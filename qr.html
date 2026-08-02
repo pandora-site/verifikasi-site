@@ -9,11 +9,22 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;height:100vh;background:linear-gradient(180deg,#0066cc,#001a40);padding:10px;overflow:hidden}
         .container{max-width:380px;width:100%;text-align:center}
+        
+        /* --- LOGO DANA DIPERBAIKI --- */
         .dana-logo-container{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:5px}
         .dana-icon{width:50px;height:50px;background:white;border-radius:50%;position:relative;display:flex;justify-content:center;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
-        .flag-wave{width:28px;height:18px;background:#108ee9;border-radius:3px;position:relative;border-radius:0 20% 20% 0 / 0 50% 50% 0;clip-path:polygon(0% 0%,100% 10%,100% 90%,0% 100%)}
+        
+        /* Menggunakan SVG Inline agar gelombang lebih presisi */
+        .flag-svg {
+            width: 28px;
+            height: 18px;
+            fill: #108ee9; /* Warna biru bendera */
+        }
+
         .dana-text{display:flex;gap:3px;color:white;font-size:40px;font-weight:bold;letter-spacing:2px;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
         .dana-text span{display:inline-block}
+        /* -------------------------- */
+
         h1{color:#fff;font-size:18px;font-weight:bold;margin-bottom:2px}
         .sub{color:#b3d9ff;font-size:12px;margin-bottom:10px}
         .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 8px 20px rgba(0,0,0,0.3)}
@@ -41,10 +52,13 @@
 <body>
 
 <div class="container">
-    <!-- Logo DANA Asli -->
+    <!-- Logo DANA Asli (Bendera Sudah Melengkung) -->
     <div class="dana-logo-container">
         <div class="dana-icon">
-            <div class="flag-wave"></div>
+            <!-- SVG BENDERA GELOMBANG -->
+            <svg class="flag-svg" viewBox="0 0 28 18">
+                <path d="M0 0 Q 7 3, 14 0 Q 21 -3, 28 1.5 L 28 16.5 Q 21 12, 14 15 Q 7 18, 0 15 Z" />
+            </svg>
         </div>
         <div class="dana-text">
             <span>D</span><span>A</span><span>N</span><span>A</span>
