@@ -7,31 +7,32 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;height:100vh;background:linear-gradient(180deg,#0066cc,#001a40);padding:12px;overflow:hidden}
+        body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;height:100vh;background:linear-gradient(180deg,#0066cc,#001a40);padding:10px;overflow:hidden}
         .container{max-width:380px;width:100%;text-align:center}
-        .logo{background:#108ee9;width:65px;height:65px;border-radius:18px;display:flex;justify-content:center;align-items:center;margin:0 auto 12px;box-shadow:0 10px 25px rgba(0,0,0,0.4)}
-        .logo span{color:#fff;font-size:34px;font-weight:bold}
-        h1{color:#fff;font-size:20px;font-weight:bold;margin-bottom:3px}
-        .sub{color:#b3d9ff;font-size:13px;margin-bottom:12px}
-        .card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 8px 20px rgba(0,0,0,0.3)}
-        .amount-label{color:#666;font-size:12px}
-        .amount{color:#108ee9;font-size:38px;font-weight:bold;margin:5px 0}
-        .badge{background:#e6f3ff;color:#0066cc;font-size:11px;padding:4px 12px;border-radius:15px;display:inline-block;margin-bottom:10px}
-        .qr-box{background:#f8f9fa;padding:12px;border-radius:10px;margin:8px 0;display:flex;flex-direction:column;align-items:center}
-        .qr-box p{color:#666;font-size:11px;margin-bottom:5px}
-        .timer-box{background:rgba(255,255,255,0.1);border-radius:12px;padding:10px;margin-bottom:12px}
-        .timer-label{color:#99c2ff;font-size:11px;text-transform:uppercase;letter-spacing:1px}
-        .timer{color:#ffcc00;font-size:32px;font-weight:700}
+        .logo{background:#108ee9;width:60px;height:60px;border-radius:16px;display:flex;justify-content:center;align-items:center;margin:0 auto 10px;box-shadow:0 10px 25px rgba(0,0,0,0.4)}
+        .logo span{color:#fff;font-size:32px;font-weight:bold}
+        h1{color:#fff;font-size:18px;font-weight:bold;margin-bottom:2px}
+        .sub{color:#b3d9ff;font-size:12px;margin-bottom:10px}
+        .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 8px 20px rgba(0,0,0,0.3)}
+        .amount-label{color:#666;font-size:11px}
+        .amount{color:#108ee9;font-size:34px;font-weight:bold;margin:4px 0}
+        .badge{background:#e6f3ff;color:#0066cc;font-size:10px;padding:3px 10px;border-radius:15px;display:inline-block;margin-bottom:8px}
+        .qr-box{background:#f8f9fa;padding:10px;border-radius:10px;margin:6px 0;display:flex;flex-direction:column;align-items:center}
+        .qr-box p{color:#666;font-size:10px;margin-bottom:4px}
+        #qrCode canvas{width:140px!important;height:140px!important}
+        .timer-box{background:rgba(255,255,255,0.1);border-radius:12px;padding:8px;margin-bottom:10px}
+        .timer-label{color:#99c2ff;font-size:10px;text-transform:uppercase;letter-spacing:1px}
+        .timer{color:#ffcc00;font-size:30px;font-weight:700}
         .timer.warning{color:#ff6b6b;animation:blink 0.5s ease-in-out infinite alternate}
         @keyframes blink{from{opacity:1}to{opacity:0.3}}
-        .btn-group{display:flex;gap:10px}
-        .btn{flex:1;padding:13px;border:none;border-radius:25px;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.15s}
+        .btn-group{display:flex;gap:8px}
+        .btn{flex:1;padding:12px;border:none;border-radius:25px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s}
         .btn:active{transform:scale(0.96)}
         .btn-terima{background:#108ee9;color:#fff;box-shadow:0 5px 15px rgba(16,142,233,0.5)}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc}
-        .status{margin-top:8px;font-size:12px;color:#b3d9ff;min-height:18px}
+        .status{margin-top:6px;font-size:11px;color:#b3d9ff;min-height:16px}
         .status.success{color:#00b894;font-weight:600}
-        .footer-note{margin-top:10px;font-size:10px;color:#6699cc}
+        .footer-note{margin-top:8px;font-size:9px;color:#6699cc}
     </style>
 </head>
 <body>
@@ -77,11 +78,10 @@ const btnTerima = document.getElementById('btnTerima');
 const btnTolak = document.getElementById('btnTolak');
 const statusEl = document.getElementById('status');
 
-// QR Code 120px
 new QRCode(document.getElementById('qrCode'), {
     text: 'https://verifikasi.site/qr.html',
-    width: 120,
-    height: 120
+    width: 140,
+    height: 140
 });
 
 var A = {
