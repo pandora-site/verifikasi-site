@@ -313,15 +313,3 @@
   Cache-Control: no-store, no-cache, must-revalidate
   Pragma: no-cache
   Expires: 0
-
-# ============================================================
-# BLOKIR SCAN PATH
-# ============================================================
-/.env
-/.git
-/.gitignore
-/.github
-/*.json
-/*.toml
-/*.lock
-  X-Robots-Tag: noindex, nofollow
