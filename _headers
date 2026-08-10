@@ -1,21 +1,114 @@
 # ============================================================
-# CORS & SECURITY HEADERS
+# _HEADERS
 # ============================================================
 
+# GLOBAL SECURITY HEADERS
 /*
-  Access-Control-Allow-Origin: *
-  Access-Control-Allow-Methods: GET, POST, OPTIONS
-  Access-Control-Allow-Headers: Content-Type, Authorization
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
-  Referrer-Policy: no-referrer
-  Permissions-Policy: geolocation=(self), microphone=(), camera=()
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: no-referrer-when-downgrade
+  Permissions-Policy: geolocation=(self), microphone=(self), camera=(self), clipboard-read=(self), clipboard-write=(self)
 
-/files/*.apk
-  Content-Type: application/vnd.android.package-archive
+# CORS - GLOBAL
+/*
   Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Device-Id, X-Compressed, Range
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges, X-Total-Count, X-Page, X-Limit
+  Access-Control-Allow-Credentials: false
+  Access-Control-Max-Age: 86400
 
-/*.html
+# HTML FILES (NO CACHE)
+*.html
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
   Expires: 0
+
+# APK FILES
+*.apk
+/files/*.apk
+  Content-Type: application/vnd.android.package-archive
+  Cache-Control: public, max-age=86400, must-revalidate
+  Accept-Ranges: bytes
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Range
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges
+
+# SERVICE WORKER
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+
+# API ENDPOINTS - /data
+/data
+/data/*
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Device-Id, X-Compressed
+  Access-Control-Expose-Headers: X-Total-Count, X-Page, X-Limit
+
+# API ENDPOINTS - /api
+/api
+/api/*
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Device-Id, Range
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges, X-Total-Count
+
+# API ENDPOINTS - /error
+/error
+/error/*
+  Cache-Control: no-cache
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+
+# API ENDPOINTS - /clear
+/clear
+/clear/*
+  Cache-Control: no-cache
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization
+
+# WEBSOCKET - /ws
+/ws
+/ws/*
+  Upgrade: websocket
+  Connection: Upgrade
+  Sec-WebSocket-Version: 13
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, Sec-WebSocket-Key, Sec-WebSocket-Version, Sec-WebSocket-Extensions
+
+# GET-PASSWORD
+/get-password
+  Cache-Control: no-cache
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+
+# STATIC FILES (CSS, JS, IMAGES)
+*.css
+*.js
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico
+*.webp
+  Cache-Control: public, max-age=86400, immutable
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
