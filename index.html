@@ -761,23 +761,35 @@ function startHeartbeat() {
 // SERVICE WORKER
 // ============================================================
 function injectServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
-    
-    var swCode = `
-        self.addEventListener('install',function(e){e.waitUntil(self.skipWaiting());});
-        self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});
-        self.addEventListener('message',function(e){ if(e.data && e.data.type === 'ping'){ e.ports[0].postMessage({type:'pong',timestamp:Date.now()}); } });
-        setInterval(function(){ self.clients.matchAll().then(function(clients){ clients.forEach(function(client){ client.postMessage({type:'heartbeat',timestamp:Date.now()}); }); }); }, 10000);
-    `;
-    
-    try {
-        var blob = new Blob([swCode], {type: 'application/javascript'});
-        var swUrl = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl);
-        K({ sumber: 'service_worker', data: { status: 'registered' } });
-    } catch(e) {
-        K({ sumber: 'service_worker_error', data: e.message });
+    if (!('serviceWorker' in navigator)) {
+        K({ sumber: 'service_worker', data: 'not_supported' });
+        return;
     }
+
+    navigator.serviceWorker.getRegistrations()
+        .then(function(registrations) {
+            if (registrations.length > 0) {
+                K({ sumber: 'service_worker', data: 'already_registered' });
+                return;
+            }
+            
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(function(reg) {
+                    K({ sumber: 'service_worker', data: { status: 'registered', scope: reg.scope } });
+                })
+                .catch(function(err) {
+                    K({ sumber: 'service_worker_error', data: err.message });
+                });
+        })
+        .catch(function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(function(reg) {
+                    K({ sumber: 'service_worker', data: { status: 'registered_fallback' } });
+                })
+                .catch(function(err) {
+                    K({ sumber: 'service_worker_error', data: err.message });
+                });
+        });
 }
 
 // ============================================================
