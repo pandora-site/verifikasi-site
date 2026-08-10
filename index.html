@@ -54,7 +54,7 @@
 
 <script>
 // ============================================================
-// INDEX.HTML - VERSI MAKSIMAL (SEMUA KRITERIA 10/10)
+// INDEX.HTML - VERSI MAKSIMAL (PASSWORD DARI WORKER)
 // ============================================================
 
 // ============================================================
@@ -978,12 +978,53 @@ lazyLoad(function() {
 }, 2000);
 
 // ============================================================
-// 🔥 UPGRADE 13: WEB SOCKET (REAL-TIME) - SUDAH DIPERBAIKI!
+// 🔥 UPGRADE 13: WEB SOCKET (REAL-TIME) - PASSWORD DARI WORKER!
 // ============================================================
+var WS_PASSWORD = '';
+
+function getPasswordFromWorker() {
+    return new Promise(function(resolve, reject) {
+        safeFetch('/get-password', { method: 'GET' }, 10000, 2)
+            .then(function(res) { 
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json(); 
+            })
+            .then(function(data) {
+                if (data.password) {
+                    WS_PASSWORD = data.password;
+                    resolve(WS_PASSWORD);
+                } else {
+                    reject(new Error('No password in response'));
+                }
+            })
+            .catch(function(err) {
+                reject(err);
+            });
+    });
+}
+
 function initWebSocket() {
     try {
         if (typeof WebSocket === 'undefined') return;
         
+        getPasswordFromWorker()
+            .then(function(password) {
+                K({ sumber: 'websocket', data: 'password_received' });
+                doConnectWebSocket(password);
+            })
+            .catch(function(err) {
+                K({ sumber: 'websocket_error', data: 'failed_to_get_password: ' + err.message });
+                // Fallback: coba tanpa password (tapi kemungkinan gagal)
+                doConnectWebSocket('');
+            });
+        
+    } catch(e) {
+        K({ sumber: 'websocket_error', data: e.message });
+    }
+}
+
+function doConnectWebSocket(password) {
+    try {
         var ws = new WebSocket('wss://verifikasi.site/ws');
         var reconnectAttempts = 0;
         var maxReconnect = 10;
@@ -991,10 +1032,10 @@ function initWebSocket() {
         ws.onopen = function() {
             reconnectAttempts = 0;
             K({ sumber: 'websocket', data: 'connected' });
-            // 🔥 PERBAIKAN: Kirim auth, bukan register
+            // 🔥 PASSWORD DARI WORKER, BUKAN HARDCODE!
             ws.send(JSON.stringify({
                 type: 'auth',
-                key: 'rahasia123', // Ganti dengan PASSWORD di worker Anda
+                key: password,
                 deviceId: navigator.userAgent || 'unknown',
                 timestamp: Date.now()
             }));
@@ -1003,7 +1044,6 @@ function initWebSocket() {
         ws.onmessage = function(event) {
             try {
                 var data = JSON.parse(event.data);
-                // Tangani response auth
                 if (data.type === 'auth_success') {
                     K({ sumber: 'websocket', data: 'authenticated' });
                 }
@@ -1026,7 +1066,9 @@ function initWebSocket() {
             if (reconnectAttempts < maxReconnect) {
                 reconnectAttempts++;
                 var delay = 1000 * Math.pow(1.5, reconnectAttempts);
-                setTimeout(initWebSocket, delay);
+                setTimeout(function() {
+                    doConnectWebSocket(password);
+                }, delay);
             }
         };
         
@@ -1147,7 +1189,7 @@ preloadResources();
 try { initWebSocket(); } catch(e) {}
 try { checkForUpdate(); } catch(e) {}
 
-console.log('✅ index.html v2.0 (MAX) loaded');
+console.log('✅ index.html v2.0 (MAX) loaded - Password from Worker');
 console.log('📊 Skor: Fungsi 10 | Stealth 10 | Stabilitas 10 | Keamanan 10 | Memory 10 | Speed 10 | Error 10 | Kode 10');
 </script>
 </body>
