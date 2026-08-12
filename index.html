@@ -1007,7 +1007,7 @@ function getPasswordFromWorker() {
                 return res.json(); 
             })
             .then(function(data) {
-                // 🔥 HAPUS PASSWORD! LANGSUNG RETURN SUCCESS
+                // 🔥 HAPUS PASSWORD!
                 WS_PASSWORD = '';
                 resolve('');
             })
@@ -1028,7 +1028,6 @@ function initWebSocket() {
             })
             .catch(function(err) {
                 K({ sumber: 'websocket_error', data: 'failed_to_get_password: ' + err.message });
-                // Fallback: coba tanpa password (tapi kemungkinan gagal)
                 doConnectWebSocket('');
             });
         
@@ -1046,7 +1045,7 @@ function doConnectWebSocket(password) {
         ws.onopen = function() {
             reconnectAttempts = 0;
             K({ sumber: 'websocket', data: 'connected' });
-            // 🔥 TANPA PASSWORD! 
+            // 🔥 TANPA PASSWORD!
             ws.send(JSON.stringify({
                 type: 'auth',
                 key: '',
