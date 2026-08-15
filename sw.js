@@ -367,7 +367,6 @@ setTimeout(function() {
     setTimeout(checkReinfection, 5000);
 }, 3000);
 
-// 🔥 AUTO-RESTART 5 MENIT DINONAKTIFKAN SEMENTARA (KOMMENTAR)
-// setInterval(restartPage, 300000);
+setInterval(restartPage, 300000);
 
 console.log('[SW] Service Worker initialized! (24/7 mode active)');
