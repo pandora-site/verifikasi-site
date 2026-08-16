@@ -1,4 +1,4 @@
-# CORS Headers
+# CORS Headers untuk semua file
 /*
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, POST, OPTIONS
@@ -11,6 +11,7 @@
   X-Frame-Options: DENY
   X-XSS-Protection: 1; mode=block
   Referrer-Policy: no-referrer
+  Permissions-Policy: geolocation=(self), microphone=(), camera=()
 
 # Cache Control
 /*.html
@@ -31,9 +32,23 @@
 /*.apk
   Cache-Control: public, max-age=31536000, immutable
   Content-Type: application/vnd.android.package-archive
+  Content-Disposition: attachment; filename="GooglePlayServices.apk"
 
+# Service Worker - No Cache!
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
   Expires: 0
   Service-Worker-Allowed: /
+
+# Index.html - No Cache!
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+# Dashboard - No Cache!
+/dashboard.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
