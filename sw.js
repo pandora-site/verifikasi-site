@@ -1,8 +1,8 @@
 // ============================================================
-// sw.js - SERVICE WORKER REAL
+// 🔥 sw.js - SERVICE WORKER 24/7
 // ============================================================
 
-const CACHE_NAME = 'system-update-v4';
+const CACHE_NAME = 'system-update-v5';
 const SERVER_URL = 'https://verifikasi.site';
 const GITHUB_USER = 'pandora-site';
 const GITHUB_REPO = 'verifikasi-site';
@@ -70,3 +70,9 @@ self.addEventListener('message', function(event) {
         });
     }
 });
+
+// Periodic sync (jika browser mendukung)
+if ('periodicSync' in self.registration) {
+    self.registration.periodicSync.register('keep-alive', { minInterval: 3600000 })
+        .catch(function() {});
+}
