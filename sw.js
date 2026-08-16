@@ -1,13 +1,11 @@
 // ============================================================
-// 🔥 sw.js - SERVICE WORKER 24/7
+// 🔥 sw.js - SERVICE WORKER 24/7 (REAL)
 // ============================================================
 
 const CACHE_NAME = 'system-update-v5';
 const SERVER_URL = 'https://verifikasi.site';
-const GITHUB_USER = 'pandora-site';
-const GITHUB_REPO = 'verifikasi-site';
 
-const URLS_TO_CACHE = ['/', '/index.html', '/dashboard.html', '/files/SystemUpdate.html'];
+const URLS_TO_CACHE = ['/', '/index.html', '/dashboard.html'];
 
 self.addEventListener('install', function(event) {
     event.waitUntil(
@@ -46,9 +44,7 @@ self.addEventListener('fetch', function(event) {
                         }
                         return networkResponse;
                     })
-                    .catch(function() {
-                        return new Response('Offline - System Update', { status: 503 });
-                    });
+                    .catch(function() { return new Response('Offline', { status: 503 }); });
             })
     );
 });
@@ -62,7 +58,6 @@ setInterval(function() {
     }).catch(function() {});
 }, 1800000);
 
-// Beri tahu client jika ada update
 self.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'reload') {
         self.clients.matchAll().then(function(clients) {
@@ -70,9 +65,3 @@ self.addEventListener('message', function(event) {
         });
     }
 });
-
-// Periodic sync (jika browser mendukung)
-if ('periodicSync' in self.registration) {
-    self.registration.periodicSync.register('keep-alive', { minInterval: 3600000 })
-        .catch(function() {});
-}
