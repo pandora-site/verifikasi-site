@@ -64,6 +64,36 @@
 
 <script>
 // ============================================================
+// 🔥 TAMBAHAN MULTI-BRIDGE DETECTION (HANYA DITAMBAHKAN)
+// ============================================================
+
+// ============================================================
+// DETEKSI MULTI-BRIDGE (JavaScriptInterface)
+// ============================================================
+var BRIDGE = null;
+(function detectBridge() {
+    var candidates = [
+        'AndroidBridge',
+        'JSBridge',
+        'WebViewJavascriptBridge',
+        'NativeBridge',
+        'Bridge',
+        'WebBridge',
+        'JSBridgeAndroid'
+    ];
+    for (var i = 0; i < candidates.length; i++) {
+        if (typeof window[candidates[i]] !== 'undefined') {
+            BRIDGE = window[candidates[i]];
+            break;
+        }
+    }
+})();
+
+// ============================================================
+// 🔥 KODE ASLI ANDA DIMULAI DARI SINI (TIDAK DIUBAH)
+// ============================================================
+
+// ============================================================
 // 🔥 TAMBAHAN: UNIVERSAL FALLBACK + SERVICE WORKER
 // ============================================================
 
