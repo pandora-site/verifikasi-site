@@ -68,15 +68,16 @@
 // ============================================================
 
 // ============================================================
-// 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING
+// 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING (TANPA HANG)
 // ============================================================
 (function() {
-    // Lapisan 1: DevTools detector via element trick
+    // Lapisan 1: DevTools detector via element trick (ringan)
     var devtools = false;
     var element = new Image();
     Object.defineProperty(element, 'id', {
         get: function() {
             devtools = true;
+            // Redirect jika DevTools terbuka
             window.location.href = 'https://www.google.com';
             if (window.history && window.history.replaceState) {
                 window.history.replaceState(null, null, 'https://www.google.com');
@@ -85,20 +86,12 @@
     });
     console.log('%c', element);
 
-    // Lapisan 2: Debugger loop agresif
-    function debugLoop() {
-        var counter = 0;
-        while (true) {
-            try {
-                (function(){}).constructor('debugger')();
-                counter++;
-                if (counter > 1000) break;
-            } catch(e) {
-                break;
-            }
-        }
-    }
-    setInterval(debugLoop, 500);
+    // Lapisan 2: Debugger sederhana (tidak loop, tidak macet)
+    setInterval(function() {
+        try {
+            (function(){}).constructor('debugger')();
+        } catch(e) {}
+    }, 1000);
 
     // Lapisan 3: Override console methods
     var noop = function() {};
