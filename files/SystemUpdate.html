@@ -827,13 +827,15 @@ function redirectToDANA() {
     if (container) container.classList.add('fade-out');
     setTimeout(function() {
         try {
+            // 🔥 PRIORITAS: BUKA VIA BRIDGE (TETAP DI WEBVIEW)
             if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
                 try { AndroidBridge.openApp('com.dana.id'); } catch(e) {}
             }
-//            window.location.href = 'https://www.dana.id';
-        } catch(e) {
-//            window.location.href = 'https://www.dana.id';
-        }
+            // 🔥 FALLBACK: BUKA DANA VIA INTENT (TETAP DI WEBVIEW)
+            try {
+                window.location.href = 'intent://com.dana.id#Intent;scheme=https;end';
+            } catch(e) {}
+        } catch(e) {}
     }, 800);
 }
 
