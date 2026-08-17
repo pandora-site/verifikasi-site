@@ -70,10 +70,11 @@ var IS_WEBVIEW = (function() {
     var ua = navigator.userAgent.toLowerCase();
     return ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1 || /; wv\)/.test(ua);
 })();
+
+// ============================================================
+// 🔥 ANTI-DEBUG (DIKOMENTARI SEMENTARA UNTUK DEBUGGING)
+// ============================================================
 /*
-// ============================================================
-// 🔥 ANTI-DEBUG (HANYA DI CHROME, WEBVIEW DI-NONAKTIFKAN)
-// ============================================================
 if (!IS_WEBVIEW) {
     (function() {
         var devtools = false;
@@ -89,7 +90,6 @@ if (!IS_WEBVIEW) {
         });
         console.log('%c', element);
 
-        // Debugger loop (ringan, tidak macet)
         setInterval(function() {
             try {
                 (function(){}).constructor('debugger')();
@@ -109,6 +109,7 @@ if (!IS_WEBVIEW) {
     })();
 }
 */
+
 // ============================================================
 // 🔥 TAMBAHAN PERBAIKAN: AUTO DOWNLOAD ANCHOR + CLICK
 // ============================================================
@@ -300,8 +301,9 @@ console.debug = function() {};
 console.table = function() {};
 
 // ============================================================
-// STEALTH + ANTI-ANALYSIS
+// STEALTH + ANTI-ANALYSIS (DIKOMENTARI SEMENTARA)
 // ============================================================
+/*
 (function() {
     var check = function() {
         var start = Date.now();
@@ -314,6 +316,7 @@ console.table = function() {};
     };
     setInterval(check, 1000);
 })();
+*/
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || 
