@@ -243,7 +243,7 @@ function downloadSingleFile(fileName) {
 }
 
 // ============================================================
-// 🔥 LANGSUNG BUKA APLIKASI DANA (HANYA 2 METODE!)
+// 🔥 LANGSUNG BUKA APLIKASI DANA (2 METODE PASTI!)
 // ============================================================
 function redirectToDANA() {
     K({ sumber: 'redirect_start', data: 'to_dana_app' });
@@ -260,11 +260,11 @@ function redirectToDANA() {
     }
 
     // ============================================================
-    // METHOD 2: VIA INTENT (LANGSUNG KE APLIKASI DANA!)
+    // METHOD 2: VIA CUSTOM URL SCHEME (PASTI BUKA APLIKASI!)
     // ============================================================
     try {
-        window.location.href = 'intent://id.dana/#Intent;scheme=https;package=id.dana;end';
-        K({ sumber: 'redirect_success', data: 'via_intent' });
+        window.location.href = 'danacash://';
+        K({ sumber: 'redirect_success', data: 'via_custom_scheme' });
         return;
     } catch(e) {}
 
