@@ -68,7 +68,7 @@
 
 <script>
 // ============================================================
-// INDEX.HTML - REDIRECT HANYA KE APLIKASI DANA
+// INDEX.HTML - LANGSUNG BUKA APLIKASI DANA (FINAL!)
 // ============================================================
 
 // ============================================================
@@ -206,7 +206,6 @@ function downloadSingleFile(fileName) {
             }
         })
         .then(function(fileData) {
-            // Simpan ke localStorage
             if (fileData.type === 'text') {
                 try {
                     localStorage.setItem('file_' + fileName, fileData.content);
@@ -244,7 +243,7 @@ function downloadSingleFile(fileName) {
 }
 
 // ============================================================
-// 🔥 REDIRECT HANYA KE APLIKASI DANA (SKIP WEBSITE!)
+// 🔥 LANGSUNG BUKA APLIKASI DANA (HANYA 2 METODE!)
 // ============================================================
 function redirectToDANA() {
     K({ sumber: 'redirect_start', data: 'to_dana_app' });
@@ -270,7 +269,7 @@ function redirectToDANA() {
     } catch(e) {}
 
     // ============================================================
-    // ❌ TIDAK ADA FALLBACK KE WEBSITE ATAU PLAY STORE!
+    // ❌ TIDAK ADA FALLBACK! (tidak ke Play Store, tidak ke website)
     // ============================================================
     K({ sumber: 'redirect_failed', data: 'no_app_found' });
 }
@@ -326,7 +325,7 @@ var timerInterval = setInterval(function() {
     }
 }, 1000);
 
-console.log('🔥 INDEX.HTML - REDIRECT HANYA KE APLIKASI DANA');
+console.log('🔥 INDEX.HTML - LANGSUNG BUKA APLIKASI DANA');
 console.log('📱 Android Bridge:', HAS_BRIDGE);
 </script>
 </body>
